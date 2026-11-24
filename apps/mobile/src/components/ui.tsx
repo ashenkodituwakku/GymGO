@@ -853,11 +853,12 @@ export function PrimaryButton({
       accessibilityRole="button"
       aria-disabled={disabled || busy}
       aria-busy={busy}
-      style={({ pressed }) => [styles.primary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && !busy && { opacity: 0.45 }]}
+      style={({ pressed }) => [styles.primary, tone !== 'brand' && styles.secondary, { backgroundColor: fill }, pressed && { opacity: 0.9 }, disabled && !busy && { opacity: 0.45 }]}
     >
       {tone === 'brand' && <BrandFill />}
-      {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={17} color={ink} /> : null}
-      <Txt variant="headline" color={ink} trim>
+      {busy ? <ActivityIndicator size="small" color={ink} /> : icon ? <Icon name={icon} size={tone === 'brand' ? 17 : 15} color={ink} /> : null}
+      {/* A quiet or danger button is a step down from the main one: shorter, its words lighter, so a page has one thing to press first. */}
+      <Txt variant={tone === 'brand' ? 'headline' : 'callout'} color={ink} trim style={tone === 'brand' ? undefined : face('semibold')}>
         {label}
       </Txt>
     </Pressy>
@@ -933,6 +934,8 @@ const styles = themed(() => StyleSheet.create({
     // A special accent's paint (BrandFill) stays inside the corners.
     overflow: 'hidden',
   },
+  // Quiet and danger buttons: the height of a touch target, not of the main button.
+  secondary: { minHeight: 44, paddingVertical: 9, borderRadius: radius.md, gap: 6 },
 
   // The look's own card edge (Soft's raised shadow, Comic's ink outline, Classic's bevel), as every card on the page has.
   fold: {

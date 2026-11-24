@@ -136,4 +136,10 @@ export const ART: Record<ArtName, Drawing> = {
       <Circle cx={84} cy={156} r={12} fill={color} {...part('paint-4')} />
     </G>
   ),
+  // Feed: one beat of a pulse.
+  pulse: (color, width) => (
+    <G>
+      <Path d="M24,128H56L96,40L160,208L200,128H232" {...stroke(color, width)} {...part('beat')} {...measured} />
+    </G>
+  ),
 };

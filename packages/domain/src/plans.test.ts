@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LIMITS, PRO_PRICES, TRIAL_DAYS, TRIAL_OFFER_DAYS, annualSaving, formatPlanPrice, isProStatus, proPrice, trialEndsAt, trialOffer } from './plans';
+import { LIMITS, PRO_PRICES, TRIAL_DAYS, TRIAL_OFFER_DAYS, annualSaving, deviceWallet, formatPlanPrice, isProStatus, orList, proPrice, stripePageNames, trialEndsAt, trialOffer, walletButtonFor } from './plans';
 
 describe('plans', () => {
   it('gives Pro more of everything Free has', () => {
@@ -54,5 +54,56 @@ describe('the free trial', () => {
   });
   it('ends, and is first charged, 3 days after it starts', () => {
     expect(trialEndsAt(new Date('2026-10-06T10:00:00Z')).toISOString()).toBe('2026-10-09T10:00:00.000Z');
+  });
+});
+
+describe('the ways to pay, in words', () => {
+  it('names only what Stripe’s page really takes, and never PayPal’s own button', () => {
+    expect(stripePageNames(null)).toEqual([]);
+    expect(stripePageNames({ card: true, applePay: true, googlePay: true, link: false, paypal: 'direct' })).toEqual(['card', 'Apple Pay', 'Google Pay']);
+    expect(stripePageNames({ card: true, applePay: false, googlePay: false, link: true, paypal: 'stripe' })).toEqual(['card', 'PayPal']);
+  });
+
+  it('joins them as a person would', () => {
+    expect(orList([])).toBe('');
+    expect(orList(['card'])).toBe('card');
+    expect(orList(['card', 'Apple Pay'])).toBe('card or Apple Pay');
+    expect(orList(['card', 'Apple Pay', 'Google Pay'])).toBe('card, Apple Pay or Google Pay');
+  });
+});
+
+describe('which wallet button a device gets', () => {
+  // User agents as the browsers send them (2026).
+  const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 19_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.1 Mobile/15E148 Safari/604.1';
+  const MAC_SAFARI = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.1 Safari/605.1.15';
+  const PIXEL = 'Mozilla/5.0 (Linux; Android 16; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36';
+  const WINDOWS = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36';
+
+  it('gives an iPhone, iPad or Mac Apple Pay', () => {
+    expect(deviceWallet({ userAgent: IPHONE, platform: 'iPhone' })).toBe('applePay');
+    // A Mac; and an iPad asking for desktop sites, which says the same.
+    expect(deviceWallet({ userAgent: MAC_SAFARI, platform: 'MacIntel' })).toBe('applePay');
+    // Chrome on a Mac says so in userAgentData.
+    expect(deviceWallet({ userAgent: WINDOWS.replace('Windows NT 10.0; Win64; x64', 'Macintosh; Intel Mac OS X 10_15_7'), platform: 'MacIntel', uaPlatform: 'macOS' })).toBe('applePay');
+  });
+
+  it('gives Android, and everything else, Google Pay', () => {
+    expect(deviceWallet({ userAgent: PIXEL, platform: 'Linux armv81', uaPlatform: 'Android' })).toBe('googlePay');
+    expect(deviceWallet({ userAgent: PIXEL, platform: 'Linux armv81' })).toBe('googlePay');
+    expect(deviceWallet({ userAgent: WINDOWS, platform: 'Win32', uaPlatform: 'Windows' })).toBe('googlePay');
+    expect(deviceWallet({ userAgent: WINDOWS, platform: 'Win32' })).toBe('googlePay');
+    expect(deviceWallet({})).toBe('googlePay');
+  });
+
+  it('believes userAgentData over an old platform string', () => {
+    expect(deviceWallet({ userAgent: MAC_SAFARI, platform: 'MacIntel', uaPlatform: 'Windows' })).toBe('googlePay');
+  });
+
+  it('shows the device’s own wallet only when the server has it on', () => {
+    const both = { publishableKey: 'pk_test_example', applePay: true, googlePay: true };
+    expect(walletButtonFor(both, 'applePay')).toBe('applePay');
+    expect(walletButtonFor({ ...both, applePay: false }, 'applePay')).toBeNull();
+    expect(walletButtonFor({ ...both, googlePay: false }, 'googlePay')).toBeNull();
+    expect(walletButtonFor(null, 'googlePay')).toBeNull();
   });
 });

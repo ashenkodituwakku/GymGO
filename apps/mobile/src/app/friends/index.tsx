@@ -217,6 +217,13 @@ export default function FriendsScreen() {
         </Section>
       )}
 
+      {/* Their workouts, newest first, to like and comment on. */}
+      {view && view.friends.length > 0 && (
+        <Group>
+          <Row icon="workout" tile={TILE.orange} title="Feed" subtitle="Your friends’ workouts, newest first" onPress={() => router.push('/feed')} />
+        </Group>
+      )}
+
       <Section title={view ? `Friends (${view.friends.length})` : 'Friends'}>
         {!view && !problem && <ListSkeleton rows={2} card={false} label="Loading your friends" />}
         {view && view.friends.length === 0 && (

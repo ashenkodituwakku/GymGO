@@ -5,7 +5,7 @@
  * rather than over the map, so the map is never covered by more than it needs.
  */
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Platform, ScrollView, StyleSheet, TextInput, View, useWindowDimensions, type TextInputInstance } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -31,6 +31,7 @@ import { AdSlot } from './AdSlot';
 import { Avatar } from './Avatar';
 import type { Account } from '@/lib/api';
 import { LIMITED } from '@/lib/limited';
+import { useGlassRedraw } from './Redrawn';
 
 /** How many result rows animate as the list changes: about a screenful. */
 const ANIMATED_ROWS = 12;
@@ -38,7 +39,14 @@ const ANIMATED_ROWS = 12;
 /** A critically-damped spring: rows glide to their new place, no bounce. */
 // Rows gliding when the list re-sorts: the app's one GLIDE (components/motion.tsx).
 
-export function ResultsContent({
+/**
+ * Memoised: Explore redraws itself for every gym picked, every map move and
+ * every card that opens, and the panel (its search, chips and list, some 470
+ * parts) was drawn again each time with nothing in it changed, on the very
+ * frame a picked gym's card opened and the map set off: a stutter. Explore
+ * keeps every prop the same between redraws (useCallback, useMemo).
+ */
+export const ResultsContent = memo(function ResultsContent({
   outcome,
   filters,
   query,
@@ -123,6 +131,8 @@ export function ResultsContent({
   /** Search this area: read the map there (again, after a failure). */
   onSearchHere?: () => void;
 }) {
+  // Memoised, it no longer redraws with Explore, so it follows Liquid Glass's level itself.
+  useGlassRedraw();
   // The sheet-aware input throws in a browser; see TextField in ui.tsx.
   const SearchInput = inSheet && Platform.OS !== 'web' ? BottomSheetTextInput : TextInput;
   // "Suburb, city or gym" doesn't fit beside the filters and your picture on a 320-point phone.
@@ -554,7 +564,7 @@ export function ResultsContent({
       {body}
     </View>
   );
-}
+});
 
 /** A suggestion's two lines: its name, and where it is (and for a gym or town, how far). */
 function suggestionRow(hit: Suggestion, home: string | null): { title: string; detail: string; label: string } {

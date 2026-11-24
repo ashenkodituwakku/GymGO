@@ -280,6 +280,117 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Timed and distance sets** (24 Nov, Update 256). `LoggedSet.seconds` /
+  `.metres` (packages/domain/src/lifting.ts) with reps 0; `isDoneSet`
+  (workingSets uses it), `isTimedSet`, `secondsLabel`, `distanceLabel`;
+  records `longestSeconds`/`furthestMetres`, NewRecord kinds `longest` and
+  `furthest` (RECORD_WORD, RANK, insights' RECORD_KIND). The server's
+  `cleanTrainingSession` takes whole seconds ≤ 6 h and metres ≤ 100 km,
+  and the "at least one set" check uses `isDoneSet`. App: `setMeasure(id,
+  planReps)` in lib/workout.ts decides reps/time/distance (TIMED set,
+  farmer-carry, cardio, else the plan's "s"/"m"); `DraftSet.time` /
+  `.distance`; `parseTime`, `tidyTime`, `parseDistance`, `timedSetLine`,
+  `setLine`, `TIMED_METRICS` in lib/training.ts; `draftToLogged` takes a
+  `measure` per item; `bestSoFar(..., measure)`. train.tsx: `timedFor`
+  (Previous, else the set above, else the plan), the stopwatch (`watch`,
+  `Stopwatch`; ticking while it runs uses its time), `liftedSoFar` in the
+  header. sessionEdit.ts `EditedExercise.measure`. Head to head has
+  optional `longestSeconds`/`furthestMetres`. CSV: `seconds`, `metres`
+  last. Older app builds ignore timed sets (their workingSets needs reps),
+  and an old build's Edit workout would drop them on save.
+- **Weekly chart, save a friend's, share a picture; Home roomy on phones
+  only** (24 Nov, Update 255). Home (app/(tabs)/index.tsx) is roomy only
+  when `width < 600` (`roomy`): pills, the lifter card, the templates link
+  alone, finder tiles and `groupRoomy`. Wider it's as before Update 254
+  (shortcut tiles, `workoutWide`). `WeatherCompact` likewise (one line on a
+  phone). lib/weekly.ts + components/WeeklyChart.tsx on `/feed?person=<you>`
+  (`mine` in feed/index.tsx loads `useTrainingLog`); Profile → Your
+  workouts. feed/[id].tsx: Save to my workouts (`friendWorkoutPlan`,
+  `api.saveWorkout`, Pro; `pro_required` goes to Pro). app/share-workout.tsx
+  (`id` from the log) with components/WorkoutShareCard.tsx; no
+  `numberOfLines={1}` on the card's short texts, since the exported picture
+  draws text a little wider and cut them off.
+- **Roomier Home, Previous, compare** (23 Nov, Update 254). Home
+  (app/(tabs)/index.tsx): quick searches as `styles.pills` in a horizontal
+  ScrollView, the workout card with an `ExerciseGlyph` (bench-press, moving,
+  reps 2) and a white "Start building" pill, the templates link alone
+  (`templatesAlone`) unless Up next shares its card, `group` gap 16.
+  lib/previous.ts (`previousSet`: same place among warm-ups or working sets,
+  converted to the workout's unit) beside each set row in train.tsx (not
+  with RPE on); lib/compare.ts (`compareWithLast`: by workoutId or name,
+  `signed`) on the summary, worked out in `finish()` before the log takes
+  the new workout in.
+- **Gym tags, profiles, muscle split** (23 Nov, Update 253).
+  `training_sessions.gym_name` is set by the server from its own gym
+  record (`gymRecord`) on POST, and on PATCH `{ gymId }` (null clears; an
+  unknown id is a 400), never from client text. The feed shows `gym` only
+  when `gym_name` is set (older workouts have none). `GET
+  /api/feed?person=` is one friend's (sharing) or your own (hidden ones
+  too), with `person.workouts`. App: app/gym-tag.tsx (`session=active` or
+  a logged id), the chip in train.tsx, a Gym row in session-edit.tsx,
+  `muscleSplit` (lib/feed.ts) on feed/[id], the friend page's workouts
+  (friends/[id].tsx), feed/index.tsx `?person=&name=`. PrimaryButton's
+  quiet and danger tones are now 44 tall (`styles.secondary` in ui.tsx).
+- **The friends' feed** (23 Nov, Update 252). docs/FEED.md. Server
+  feed.ts (`Feed`): `users.share_workouts` (opt-in), `training_sessions.hidden`
+  and `.records_json` (records cached, invalidated by `forgetRecordsFrom` on
+  log, edit and delete), tables `feed_likes`, `feed_comments`, `feed_reports`
+  (in db.ts SCHEMA, cascading). Visibility is one rule (`visible()`): yours, or
+  an accepted friend's that they share and haven't hidden; everything else
+  404s. Unfriending calls `feed.forgetBetween`. Reports go through
+  `bugReports.create`. Head to head is Pro (`billing.isPro`) and uses only the
+  friend's non-hidden workouts. The records code moved to
+  packages/domain/src/lifting.ts; apps/mobile/src/lib/training.ts re-exports
+  it, so app imports didn't change. App: app/feed/index.tsx, app/feed/[id].tsx,
+  components/FeedCard.tsx (memoised: calls useGlassRedraw, which a test
+  checks), components/HeadToHead.tsx, lib/feed.ts; ProReason `headToHead`.
+  legal.ts doesn't mention workout sharing yet (owner's wording).
+- **Apple Pay's and Google Pay's own buttons** (23 Nov, Update 251).
+  Web only. `deviceWallet` (domain plans.ts) picks Apple Pay for
+  iPhone/iPad/Mac (userAgentData.platform, else navigator.platform, else
+  UA) and Google Pay for the rest; `walletButtonFor` shows it only if the
+  server's `wallets` (plans response, from `Billing.wallets()`: needs
+  `STRIPE_PUBLISHABLE_KEY` and the wallet on in Stripe's settings) has it.
+  components/WalletButton.tsx mounts Stripe's Express Checkout Element
+  (Checkout Sessions `ui_mode: 'elements'`, `POST /api/billing/wallet` →
+  `clientSecret`, Stripe.js `initCheckoutElementsSdk` from
+  js.stripe.com/dahlia, matching the server library's API version; bump
+  both together). Hidden (absolute, transparent, no pointer events) until
+  `ready` reports the wallet available. The wallet checkout passes the
+  account's existing Stripe customer or none (linked by
+  client_reference_id on completion, as any checkout). legal.ts doesn't
+  yet mention Stripe.js on the Pro page or Google Pay's button: owner's
+  wording (docs/PAYMENTS.md) before live payments.
+- **Apple Pay, Google Pay, PayPal** (22 Nov, Update 249). docs/PAYMENTS.md
+  is the owner's set-up. billing.ts `payWith()` reads Stripe's payment
+  method configuration (`paymentMethodConfigurations`: each method's
+  `available`), cached ten minutes, and `paymentMethodSetting()` passes
+  `STRIPE_PAYMENT_METHOD_CONFIGURATION` to checkouts. paypal.ts is PayPal
+  through GymGO's own account: `createPayPal` (REST over fetch),
+  `PayPalPro` (plans found by product `GYMGO-PRO` and description
+  `gymgo:<lookup key>[:trial]`, prices read back; checkout records nothing
+  until confirm; `readStatus` maps to Stripe's statuses; rows in
+  `subscriptions` as `paypal:I-…`). Anything that calls Stripe with a
+  subscription id must skip `paypal:` rows (cancelAllFor does). The app:
+  `stripePageNames`/`orList` for the line under Subscribe; `payWith.paypal
+  === 'direct'` shows PayPalButton (PayPal's wordmark paths from its
+  published button SVG, its #60CDFF blue, white in dark mode, per PayPal's
+  August 2026 colours); `manageSubscription` opens PayPal's
+  autopay page for `provider: 'paypal'`. legal.ts still names only Stripe:
+  PayPal must be added there (owner's wording) before it takes real money.
+- **Picking a gym on the map, kept light** (22 Nov, Update 248). The
+  click's frame used to redraw the whole app. `addRecent` (app-state.tsx)
+  now runs in `startTransition` and does nothing for the gym already first.
+  `ResultsContent` is `memo`: keep every prop Explore hands it stable
+  (`useCallback`/`useMemo`; `locked` is memoised, `focusSearch` and
+  `seeWorldwide` are callbacks); it calls `useGlassRedraw()` itself, since
+  Explore's redraws no longer reach it. `PlaceCard staged` (Explore only)
+  mounts its folded detail a frame later in a transition; the gym page leaves
+  it off, because PageScroll restores the scroll on the first content size.
+  To measure, a fake `__REACT_DEVTOOLS_GLOBAL_HOOK__` in a Playwright init
+  script can count the components each commit renders (count a fiber only
+  when it isn't the same object as in the last commit: skipped subtrees keep
+  their old flags).
 - **Desktop side panels and focus** (18 Nov). explore.tsx: one effect on
   `[wide, panel, selectedId]` records the opener (the focused element,
   unless it's inside the panel), focuses `sidePanel` (tabIndex -1, quiet

@@ -20,11 +20,25 @@ import { Chip, PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
-import { EXERCISE_METRICS, exerciseSeries, formatWeight, fromKg, personalRecords, repRecords, repsWords, setsSummary, unitFor, type ExerciseMetric } from '@/lib/training';
+import {
+  EXERCISE_METRICS,
+  TIMED_METRICS,
+  distanceLabel,
+  exerciseSeries,
+  formatWeight,
+  fromKg,
+  personalRecords,
+  repRecords,
+  repsWords,
+  secondsLabel,
+  setsSummary,
+  unitFor,
+  type ExerciseMetric,
+} from '@/lib/training';
 import { useOwnTraining } from '@/lib/ownTraining';
 import { useTrainingLog } from '@/lib/useTraining';
 import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
-import { KIT_LABEL, exerciseName, muscleLabel, exerciseById } from '@/lib/workout';
+import { KIT_LABEL, exerciseName, muscleLabel, exerciseById, setMeasure } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { MuscleFigures } from '@/components/MuscleFigures';
 import { PageScroll } from '@/components/PageScroll';
@@ -56,11 +70,15 @@ export default function ExerciseProgressScreen() {
   usePageTitle(title);
   const record = useMemo(() => personalRecords(log.sessions).get(exerciseId) ?? null, [log.sessions, exerciseId]);
   const [picked, setPicked] = useState<ExerciseMetric | null>(null);
+  // A plank's chart is its longest set, a carry's its furthest; nothing else of a weight's applies.
+  const measure = setMeasure(exerciseId);
+  const metrics = measure === 'reps' ? EXERCISE_METRICS : TIMED_METRICS.filter((item) => item.id === (measure === 'time' ? 'longest' : 'furthest'));
   // Until you pick one, the 1-rep max; for an exercise you've only done at body weight, the reps, as the rest have nothing to show.
-  const metric: ExerciseMetric = picked ?? (record && record.heaviestKg === null && record.mostReps !== null ? 'reps' : 'e1rm');
+  const metric: ExerciseMetric =
+    measure === 'time' ? 'longest' : measure === 'distance' ? 'furthest' : (picked ?? (record && record.heaviestKg === null && record.mostReps !== null ? 'reps' : 'e1rm'));
   const [noting, setNoting] = useState(false);
   const series = useMemo(() => exerciseSeries(log.sessions, exerciseId, metric), [log.sessions, exerciseId, metric]);
-  const shownMetric = EXERCISE_METRICS.find((item) => item.id === metric)!;
+  const shownMetric = [...EXERCISE_METRICS, ...TIMED_METRICS].find((item) => item.id === metric)!;
   const reps = useMemo(() => repRecords(log.sessions, exerciseId), [log.sessions, exerciseId]);
   /** A big weight with its thousands marked, in your unit: "4,250 kg". */
   const tonnage = (kg: number) => `${Math.round(fromKg(kg, unit)).toLocaleString()}\u00a0${unit}`;
@@ -192,6 +210,9 @@ export default function ExerciseProgressScreen() {
             record.mostReps !== null && <Fact label="Most reps" value={String(record.mostReps)} detail="in one set" />
           )}
           {record.e1rmKg !== null && <Fact label="1-rep max" value={formatWeight(Math.round(fromKg(record.e1rmKg, unit)), unit)} detail="estimated" />}
+          {/* By the clock or the tape: the longest or furthest set. */}
+          {record.longestSeconds !== null && <Fact label="Longest" value={secondsLabel(record.longestSeconds)} detail="in one set" />}
+          {record.furthestMetres !== null && <Fact label="Furthest" value={distanceLabel(record.furthestMetres)} detail="in one set" />}
           <Fact label="Sessions" value={String(record.sessions)} detail={record.sessions > 0 ? 'logged' : undefined} />
         </View>
       )}
@@ -260,20 +281,26 @@ export default function ExerciseProgressScreen() {
       {billing.isPro ? (
         <View style={styles.card}>
           {/* What the chart follows: the estimated 1-rep max, the heaviest weight, the biggest set, the day's volume or reps. */}
-          <View style={styles.metrics} role="radiogroup" accessibilityLabel="What the chart shows">
-            {EXERCISE_METRICS.map((item) => (
-              <Chip key={item.id} label={item.label} selected={metric === item.id} accessibilityLabel={item.title.toLowerCase().includes(item.label.toLowerCase()) ? item.title : `${item.label}: ${item.title}`} onPress={() => setPicked(item.id)} />
-            ))}
-          </View>
+          {metrics.length > 1 && (
+            <View style={styles.metrics} role="radiogroup" accessibilityLabel="What the chart shows">
+              {metrics.map((item) => (
+                <Chip key={item.id} label={item.label} selected={metric === item.id} accessibilityLabel={item.title.toLowerCase().includes(item.label.toLowerCase()) ? item.title : `${item.label}: ${item.title}`} onPress={() => setPicked(item.id)} />
+              ))}
+            </View>
+          )}
           {series.length > 0 ? (
-            <ProgressChart points={series} unit={unit} title={shownMetric.title} count={metric === 'reps' ? 'reps' : undefined} />
+            <ProgressChart points={series} unit={unit} title={shownMetric.title} count={metric === 'reps' ? 'reps' : metric === 'longest' ? 's' : metric === 'furthest' ? 'm' : undefined} />
           ) : (
             <Txt variant="subhead" color={color.labelSecondary}>
-              {metric === 'e1rm' ? 'This chart needs a weighted set of 12 reps or fewer.' : metric === 'reps' ? 'Nothing logged yet.' : 'This chart needs a set with a weight on it.'}
+              {metric === 'e1rm'
+                ? 'This chart needs a weighted set of 12 reps or fewer.'
+                : metric === 'reps' || metric === 'longest' || metric === 'furthest'
+                  ? 'Nothing logged yet.'
+                  : 'This chart needs a set with a weight on it.'}
             </Txt>
           )}
           <Txt variant="footnote" color={color.labelSecondary}>
-            {`${shownMetric.about} Your next target shows beside the exercise when you start a workout.`}
+            {measure === 'reps' ? `${shownMetric.about} Your next target shows beside the exercise when you start a workout.` : shownMetric.about}
           </Txt>
         </View>
       ) : (

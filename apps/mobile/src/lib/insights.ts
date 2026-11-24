@@ -241,7 +241,7 @@ export function muscleBalance(sessions: TrainingSession[], days = 28, now: Date 
 
 // --- Sharing a workout ------------------------------------------------------------------
 
-const RECORD_KIND: Record<NewRecord['kind'], string> = { heaviest: 'heaviest yet', e1rm: 'strongest set yet', volume: 'biggest set yet', reps: 'most reps yet' };
+const RECORD_KIND: Record<NewRecord['kind'], string> = { heaviest: 'heaviest yet', e1rm: 'strongest set yet', volume: 'biggest set yet', reps: 'most reps yet', longest: 'longest yet', furthest: 'furthest yet' };
 
 /**
  * A finished workout as a few lines of plain text to send a friend: what,
@@ -279,9 +279,12 @@ const csvCell = (value: string | number | null) => {
  * date and time it finished, the workout, the exercise, the set's number,
  * weight and unit (blank for body weight, never zero) and reps, and your
  * note on the workout (on each of its rows, so a sort or filter keeps it).
+ * A set by the clock or the tape (a plank, a carry) has its seconds or
+ * metres in the last two columns, after the note, so older sheets' columns
+ * stay where they were.
  */
 export function logToCsv(sessions: TrainingSession[]): string {
-  const rows: Array<Array<string | number | null>> = [['date', 'time', 'workout', 'exercise', 'set', 'weight', 'unit', 'reps', 'type', 'rpe', 'note']];
+  const rows: Array<Array<string | number | null>> = [['date', 'time', 'workout', 'exercise', 'set', 'weight', 'unit', 'reps', 'type', 'rpe', 'note', 'seconds', 'metres']];
   const ordered = [...sessions].sort((a, b) => (a.finishedAt < b.finishedAt ? -1 : a.finishedAt > b.finishedAt ? 1 : 0));
   for (const session of ordered) {
     const finished = new Date(session.finishedAt);
@@ -290,7 +293,7 @@ export function logToCsv(sessions: TrainingSession[]): string {
     for (const logged of session.exercises) {
       logged.sets.forEach((set, index) => {
         const type = set.kind === 'warmup' ? 'warm-up' : set.kind === 'drop' ? 'drop set' : set.kind === 'failure' ? 'failure' : 'normal';
-        rows.push([date, time, session.name, exerciseName(logged.exerciseId), index + 1, set.weight, set.weight === null ? null : session.unit, set.reps, type, set.rpe ?? null, session.note ?? null]);
+        rows.push([date, time, session.name, exerciseName(logged.exerciseId), index + 1, set.weight, set.weight === null ? null : session.unit, set.reps, type, set.rpe ?? null, session.note ?? null, set.seconds ?? null, set.metres ?? null]);
       });
     }
   }

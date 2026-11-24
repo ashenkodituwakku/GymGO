@@ -121,19 +121,26 @@ describe('workoutShareText', () => {
 
 describe('logToCsv', () => {
   it('writes a row a set, oldest first, blank weight for body weight, quoting what needs it', () => {
-    const later = session(at(4, 14, 19), [{ exerciseId: 'push-up', sets: [{ weight: null, reps: 12, kind: 'failure' }] }]);
+    const later = session(at(4, 14, 19), [
+      { exerciseId: 'push-up', sets: [{ weight: null, reps: 12, kind: 'failure' }] },
+      { exerciseId: 'plank', sets: [{ weight: null, reps: 0, seconds: 75 }] },
+      { exerciseId: 'farmer-carry', sets: [{ weight: 24, reps: 0, metres: 40 }] },
+    ]);
     const earlier = {
       ...session(at(4, 10, 7), [{ exerciseId: 'back-squat', sets: [{ weight: 60, reps: 5, kind: 'warmup' }, { weight: 100, reps: 5, rpe: 8 }, { weight: 102.5, reps: 3, rpe: 9.5 }] }]),
       name: 'Legs, heavy',
       note: 'Knee "fine"',
     };
     const lines = logToCsv([later, earlier]).trim().split('\n');
-    expect(lines[0]).toBe('date,time,workout,exercise,set,weight,unit,reps,type,rpe,note');
+    expect(lines[0]).toBe('date,time,workout,exercise,set,weight,unit,reps,type,rpe,note,seconds,metres');
     // The workout's note on each of its rows, quoted where it needs it; each set's type, and its RPE when given.
-    expect(lines[1]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,1,60,kg,5,warm-up,,"Knee ""fine"""');
-    expect(lines[2]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,2,100,kg,5,normal,8,"Knee ""fine"""');
-    expect(lines[3]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,3,102.5,kg,3,normal,9.5,"Knee ""fine"""');
-    expect(lines[4]).toBe('2024-05-14,19:00,Legs,Push-up,1,,,12,failure,,');
+    expect(lines[1]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,1,60,kg,5,warm-up,,"Knee ""fine""",,');
+    expect(lines[2]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,2,100,kg,5,normal,8,"Knee ""fine""",,');
+    expect(lines[3]).toBe('2024-05-10,07:00,"Legs, heavy",Barbell back squat,3,102.5,kg,3,normal,9.5,"Knee ""fine""",,');
+    expect(lines[4]).toBe('2024-05-14,19:00,Legs,Push-up,1,,,12,failure,,,,');
+    // A plank's seconds and a carry's metres, in the last two columns.
+    expect(lines[5]).toBe('2024-05-14,19:00,Legs,Plank,1,,,0,normal,,,75,');
+    expect(lines[6]).toBe("2024-05-14,19:00,Legs,Farmer's carry,1,24,kg,0,normal,,,,40");
   });
 });
 

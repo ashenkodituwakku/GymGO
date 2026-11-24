@@ -43,6 +43,85 @@ export const LIMITS: Record<PlanId, PlanLimits> = {
 /** Above this, a limit reads as "unlimited". */
 export const UNLIMITED_FROM = 1000;
 
+/**
+ * The ways a GymGO server can take a payment right now, as its payment
+ * settings say (docs/PAYMENTS.md): never a promise the checkout can't keep.
+ *
+ * Card, Apple Pay, Google Pay and Link are on Stripe's checkout page, each
+ * there only when it's turned on in the Stripe Dashboard (Apple Pay and
+ * Google Pay show on devices that have them). PayPal is either on Stripe's
+ * page too ('stripe': Stripe offers it to businesses in Europe), or through
+ * GymGO's own PayPal account, with its own button ('direct'), or not at all.
+ */
+export interface PayWith {
+  card: boolean;
+  applePay: boolean;
+  googlePay: boolean;
+  link: boolean;
+  paypal: 'stripe' | 'direct' | null;
+}
+
+/**
+ * What Stripe's checkout page takes, in words, for "Pay by …": only what's
+ * really on. PayPal through GymGO's own account isn't on that page (it has
+ * its own button), so it isn't named here.
+ */
+export function stripePageNames(payWith: PayWith | null | undefined): string[] {
+  if (!payWith) return [];
+  const names: string[] = [];
+  if (payWith.card) names.push('card');
+  if (payWith.applePay) names.push('Apple Pay');
+  if (payWith.googlePay) names.push('Google Pay');
+  if (payWith.paypal === 'stripe') names.push('PayPal');
+  return names;
+}
+
+/** A list in words: "card", "card or Apple Pay", "card, Apple Pay or Google Pay". */
+export function orList(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
+}
+
+/**
+ * Apple Pay's and Google Pay's own buttons on the Pro page (Stripe's Express
+ * Checkout), when the server has them set up: the publishable key Stripe.js
+ * opens them with (public by design), and which of the two are on.
+ */
+export interface WalletButtons {
+  publishableKey: string;
+  applePay: boolean;
+  googlePay: boolean;
+}
+
+export type Wallet = 'applePay' | 'googlePay';
+
+/**
+ * The wallet a device has: Apple Pay on an iPhone, iPad or Mac, Google Pay
+ * on Android and everything else (Windows, Linux, ChromeOS, in Chrome). From
+ * what the browser says about itself: `navigator.userAgentData.platform`
+ * where there is one ("macOS", "iOS", "Android"), else `navigator.platform`
+ * ("MacIntel", "iPhone"), else the user agent. An iPad asking for desktop
+ * sites calls itself a Mac, which is still Apple.
+ */
+export function deviceWallet(device: { userAgent?: string; platform?: string; uaPlatform?: string }): Wallet {
+  const ua = device.userAgent ?? '';
+  const uaPlatform = (device.uaPlatform ?? '').trim();
+  const platform = (device.platform ?? '').trim();
+  if (/^android$/i.test(uaPlatform) || /android/i.test(ua)) return 'googlePay';
+  if (/^(macos|ios|ipados)$/i.test(uaPlatform)) return 'applePay';
+  if (uaPlatform === '' && /^(mac|iphone|ipad|ipod)/i.test(platform)) return 'applePay';
+  if (uaPlatform === '' && /iPhone|iPad|iPod|Macintosh/.test(ua)) return 'applePay';
+  return 'googlePay';
+}
+
+/** The wallet button to show on this device: its own wallet, when the server has that one on. */
+export function walletButtonFor(wallets: WalletButtons | null, wallet: Wallet): Wallet | null {
+  return wallets?.[wallet] ? wallet : null;
+}
+
+/** "Apple Pay", "Google Pay". */
+export const WALLET_NAME: Record<Wallet, string> = { applePay: 'Apple Pay', googlePay: 'Google Pay' };
+
 export interface ProPrice {
   /** Stripe's lookup key for this price, so the server never needs a price id. */
   lookupKey: string;
@@ -89,6 +168,7 @@ export const PRO_FEATURES: Array<{ title: string; free: string; pro: string; gro
   { title: '1-rep max', free: 'Your max, and 3 percentages', pro: 'Every percentage, with plates', group: 'training' },
   { title: 'Streak freeze', free: 'Not included', pro: 'One missed week a month', group: 'training' },
   { title: 'Lifetime stats', free: 'Not included', pro: 'Every kilo, rep and hour, to share', group: 'training' },
+  { title: 'Head to head', free: 'Your friends’ workouts, likes and comments', pro: 'Your best lifts beside a friend’s', group: 'training' },
   { title: 'GymPal', free: '20 questions a day', pro: '100 a day, and answers that know your training', group: 'training' },
   { title: 'Colour themes', free: 'Indigo; light, dark or Dim; text size', pro: 'Twelve accents or your own, ten looks, corner styles, map styles', group: 'yours' },
   { title: 'Profile ring', free: 'Your picture', pro: 'Ringed in your accent', group: 'yours' },
@@ -107,6 +187,7 @@ export const ALWAYS_FREE = [
   'The workout builder',
   'Logging your workouts, with a rest timer, a plate calculator and your records',
   'A weekly goal, your training calendar and milestones',
+  'Friends, and a feed of their workouts to like and comment on',
   'A profile picture, an interval timer and a 1-rep max calculator',
   'Dark mode',
 ] as const;

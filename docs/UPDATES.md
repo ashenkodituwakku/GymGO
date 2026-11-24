@@ -9,6 +9,214 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 256 · Planks, holds, cardio and carries are logged, with a stopwatch
+
+*24 Nov 2026 · the commit "Timed and distance sets: planks, holds, cardio and carries logged, with a stopwatch"*
+
+You asked to keep polishing and add more of Hevy's features. Until now, a plank, a wall sit, a rower finisher or a farmer's carry in a workout had a "Done?" tick, but it wasn't saved: only sets of reps were. Hevy logs these by time or distance, and now GymGO does too, in its own look.
+
+- **Holds and cardio, by time.** A plank, side plank, hollow hold, wall sit, rower or bike sprints has a **TIME** box in place of weight and reps:
+  - Type "1:30" or "90"; it tidies to a clock as you leave the box.
+  - Or tap **▶** to start a **stopwatch** on that set, then tap again to stop: its time goes in and the set is ticked. Ticking the set while the stopwatch runs does the same.
+  - A set left blank stands for last time's at the same place, else the set above, else the plan ("30–45 s" → 0:30).
+- **Carries, by distance.** A farmer's carry has the weight carried and **METRES** (or "1.2 km").
+- **Everywhere a set shows:**
+  - Previous beside each set ("1:15", "24 × 40 m"), to tap and copy in;
+  - "Last time", the summary, your workout's page and friends' feed ("Plank 1:15, 1:00, 0:45");
+  - Edit workout, with the same boxes. Before, editing a workout would have dropped any such set.
+  - The share picture and the shared text, and the CSV export, which has new **seconds** and **metres** columns at the end so older sheets keep their columns.
+  - GymPal's summary of your training.
+- **Their own records.** Longest set ("Longest yet") and furthest ("Furthest yet"):
+  - marked with the trophy as you tick;
+  - on the summary, the feed and Progress ("Longest 1:15");
+  - on the exercise's page, with a chart of your longest (or furthest) set each day;
+  - in Head to head.
+  
+  A plate on your back during a plank never counts as a heavy lift.
+- **Weight lifted so far**, beside the time and sets at the top of a workout ("12:06 so far · 480 kg · 1 of 5 sets").
+- **The server** keeps a set's `seconds` (whole, up to six hours) and `metres` (whole, up to 100 km), and a workout of only planks counts as a workout.
+
+- Checked: every package's tests, lint and typecheck pass (app 660, with 9 new and three widened; server 360, with 1 new; domain 205). In a browser against the local server, at 390 light, 1280 dark and 320:
+  - a plank, a carry and a bench press logged: a typed time, the stopwatch, a time as planned and 24 kg × 40 m;
+  - "Finish anyway" with one carry set unticked;
+  - the summary;
+  - the plank's page (Longest, its chart);
+  - Edit workout showing the times and distance;
+  - ticking while the stopwatch ran;
+  - no sideways scroll at 320.
+- Not checked: on a phone (the iPhone's numbers-and-punctuation keyboard for the time box is unseen).
+
+## Update 255 · Your weeks as bars, save a friend's workout, share a workout as a picture
+
+*24 Nov 2026 · the commit "Your weeks as bars; save a friend's workout; share a workout as a picture; roomy Home on phones only"*
+
+You asked to keep polishing and add more of Hevy's features. You also said the web version of Home was fine and only the phone's looked compacted. As before, Hevy's patterns are drawn in GymGO's own look.
+
+- **Home is roomy on phones only.** Update 254's roomier Home now applies only below 600 points wide:
+  - the quick-search pills;
+  - the lifter card;
+  - the templates link on its own;
+  - the finder tiles;
+  - the wider gaps.
+  
+  On a computer or tablet, Home is as it was before. The weather's one-line caption is phone-only too.
+- **Your workouts, with your weeks as bars** (Profile → Your workouts): your own workouts as friends see them. On top are your last twelve weeks as bars, for time trained, weight lifted or reps. This week's bar is in the accent, with its total and workout count above. Tap any bar to read that week.
+- **Save to my workouts** (Pro), on a friend's workout: it saves the same exercises, sets and reps to My workouts, ready to start again any time. Exercises they made themselves are left out. On a free account it opens Pro.
+- **Share as a picture**: on your own workout's page, and in the list when you finish one. The picture is a card with:
+  - the workout's name, day and gym;
+  - its time, volume, sets and any records (in gold);
+  - up to six exercises with their best set.
+  
+  On a phone it goes to the share sheet. In a browser it's shared or saved to your downloads. "Share as text" is next to it. Notes never go on the picture.
+- **Fixed before it shipped:**
+  - The picture cut short a gym name and best sets ("Doherty's G…"), because an exported picture draws text a little wider than the screen. Those lines now have no length limit.
+  - The chart's month names were clipped to one letter. They now run on under the next bars.
+
+- Checked: every package's tests, lint and typecheck pass (app 651, with 5 new: 3 for the weekly totals and 2 for a friend's workout as a plan; server 359; domain 205). In a browser against the local server with test friends:
+  - Profile → Your workouts showed the chart (This week 55 min, 3 workouts; Volume 3,855 kg; Reps 42);
+  - a friend's workout saved to My workouts;
+  - the picture downloaded and looked at, with nothing cut off;
+  - Home at 390 (roomy) and 1280 (as before) wide.
+- Not checked: the phone's share sheet for the picture (no phone here).
+
+## Update 254 · A roomier Home, Previous beside every set, and how it compares with last time
+
+*23 Nov 2026 · the commit "Home: room to breathe; Previous beside each set; compared with last time"*
+
+You said the phone's Home felt cramped and asked to make it spacious and good to look at, to keep polishing, and for more of Hevy's features. Hevy's patterns are drawn in GymGO's own look.
+
+- **Home, with room to breathe.** The top of Home was seven boxes stacked tight. Now:
+  - **Quick searches** (Near me, Early start, After work, Under A$30) are one row of pills that slides sideways, instead of four squeezed tiles.
+  - **Build a workout** is a roomier card, with "Start building" on a white pill and a lifter at the bar who does two reps as Home opens, then rests.
+  - **Templates and programmes** is a plain link under it, not another box (it's still a card when something's up next).
+  - **Machines and Trips** have their icons on soft round tiles, with more padding, and there's more space between groups.
+  - **The weather** says just the place and MET Norway on one line (a screen reader still hears when the forecast was made).
+- **Previous, beside every set** (as Hevy has it): while you train, each set row shows the set at the same place last time ("90 × 5"), a warm-up beside a warm-up, in this workout's unit. Tap it to copy it in. (Not beside the RPE column, where there's no room.)
+- **Compared with last time**, when you finish: against the last time you did the same workout (by saved workout or name), how much more you lifted, how many more sets and how long it took, with what went up in green.
+- **Polish:**
+  - The finished workout's three figures sit in one card, as Progress's do.
+  - A friend who hasn't collected a gym no longer has a purple box of four zeros on their page.
+  - Fixed: "Do it again" kept the last workout's gym but showed "Tag your gym"; it now shows the gym's name.
+
+- Checked: every package's tests, lint and typecheck pass (app 646, with 8 new for Previous and the comparison; server 359; domain 205). In a browser against the local server:
+  - Home at phone and computer width, light and dark;
+  - Do it again showing Previous, copying it in, ticking the sets and finishing, which showed the comparison;
+  - the gym chip after Do it again.
+
+## Update 253 · Tag your gym, friends' profiles, muscle split, and a calmer look
+
+*23 Nov 2026 · the commit "Workouts: tag the gym; a friend's workouts and muscle split; lighter secondary buttons"*
+
+You asked to make the app cleaner and less clunky, to be able to tag which gym you went to on a workout, and for more from Hevy, looking really good. Hevy's features and patterns are drawn in GymGO's own look; nothing of Hevy's art or design is copied.
+
+- **Tag your gym.** A workout in progress has a gym chip under its title ("Tag your gym", or the gym's name). It opens **Which gym?**: your usual gyms first (the ones your workouts were at), then saved, visited and nearby ones, with distances, and a search. A workout built for a gym starts tagged with it. The gym:
+  - shows on the summary when you finish, in your history, and on the workout in the feed, where it opens the gym's page;
+  - can be changed or taken off later, from Edit workout.
+  - It's named as GymGO knows the gym, never typed text. Friends see it only when you've tagged one; workouts logged before today show none.
+- **A friend's workouts.** A friend's page now lists their latest workouts, with a count and See all. Like and comment right there, as on Hevy's profiles. Your own list shows hidden workouts too.
+- **Muscle split** on a workout's page: which muscles it worked, as bars by share of its sets (main muscles count fully, others half, as in your month report).
+- **A calmer look:**
+  - Quiet buttons ("Share your week", "Cancel", "See GymGO Pro") are now a step down from the main one: 44 points tall instead of 52, lighter words. A page reads as one thing to press first, not a stack of slabs.
+  - Progress's three figures sit in one card with hairlines between them, not three boxes.
+  - The calendar's explanation is one short line.
+  - Home's template link just says "Templates and programmes".
+
+- Checked: every package's tests, lint and typecheck pass (server 359, with 2 new for gym tags and a person's workouts; app 638, with 2 new for muscle split; domain 205). In a browser against the local server, at phone and computer width, light and dark:
+  - the gym chip, the picker and tagging a workout all worked;
+  - the gym showed on the feed card and the workout's page, where it opens the gym;
+  - the muscle split, a friend's workout list and the Progress card all showed.
+  - One thing fixed on the way: the workout's page showed its gym twice.
+
+## Update 252 · A feed of your friends' workouts, and Head to head
+
+*23 Nov 2026 · the commit "Feed: your friends' workouts, likes and comments; Do this workout; Head to head (Pro)"*
+
+You asked to keep polishing, add the features it needs and more Pro features, and a workout feed where you can see all your friends' workouts, taking inspiration from Hevy.
+
+- **Feed** (sidebar → Feed, Profile → Friends, the Friends page): your friends' workouts, newest first. Each card says who and when, the workout's name, its **time, volume, sets and records**, and the first exercises with their best set ("85 kg × 5") and any record ("Heaviest yet"). Below are who liked it, and **Like** (a heart) and **Comment**. Twenty at a time, with Show older.
+- **A workout's page**: every exercise and every set (warm-ups and drop sets tagged, RPE, a trophy on the set that made a record), the likes and the comments, with a box to add one.
+  - On a friend's: **Do this workout** turns it into a workout to start, with your own weights.
+  - On yours: **Hide from friends**.
+- **On your workouts**, at the top of the feed: who liked or commented on yours lately, with the new ones marked.
+- **Head to head** (new in Pro), on a friend's page: your best lifts beside theirs on every exercise you've both done (heaviest, estimated 1-rep max, most reps), with whoever's ahead marked. Free shows what it is and the way to Pro, and Pro's comparison table lists it.
+- **Your choice what's shared.** Sharing your own workouts is off until you turn it on in the feed, which says plainly what friends see: the exercises, sets, time and records. Friends never see your notes or which gym. Hide any one workout, or stop sharing at once. You can see friends' workouts without sharing yours.
+- **Comments** are between friends, up to 300 characters. Whoever wrote one, or whoever's workout it's on, can delete it. Anyone else can report it to the team, which sends it like a bug report. Unfriending takes away each one's likes and comments on the other's workouts. Download my data includes them all.
+- The records a friend sees are worked out the same way as on your phone. The code for them now lives in the shared domain package, so the server uses it too.
+- The sidebar's Feed has its own icon: a pulse, whose line draws itself under the mouse like the other icons' scenes.
+
+**Yours to decide:** the Privacy Policy lists what friends see (your name, picture, cards and totals). For anyone who turns sharing on, they now see workouts too. I haven't changed the policy, because that wording is yours to approve and changing it asks everyone to agree again. `docs/FEED.md` has the lines that would change.
+
+- Checked: every package's tests, lint and typecheck pass (server 357, with 11 new for the feed; app 636, with 10 new; domain 205). In a browser against the local server, with two test friends' workouts, at phone and computer width, light and dark:
+  - the feed, a workout's page, liking and commenting, and sharing on and off all worked;
+  - activity on your workouts listed the friends' likes and comment;
+  - Head to head showed the bench press both had done;
+  - Do this workout started the friend's leg day with the account's own weights.
+  - The tests caught one real bug, fixed: a comment kept the spaces at the end of a line.
+
+## Update 251 · Apple Pay's and Google Pay's own buttons, for the device you're on
+
+*23 Nov 2026 · the commit "Pro: Apple Pay's and Google Pay's own buttons, the device's own wallet; off until set up"*
+
+You asked for Apple Pay and Google Pay buttons like the PayPal one, showing the right one for the device. On the website's Pro page, under Subscribe:
+
+- **Apple Pay on an iPhone, iPad or Mac; Google Pay on Android** (and on Windows, Linux or ChromeOS, in Chrome). Which device it is comes from what the browser says it runs on.
+- **The real buttons, in their own colours.** "Subscribe with Apple Pay" and "Subscribe with Google Pay", drawn by Stripe from Apple's and Google's own artwork: black on a light page, white in dark mode, the same height and corners as Subscribe and PayPal.
+- **One tap opens the wallet.** Apple and Google require their buttons to open their payment sheet straight away, not lead to another page. So these use Stripe's Express Checkout: Stripe's code shows the button on GymGO's page and opens Apple Pay or Google Pay itself. Once paid, the browser comes back through the server and Pro turns on, as after Stripe's page.
+- **Only when it can work.** The button shows only if the device can really pay with that wallet (Apple Pay set up in Safari, a card saved in Google Pay). Otherwise nothing shows and there's no gap. A Mac in Chrome, where Apple Pay can't show, gets no wallet button; Subscribe's page still takes Google Pay there.
+- The renewal terms name the button when it shows ("Tapping Subscribe, Apple Pay or PayPal agrees…"). A declined payment says why on the page.
+- **Not in the phone apps.** There, Pro is sold through the App Store's and Google Play's own purchase, and Apple doesn't allow Apple Pay for a subscription inside an iPhone app.
+
+**Yours, when you want it on:** Stripe's publishable key (`pk_test_…`, the same mode as the secret key) in `apps/server/.env.local` as `STRIPE_PUBLISHABLE_KEY`, and the web app's domain registered in Stripe (Settings → Payment method domains), in test and live mode. **Before it takes real payments**, the Privacy Policy needs a few words: the button brings Stripe's code onto GymGO's Pro page (Stripe uses it against fraud, with its own cookies), and Google Pay's button comes from Google. The policy now says Stripe takes payment "on its own page" and that GymGO has no tracking code. I haven't changed it, because that wording is yours to approve. `docs/PAYMENTS.md` has the steps and the wording. Until the key is set, nothing changes and nothing of Stripe's loads on GymGO's pages.
+
+- Checked: typecheck, lint and every package's tests pass (server 346, with 5 new for the wallet checkout; 4 new for which wallet a device gets). In a browser, with the server's answers and Stripe.js stood in, as an iPhone, a Mac, Android and Windows, in light and dark: each got the right wallet. A device that can't pay showed nothing and no gap, with PayPal still tappable. Three quick plan taps made one checkout, and a declined payment showed its message. With the real Stripe.js and a dummy key, no button and no errors. Nothing has talked to the real Stripe, and no real wallet payment has been tried: there are no keys here.
+
+## Update 250 · The PayPal button is PayPal's own
+
+*23 Nov 2026 · the commit "Pro: PayPal's own button, its wordmark on its colours"*
+
+You asked for the PayPal button to be the PayPal logo, clean, standing out, in PayPal's colours. It's now just PayPal's wordmark on PayPal's button colour, the size and corners of the Subscribe button above it:
+
+- **PayPal's current colours.** PayPal changed its buttons in August 2026: the gold one became blue. On a light page the button is PayPal's light blue (#60CDFF) with the black wordmark; in dark mode it's PayPal's white button, as PayPal's own guidance says for contrast on dark pages. A touch darker under the mouse.
+- **PayPal's own wordmark,** taken unchanged from PayPal's published button artwork (paypalobjects.com), not redrawn. A screen reader hears "Pay with PayPal". While PayPal's page is opening, a spinner takes the wordmark's place.
+- The renewal terms under it now say "Tapping Subscribe or PayPal agrees…", since the button no longer has words.
+
+- Checked: typecheck passes; on the Pro page (with the server's answers stood in) the button shows in light and dark, its blue darkens on hover, no page errors. It shows only once PayPal is set up (docs/PAYMENTS.md).
+
+## Update 249 · Apple Pay, Google Pay and PayPal, ready for you to switch on
+
+*22 Nov 2026 · the commit "Payments: Apple Pay and Google Pay through Stripe, PayPal through GymGO's own account; off until set up"*
+
+You asked to polish the app and include paying with Apple Pay, Google Pay and PayPal, which you'll set up later. Everything is built and switched off until you connect it; `docs/PAYMENTS.md` has the steps.
+
+- **Apple Pay and Google Pay come with Stripe's checkout page.** Turn them on in the Stripe Dashboard (Settings → Payment methods) and they appear on devices that have them, with no code or domain set-up. The server reads Stripe's own settings, so the Pro page says only what's really on: "Card, Apple Pay or Google Pay, on Stripe's secure page", under Subscribe.
+- **PayPal has its own button,** "Pay with PayPal", under Subscribe, once your PayPal business account's keys are set and `paypal:setup` has made GymGO's plans in PayPal. It works for monthly and yearly Pro and Duo, A$ and US$, and the free trial. Stripe offers PayPal on its page only to businesses in Europe, and GymGO's A$ and US$ prices suggest yours isn't, so PayPal is connected directly (PayPal's Subscriptions API). If your Stripe account is European, PayPal can simply be turned on in Stripe instead; the page then lists it there.
+- **Pro is the same whichever way you pay.** A PayPal subscription is checked with PayPal when you come back (Pro turns on at once), kept in step by PayPal's webhook or a re-check every ten minutes, and keeps Pro until the end of what was paid for if cancelled. Manage subscription opens PayPal's page for PayPal subscribers, and deleting an account cancels at PayPal first.
+- **Polish on the Pro page:** the renewal terms now say that "Pay with PayPal" agrees to them too, and the trial's line names PayPal when it's offered. Walking the main screens at phone and computer width, light and dark, found nothing else broken.
+
+**Yours, when you want it on:** turn on Apple Pay and Google Pay in Stripe; for PayPal, a business account, an app at developer.paypal.com (its keys in `.env.local`), `paypal:setup`, and the webhook. **Before PayPal takes real money**, the Privacy Policy and Terms must name PayPal (they name only Stripe). I haven't changed them, because that wording is yours to approve; `docs/PAYMENTS.md` lists what would change. Inside the phone apps, the stores' own rules for selling subscriptions still apply, as before.
+
+- Checked: typecheck and every package's tests pass (server 341, with 26 new for PayPal and the ways to pay). With the server's answers stood in, the Pro page shows the line and the PayPal button in light and dark, at phone and computer width, with no page errors. Nothing has talked to the real Stripe or PayPal: there are no keys here.
+
+## Update 248 · No more hitch when you click the map
+
+*22 Nov 2026 · the commit "Explore: picking a gym on the map no longer redraws the whole app in that frame"*
+
+You asked to fix the momentary lag when you click the map. Measured in the browser, clicking a gym's pin did a lot of work all at once, on the very frame the map set off towards the gym and its card opened:
+
+- **The whole app was redrawn** (744 parts), because the gym was added to your recently viewed gyms, which lives in the app-wide state.
+- **The results panel was redrawn** (some 470 of those parts: its search, chips and list), though nothing in it had changed.
+- **The whole card was built** at once (about 900 parts), most of them its folded sections, below what you see first.
+
+Now:
+
+- **Recently viewed is updated as a background task**: React does it in small slices between the map's frames, and opening the same gym again changes nothing at all.
+- **The results panel is drawn again only when something in it changes**: Explore hands it the same things each time, so picking a gym or closing its card leaves it alone.
+- **The card's top comes at once and its folded sections a frame later**, also as a background task. The top is the photos, actions, facts, and the Google and workout rows. The gym's own page still draws everything at once, so it can scroll back to where you were after a change of colours.
+
+Clicking a pin now redraws 84 parts plus the top of the card, instead of 744 plus the whole card. In this workspace's development build that frame took 41 to 68 ms, down from 74 to 125 ms. Closing a card by clicking the map is down to 84 parts in under 5 ms. On a phone-width screen, a tap redraws 141 parts in 13 ms. A click on empty map does no React work at all, just one map frame, which a graphics card draws in a moment.
+
+- Checked: typecheck and every package's tests pass (app 626, server 315). In the browser: the card opens complete (its folded sections arrive just after), the list beside it is untouched, closing still works, phone width still works, no page errors. The timings come from this workspace's development build and software graphics; a production build on a real computer is faster throughout.
+
 ## Update 247 · A screen reader hears where a widget went
 
 *22 Nov 2026 · the commit "Customise Home tells a screen reader where a widget moved, or that it came off"*

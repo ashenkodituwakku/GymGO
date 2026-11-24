@@ -156,6 +156,13 @@ const SCHEMA = `
     type text not null,
     received_at text not null
   );
+  -- PayPal's webhook events, each handled once (paypal.ts). Its subscriptions share the
+  -- subscriptions table, their ids written "paypal:I-…".
+  create table if not exists paypal_events (
+    id text primary key,
+    type text not null,
+    received_at text not null
+  );
   create table if not exists workouts (
     id text primary key,
     user_id text not null references users(id) on delete cascade,
@@ -345,6 +352,28 @@ const SCHEMA = `
     finished_at text,
     primary key (user_id, month)
   );
+  create table if not exists feed_likes (
+    session_id text not null references training_sessions(id) on delete cascade,
+    user_id text not null references users(id) on delete cascade,
+    created_at text not null,
+    primary key (session_id, user_id)
+  );
+  create index if not exists feed_likes_user on feed_likes(user_id);
+  create table if not exists feed_comments (
+    id text primary key,
+    session_id text not null references training_sessions(id) on delete cascade,
+    user_id text not null references users(id) on delete cascade,
+    body text not null,
+    created_at text not null
+  );
+  create index if not exists feed_comments_session on feed_comments(session_id, created_at);
+  create index if not exists feed_comments_user on feed_comments(user_id);
+  create table if not exists feed_reports (
+    comment_id text not null references feed_comments(id) on delete cascade,
+    user_id text not null references users(id) on delete cascade,
+    created_at text not null,
+    primary key (comment_id, user_id)
+  );
 `;
 
 export function openDb(path: string): Db {
@@ -372,6 +401,8 @@ function migrate(db: Db): void {
   // Which version of the terms the account agreed to, and when (see LEGAL_VERSION in @gymgo/domain).
   if (!userColumns.some((column) => column.name === 'terms_version')) db.exec('alter table users add column terms_version text');
   if (!userColumns.some((column) => column.name === 'terms_accepted_at')) db.exec('alter table users add column terms_accepted_at text');
+  // Whether your friends see the workouts you log, in the feed (feed.ts); off until you turn it on (added 23 Nov 2026).
+  if (!userColumns.some((column) => column.name === 'share_workouts')) db.exec('alter table users add column share_workouts integer not null default 0');
   // A review's optional ratings for four aspects, 1 to 5 or none (added 18 Nov 2026).
   const reviewColumns = db.prepare('pragma table_info(reviews)').all() as Array<{ name: string }>;
   for (const aspect of ['equipment', 'cleanliness', 'atmosphere', 'value']) {
@@ -381,6 +412,11 @@ function migrate(db: Db): void {
   // A note on a logged session (added 17 Oct 2026).
   const trainingColumns = db.prepare('pragma table_info(training_sessions)').all() as Array<{ name: string }>;
   if (!trainingColumns.some((column) => column.name === 'note')) db.exec('alter table training_sessions add column note text');
+  // A workout hidden from your friends' feed, and the records it broke, once worked out (feed.ts; added 23 Nov 2026).
+  if (!trainingColumns.some((column) => column.name === 'hidden')) db.exec('alter table training_sessions add column hidden integer not null default 0');
+  if (!trainingColumns.some((column) => column.name === 'records_json')) db.exec('alter table training_sessions add column records_json text');
+  // The gym a workout was at, by its name as GymGO knows it, when one was tagged (added 23 Nov 2026).
+  if (!trainingColumns.some((column) => column.name === 'gym_name')) db.exec('alter table training_sessions add column gym_name text');
   const reportColumns = db.prepare('pragma table_info(bug_reports)').all() as Array<{ name: string }>;
   if (!reportColumns.some((column) => column.name === 'topic')) {
     db.exec(`alter table bug_reports add column topic text not null default 'bug' check (topic in ('bug', 'copyright'))`);

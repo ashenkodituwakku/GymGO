@@ -28,7 +28,7 @@ import { useThemeChoice } from '@/lib/themePrefs';
 import { useCollection } from '@/lib/useCollection';
 import { useTrainingLog } from '@/lib/useTraining';
 import { BrandFill } from '@/components/BrandFill';
-import { CAN_BUY_HERE, openManage } from '@/lib/purchase';
+import { CAN_BUY_HERE, manageSubscription } from '@/lib/purchase';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { Avatar } from '@/components/Avatar';
 import { haptic } from '@/lib/haptics';
@@ -94,7 +94,7 @@ export default function Profile() {
     if (!account.token) return;
     setError(null);
     try {
-      const outcome = await openManage(account.token);
+      const outcome = await manageSubscription(account.token, billing.subscription);
       if (outcome !== 'left') await refresh(true);
     } catch (problem) {
       setError(problem instanceof ApiError ? problem.message : 'Couldn’t reach the GymGO server.');
@@ -178,6 +178,8 @@ export default function Profile() {
 
       <Group header="Training">
         <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
+        {/* Your workouts as your friends see them, with your last 12 weeks in a chart. */}
+        {me && <Row icon="workout" tile={TILE.indigo} title="Your workouts" subtitle="As friends see them, with your weeks" onPress={() => router.push({ pathname: '/feed', params: { person: me.id, name: 'You' } })} />}
         {!LIMITED && <Row icon="trophy" tile={TILE.pink} title="Lifetime" subtitle={billing.isPro ? 'Every kilo, rep and hour, added up' : 'Every kilo, rep and hour, added up, with Pro'} onPress={() => router.push('/lifetime')} />}
         <Row icon="workout" tile={TILE.orange} title="My workouts" subtitle="Ones you built or made, to start again" onPress={() => router.push('/workouts')} />
         <Row icon="calendar" tile={TILE.blue} title="Training programme" subtitle="Weeks planned for you, with easier weeks" onPress={() => router.push('/programme')} />
@@ -214,6 +216,7 @@ export default function Profile() {
       {/* Friends and leaderboards live on the server, which the limited website hasn't got. */}
       {!LIMITED && (
         <Group header="Friends">
+          <Row icon="workout" tile={TILE.orange} title="Feed" subtitle="Your friends’ workouts: like them, comment, share yours" onPress={() => router.push('/feed')} />
           <Row icon="people" tile={TILE.indigo} title="Friends" subtitle="Add by code, see their cards, invite to train" onPress={() => router.push('/friends')} />
           <Row icon="trophy" tile={TILE.teal} title="Leaderboard" subtitle="Most gyms collected, if you join" onPress={() => router.push('/leaderboard')} />
         </Group>

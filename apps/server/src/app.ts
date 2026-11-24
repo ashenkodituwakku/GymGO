@@ -63,6 +63,7 @@
  *   GET    /api/billing/plans             GymGO Pro's prices, and whether it's on sale
  *   GET    /api/billing                   your plan (Free or Pro) and subscription
  *   POST   /api/billing/checkout          { interval, currency, returnUrl, plan?, trial? } -> { url } of Stripe Checkout
+ *   POST   /api/billing/wallet            { interval, currency, returnUrl, plan?, trial? } -> { clientSecret } for Apple Pay's or Google Pay's button
  *   POST   /api/billing/portal            { returnUrl } -> { url } of Stripe's page to manage or cancel
  *   POST   /api/billing/gift              { currency, returnUrl } -> { url } of Stripe Checkout for a year of Pro as a gift code
  *   GET    /api/billing/gifts             the gift codes you bought, and whether they've been used
@@ -78,6 +79,9 @@
  *   POST   /api/billing/sync              re-read your subscription from Stripe
  *   GET    /api/billing/return            where Stripe sends people back to; forwards them into the app
  *   POST   /api/billing/webhook           Stripe's events (signature checked)
+ *   POST   /api/billing/paypal/checkout   { interval, currency, returnUrl, plan?, trial? } -> { url } of PayPal's page to approve
+ *   GET    /api/billing/paypal/return     where PayPal sends people back to; records the subscription, forwards into the app
+ *   POST   /api/billing/paypal/webhook    PayPal's events (signature checked by PayPal)
  *   GET    /api/workouts                  your saved workouts
  *   POST   /api/workouts                  Pro: { name, gymId?, plan } -> saved
  *   DELETE /api/workouts/:id
@@ -92,11 +96,19 @@
  *   DELETE /api/splits/:id
  *   GET    /api/training                  the sessions you've logged, newest first
  *   POST   /api/training                  { name, unit, startedAt, finishedAt, workoutId?, gymId?, exercises, note? } -> logged (sent again: the one already logged)
- *   PATCH  /api/training/:id              { note: string | null } -> the session with its note (up to 500 characters; null or blank clears it)
+ *   PATCH  /api/training/:id              { note: string | null } -> the session with its note (up to 500 characters; null or blank clears it); { hidden } keeps it from your friends' feed; { gymId } tags the gym it was at (null: none)
  *   DELETE /api/training/:id
  *   GET    /api/collection                your gym collection (gyms checked in at, and the days) and when it was last reset
  *   PUT    /api/collection                { gyms, resetAt } -> merged into the account's (never overwritten); 409 when reset elsewhere since
  *   DELETE /api/collection                reset: every gym and visit removed, and the reset remembered
+ *   GET    /api/feed?after=&person=       your friends' shared workouts (and yours, while you share), newest first: { sharing, items, next, activity (first page) }; person= one friend's (or your own) with their count
+ *   GET    /api/feed/:id                  one workout in the feed, with its comments
+ *   GET    /api/feed/compare/:friendId    Pro: head to head, your best and a sharing friend's on the exercises you've both done
+ *   PUT    /api/feed/:id/like             like it (DELETE: take the like back) -> { likes, liked }
+ *   POST   /api/feed/:id/comments         { body } -> a comment (up to 300 characters)
+ *   DELETE /api/feed/comments/:id         your comment, one on your workout, or (moderators) any
+ *   POST   /api/feed/comments/:id/report  report a comment to the team
+ *   PUT    /api/me/sharing                { workouts } -> whether your friends see the workouts you log
  *   GET    /api/friends                   your friend code, friends (with totals), requests both ways, invites to train, whether you're on the leaderboard
  *   POST   /api/friends                   { code } -> asks them (or, if they'd asked you, you're friends)
  *   POST   /api/friends/:id/accept        accept their request
@@ -170,6 +182,7 @@ import {
   COLLECTION_MAX_GYMS,
   cleanCollectedGym,
   mergeCollectedGym,
+  isDoneSet,
   type CollectedGym,
 } from '@gymgo/domain';
 import {
@@ -204,6 +217,7 @@ import {
 import { DEV_PRO_EMAIL, matchesDevPassword } from './devAccount';
 import { legalIndexPage, legalPage, resetEmail, resetPasswordPage, securityTxt } from './legalPages';
 import { Billing, BillingError, returnPage, safeReturnUrl, withQuery, type StripeApi } from './billing';
+import { PayPalError, PayPalPro, type PayPalApi } from './paypal';
 import { AreaError, AreaSearch, parseBox, whereIs } from './area';
 import { CountryPacks } from './countryPack';
 import { PlaceError, PlaceSearch } from './places';
@@ -222,6 +236,7 @@ import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
 import { PerkError, Perks } from './perks';
 import { OwnTraining, OwnTrainingError } from './ownTraining';
+import { Feed, FeedError, readCursor } from './feed';
 import type { SendMail } from './mail';
 
 export interface AppOptions {
@@ -247,8 +262,13 @@ export interface AppOptions {
   googleKey?: string | null;
   /** Swappable for tests, so no test ever calls Google. */
   fetchImpl?: typeof fetch;
-  /** Stripe, for GymGO Pro. Without a client, Pro isn't on sale. */
-  billing?: { stripe: StripeApi | null; webhookSecret: string | null };
+  /**
+   * Stripe, for GymGO Pro. Without a client, Pro isn't on sale. Its payment
+   * method setting (pmc_…), when checkouts shouldn't use the account's default.
+   */
+  billing?: { stripe: StripeApi | null; webhookSecret: string | null; paymentMethodConfiguration?: string | null; publishableKey?: string | null };
+  /** PayPal, for Pro paid with GymGO's own PayPal account (paypal.ts). Without a client, no PayPal button. */
+  paypal?: { api: PayPalApi | null; webhookId: string | null };
   /** This server's public address, once hosted. */
   publicUrl?: string | null;
   /** "Search this area": which Overpass API server to ask, and a stand-in fetch for tests. */
@@ -317,6 +337,7 @@ export function isPublicRoute(method: string, path: string): boolean {
   if (path === '/api/health' || path === '/api/legal' || path.startsWith('/api/auth/') || path === '/reset-password') return true;
   if (method === 'GET' && (path === '/legal' || isLegalDocId(path.slice(1)) || path === '/.well-known/security.txt')) return true;
   if ((method === 'POST' && path === '/api/billing/webhook') || (method === 'GET' && (path === '/api/billing/return' || path === '/api/billing/plans'))) return true;
+  if ((method === 'POST' && path === '/api/billing/paypal/webhook') || (method === 'GET' && path === '/api/billing/paypal/return')) return true;
   if (method === 'POST' && path === '/api/bug-reports') return true;
   if (method === 'GET' && (/^\/api\/avatars\/[^/]+$/.test(path) || (/^\/api\/photos\/[^/]+$/.test(path) && path !== '/api/photos/covers'))) return true;
   if (method === 'GET' && /^\/api\/gyms\/[^/]+\/(icon|icon-colour|photo|photo\/\d|site-photos)$/.test(path)) return true;
@@ -451,7 +472,9 @@ const SET_KINDS = new Set(['warmup', 'drop', 'failure']);
 
 /**
  * A logged session, checked field by field. A weight left blank is body
- * weight (null), never zero; reps of 0 are a set planned but not done.
+ * weight (null), never zero; reps of 0 are a set planned but not done,
+ * unless it has a time (a plank, in whole seconds up to six hours) or a
+ * distance (a carry, in whole metres up to 100 km).
  */
 export function cleanTrainingSession(input: unknown, now: Date) {
   const body = (input ?? {}) as Record<string, unknown>;
@@ -485,16 +508,23 @@ export function cleanTrainingSession(input: unknown, now: Date) {
         if (set.kind !== undefined && set.kind !== null && !SET_KINDS.has(set.kind as string)) throw bad();
         // How hard it was (RPE), 6 to 10 in half steps, when given.
         if (set.rpe !== undefined && set.rpe !== null && !(typeof set.rpe === 'number' && set.rpe >= 6 && set.rpe <= 10 && Number.isInteger(set.rpe * 2))) throw bad();
+        // By the clock or the tape, when given: whole seconds (six hours at most) or whole metres (100 km at most).
+        const whole = (value: unknown, max: number) => (value === undefined || value === null ? null : typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= max ? value : undefined);
+        const seconds = whole(set.seconds, 6 * 3600);
+        const metres = whole(set.metres, 100_000);
+        if (seconds === undefined || metres === undefined) throw bad();
         return {
           weight,
           reps,
           ...(typeof set.kind === 'string' ? { kind: set.kind as 'warmup' | 'drop' | 'failure' } : {}),
           ...(typeof set.rpe === 'number' ? { rpe: set.rpe } : {}),
+          ...(seconds !== null ? { seconds } : {}),
+          ...(metres !== null ? { metres } : {}),
         };
       }),
     };
   });
-  if (!clean.some((item) => item.sets.some((set) => set.reps > 0 && set.kind !== 'warmup'))) throw new HttpError(400, 'Log at least one set before finishing (warm-ups on their own don’t count).');
+  if (!clean.some((item) => item.sets.some((set) => isDoneSet(set) && set.kind !== 'warmup'))) throw new HttpError(400, 'Log at least one set before finishing (warm-ups on their own don’t count).');
   return {
     name,
     unit,
@@ -517,6 +547,8 @@ type TrainingRow = {
   gym_id: string | null;
   exercises_json: string;
   note: string | null;
+  hidden: number;
+  gym_name: string | null;
 };
 
 const trainingView = (row: TrainingRow) => ({
@@ -527,11 +559,15 @@ const trainingView = (row: TrainingRow) => ({
   finishedAt: row.finished_at,
   workoutId: row.workout_id,
   gymId: row.gym_id,
+  // The gym's name as GymGO knows it, when one was tagged.
+  gymName: row.gym_name ?? null,
   exercises: JSON.parse(row.exercises_json),
   note: row.note ?? null,
+  // Kept from your friends' feed (feed.ts), when you share your workouts.
+  hidden: row.hidden === 1,
 });
 
-const TRAINING_COLUMNS = 'id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note';
+const TRAINING_COLUMNS = 'id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, hidden, gym_name';
 
 /** The middle of sorted amounts (the mean of the middle two for an even count). */
 function median(sorted: number[]): number {
@@ -656,6 +692,12 @@ export function createApp(options: AppOptions) {
   const equipmentLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   // Adding friends by code: plenty for real use, far too few to guess codes with.
   const friendLimiter = new AttemptLimiter(20, 24 * 60 * 60_000);
+  // The friends' feed: comments, likes and reports, generous for real use, short of a script.
+  const commentLimiter = new AttemptLimiter(60, 60 * 60_000);
+  const likeLimiter = new AttemptLimiter(300, 60 * 60_000);
+  const commentReportLimiter = new AttemptLimiter(10, 24 * 60 * 60_000);
+  // Apple Pay and Google Pay buttons: a checkout per plan the Pro page shows.
+  const walletLimiter = new AttemptLimiter(60, 60 * 60_000);
   // How busy a gym is: a few gyms a day, a few times each.
   const busyLimiter = new AttemptLimiter(30, 24 * 60 * 60_000);
   // Gift codes: enough for real use, too few to guess one.
@@ -723,7 +765,7 @@ export function createApp(options: AppOptions) {
   // rate-limit keys (addresses among them) whose window has passed.
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
-    equipmentLimiter, friendLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter, weatherLimiter,
+    equipmentLimiter, friendLimiter, walletLimiter, commentLimiter, likeLimiter, commentReportLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter, weatherLimiter,
     gymPalLimiters.free.minute, gymPalLimiters.free.day, gymPalLimiters.pro.minute, gymPalLimiters.pro.day,
   ];
   /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
@@ -764,13 +806,27 @@ export function createApp(options: AppOptions) {
 
   const perks = new Perks(db, now);
   const own = new OwnTraining(db, now);
+  const feed = new Feed(db, now);
+  // PayPal reads who's Pro and who may have the free trial from Billing, which keeps PayPal's subscriptions too.
+  const billingFor: { current: Billing | null } = { current: null };
+  const paypal = new PayPalPro(db, {
+    api: options.paypal?.api ?? null,
+    webhookId: options.paypal?.webhookId ?? null,
+    now,
+    subscribedPro: (userId) => billingFor.current?.subscribed(userId).pro ?? false,
+    trialFor: (userId) => billingFor.current?.trialFor(userId) ?? null,
+  });
   const billing = new Billing(db, {
     stripe: options.billing?.stripe ?? null,
     webhookSecret: options.billing?.webhookSecret ?? null,
+    paymentMethodConfiguration: options.billing?.paymentMethodConfiguration ?? null,
+    publishableKey: options.billing?.publishableKey ?? null,
+    paypal,
     now,
     grantFor: (userId) => perks.grantFor(userId),
     onPaid: (session) => perks.fulfil(session),
   });
+  billingFor.current = billing;
   perks.attach(billing);
 
   /**
@@ -952,7 +1008,56 @@ export function createApp(options: AppOptions) {
 
     if (method === 'GET' && path === '/api/billing/plans') {
       const { available, prices, duo, gifts } = await billing.prices();
-      return send(res, 200, { available, prices, duo, gifts, limits: LIMITS });
+      // The ways to pay checkout will really offer (card, Apple Pay, Google Pay, PayPal), from the payment settings.
+      // And Apple Pay's and Google Pay's own buttons, when the publishable key is set.
+      return send(res, 200, { available, prices, duo, gifts, limits: LIMITS, payWith: await billing.payWith(), wallets: await billing.wallets() });
+    }
+
+    // --- Pro with PayPal (paypal.ts) ----------------------------------------------------
+    if (method === 'POST' && path === '/api/billing/paypal/webhook') {
+      const headers: Record<string, string | undefined> = {};
+      for (const name of ['paypal-auth-algo', 'paypal-cert-url', 'paypal-transmission-id', 'paypal-transmission-sig', 'paypal-transmission-time']) {
+        const value = req.headers[name];
+        headers[name] = Array.isArray(value) ? value[0] : value;
+      }
+      await paypal.handleWebhook(await readRaw(req, 1024 * 1024), headers);
+      return send(res, 200, { received: true });
+    }
+
+    if (method === 'GET' && path === '/api/billing/paypal/return') {
+      const kind = url.searchParams.get('result') === 'success' ? 'success' : 'cancelled';
+      const to = safeReturnUrl(url.searchParams.get('to'), (origin) => isAllowedOrigin(origin, options.allowedOrigins));
+      const subscriptionId = url.searchParams.get('subscription_id');
+      if (kind === 'success' && subscriptionId && paypal.connected) {
+        // Turn Pro on now, without waiting for a webhook that may never come.
+        await paypal.confirm(subscriptionId).catch((error: unknown) => console.error('[paypal] return sync failed', error));
+      }
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-store');
+      res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'");
+      res.setHeader('Referrer-Policy', 'no-referrer');
+      res.end(returnPage(kind, to ? withQuery(to, { checkout: kind }) : null));
+      return;
+    }
+
+    if (method === 'POST' && path === '/api/billing/paypal/checkout') {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const interval = body.interval;
+      const currency = body.currency;
+      if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
+      if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
+      const plan = body.plan === 'duo' ? 'duo' : 'pro';
+      const returnUrl = returnUrlFrom(body.returnUrl);
+      const back = `${publicBase(req)}/api/billing/paypal/return?to=${encodeURIComponent(returnUrl)}`;
+      // PayPal adds the subscription's id (subscription_id) to the success address itself.
+      const approveUrl = await paypal.checkout(
+        account,
+        { interval: interval as BillingInterval, currency: currency as BillingCurrency, plan, trial: body.trial === true },
+        { success: `${back}&result=success`, cancel: `${back}&result=cancelled` },
+      );
+      return send(res, 200, { url: approveUrl });
     }
 
     if (method === 'GET' && path === '/api/billing/return') {
@@ -1005,6 +1110,26 @@ export function createApp(options: AppOptions) {
         },
       );
       return send(res, 200, { url: checkoutUrl });
+    }
+
+    if (method === 'POST' && path === '/api/billing/wallet') {
+      const { account } = requireAccount(req);
+      // Made each time the Pro page shows the button for a plan, so a limit well above any real browsing.
+      if (!walletLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That’s a lot of checkouts for one hour. Try again later.');
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const interval = body.interval;
+      const currency = body.currency;
+      if (interval !== 'month' && interval !== 'year') throw new HttpError(400, 'Choose monthly or yearly.');
+      if (currency !== 'aud' && currency !== 'usd') throw new HttpError(400, 'Choose A$ or US$.');
+      const plan = body.plan === 'duo' ? 'duo' : 'pro';
+      const back = `${publicBase(req)}/api/billing/return?to=${encodeURIComponent(returnUrlFrom(body.returnUrl))}`;
+      const checkout = await billing.walletCheckout(
+        account,
+        { interval: interval as BillingInterval, currency: currency as BillingCurrency, plan, trial: body.trial === true },
+        // Where Stripe.js sends the browser once the wallet has paid; {CHECKOUT_SESSION_ID} as for Stripe's page.
+        `${back}&result=success&session_id={CHECKOUT_SESSION_ID}`,
+      );
+      return send(res, 200, checkout);
     }
 
     // --- Gift Pro, Duo and day passes (perks.ts) ------------------------------------
@@ -1217,9 +1342,11 @@ export function createApp(options: AppOptions) {
       const count = (db.prepare('select count(*) as n from training_sessions where user_id = ?').get(account.id) as { n: number }).n;
       if (count >= MAX_TRAINING_SESSIONS) throw new HttpError(409, `You’ve logged ${count} sessions, the most there’s room for. Delete some old ones first.`);
       const id = randomUUID();
+      // The gym it was at, named as GymGO knows it (never words sent with it), when GymGO knows the gym.
+      const gymName = session.gymId ? (gymRecord(db, session.gymId)?.location.name ?? null) : null;
       db.prepare(
-        `insert into training_sessions (id, user_id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, created_at)
-         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `insert into training_sessions (id, user_id, name, unit, started_at, finished_at, workout_id, gym_id, exercises_json, note, gym_name, created_at)
+         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(
         id,
         account.id,
@@ -1231,9 +1358,12 @@ export function createApp(options: AppOptions) {
         session.gymId,
         JSON.stringify(session.exercises),
         session.note,
+        gymName,
         now().toISOString(),
       );
-      return send(res, 201, { session: { id, ...session } });
+      // A workout logged after the fact changes the records of any that came after it.
+      feed.forgetRecordsFrom(account.id, session.finishedAt);
+      return send(res, 201, { session: { id, ...session, gymName, hidden: false } });
     }
 
     // A session you logged, changed afterwards: its note (added after Finish,
@@ -1245,7 +1375,18 @@ export function createApp(options: AppOptions) {
       const body = (await readJson(req)) as Record<string, unknown>;
       const editable = ['name', 'unit', 'startedAt', 'finishedAt', 'exercises'] as const;
       const edits = editable.filter((key) => key in body);
-      if (!('note' in body) && edits.length === 0) throw new HttpError(400, 'Send the note (or null to clear it), or what to change.');
+      if (!('note' in body) && !('hidden' in body) && !('gymId' in body) && edits.length === 0) throw new HttpError(400, 'Send the note (or null to clear it), or what to change.');
+      if ('hidden' in body && typeof body.hidden !== 'boolean') throw new HttpError(400, 'Hidden is true or false.');
+      // The gym it was at: one GymGO knows, or null for none.
+      let gymTag: { id: string; name: string } | null | undefined;
+      if ('gymId' in body) {
+        if (body.gymId === null) gymTag = null;
+        else {
+          const record = typeof body.gymId === 'string' && body.gymId.length <= 120 ? gymRecord(db, body.gymId) : null;
+          if (!record) throw new HttpError(400, 'GymGO doesn’t know that gym.');
+          gymTag = { id: record.location.id, name: record.location.name };
+        }
+      }
       const sessionId = decodeURIComponent(parts[2]!);
       const kept = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow | undefined;
       if (!kept) throw new HttpError(404, 'No logged session with that id.');
@@ -1265,7 +1406,11 @@ export function createApp(options: AppOptions) {
           sessionId,
           account.id,
         );
+        // Its records, and those of the workouts after it, are worked out again.
+        feed.forgetRecordsFrom(account.id, clean.finishedAt < before.finishedAt ? clean.finishedAt : before.finishedAt);
       }
+      if (typeof body.hidden === 'boolean') db.prepare('update training_sessions set hidden = ? where id = ? and user_id = ?').run(body.hidden ? 1 : 0, sessionId, account.id);
+      if (gymTag !== undefined) db.prepare('update training_sessions set gym_id = ?, gym_name = ? where id = ? and user_id = ?').run(gymTag?.id ?? null, gymTag?.name ?? null, sessionId, account.id);
       if (note !== undefined) db.prepare('update training_sessions set note = ? where id = ? and user_id = ?').run(note, sessionId, account.id);
       const row = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow;
       return send(res, 200, { session: trainingView(row) });
@@ -1273,8 +1418,12 @@ export function createApp(options: AppOptions) {
 
     if (method === 'DELETE' && parts[0] === 'api' && parts[1] === 'training' && parts.length === 3) {
       const { account } = requireAccount(req);
-      const removed = db.prepare('delete from training_sessions where id = ? and user_id = ?').run(decodeURIComponent(parts[2]!), account.id);
-      if (removed.changes === 0) throw new HttpError(404, 'No logged session with that id.');
+      const sessionId = decodeURIComponent(parts[2]!);
+      const gone = db.prepare('select finished_at from training_sessions where id = ? and user_id = ?').get(sessionId, account.id) as { finished_at: string } | undefined;
+      const removed = db.prepare('delete from training_sessions where id = ? and user_id = ?').run(sessionId, account.id);
+      if (removed.changes === 0 || !gone) throw new HttpError(404, 'No logged session with that id.');
+      // The workouts after it may have broken records only against it.
+      feed.forgetRecordsFrom(account.id, gone.finished_at);
       return send(res, 204);
     }
 
@@ -1362,6 +1511,68 @@ export function createApp(options: AppOptions) {
       throw new HttpError(404, 'Not found.');
     }
 
+    // --- The friends' feed (feed.ts) ------------------------------------------
+    if ((parts[0] === 'api' && parts[1] === 'feed') || path === '/api/me/sharing') {
+      const { account, user } = requireAccount(req);
+      const me = account.id;
+      try {
+        if (path === '/api/me/sharing' && method === 'PUT') {
+          const body = (await readJson(req)) as Record<string, unknown>;
+          if (typeof body.workouts !== 'boolean') throw new HttpError(400, 'Say whether to share your workouts: true or false.');
+          return send(res, 200, { workouts: feed.setSharing(me, body.workouts) });
+        }
+        if (path === '/api/feed' && method === 'GET') {
+          const person = url.searchParams.get('person');
+          return send(res, 200, feed.page(me, readCursor(url.searchParams.get('after')), undefined, person && person.length <= 60 ? person : null));
+        }
+        if (parts[2] === 'compare' && parts.length === 4 && method === 'GET') {
+          if (!billing.isPro(me)) throw new HttpError(403, 'Head to head is part of GymGO Pro.', 'pro_required');
+          return send(res, 200, feed.headToHead(me, decodeURIComponent(parts[3]!)));
+        }
+        if (parts[2] === 'comments' && parts.length >= 4) {
+          const commentId = decodeURIComponent(parts[3]!);
+          if (parts.length === 4 && method === 'DELETE') {
+            feed.removeComment(me, commentId, can(user, 'moderation.view_queue'));
+            return send(res, 204);
+          }
+          if (parts.length === 5 && parts[4] === 'report' && method === 'POST') {
+            if (!commentReportLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of reports for one day. Try again tomorrow.');
+            const reported = feed.report(me, commentId);
+            if (reported) {
+              const id = bugReports.create(
+                {
+                  topic: 'bug',
+                  description: `A comment in the friends' feed was reported.\n\nComment ${commentId} on workout ${reported.sessionId}, by ${reported.author.displayName} (account ${reported.author.id}):\n\n${reported.body}\n\nA moderator can delete it: DELETE /api/feed/comments/${commentId}.`,
+                  replyTo: null,
+                  context: [{ label: 'Kind', value: 'Reported feed comment' }],
+                },
+                { id: account.id, email: account.email, displayName: account.display_name },
+              );
+              await bugReports.deliverWithin(id, 8000);
+            }
+            return send(res, 200, { reported: true });
+          }
+        }
+        if (parts.length >= 3 && parts[2] !== 'comments' && parts[2] !== 'compare') {
+          const sessionId = decodeURIComponent(parts[2]!);
+          if (parts.length === 3 && method === 'GET') return send(res, 200, feed.item(me, sessionId));
+          if (parts.length === 4 && parts[3] === 'like' && (method === 'PUT' || method === 'DELETE')) {
+            if (!likeLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of likes for one hour. Try again later.');
+            return send(res, 200, feed.like(me, sessionId, method === 'PUT'));
+          }
+          if (parts.length === 4 && parts[3] === 'comments' && method === 'POST') {
+            if (!commentLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of comments for one hour. Try again later.');
+            const body = (await readJson(req)) as Record<string, unknown>;
+            return send(res, 201, { comment: feed.comment(me, sessionId, body.body) });
+          }
+        }
+      } catch (error) {
+        if (error instanceof FeedError) throw new HttpError(error.status, error.message);
+        throw error;
+      }
+      throw new HttpError(404, 'Not found.');
+    }
+
     // --- Friends, invites to train, leaderboards (social.ts) -----------------
     if (parts[0] === 'api' && (parts[1] === 'friends' || parts[1] === 'invites' || parts[1] === 'leaderboard' || path === '/api/me/leaderboard')) {
       const { account } = requireAccount(req);
@@ -1377,6 +1588,8 @@ export function createApp(options: AppOptions) {
           const other = decodeURIComponent(parts[2]!);
           if (parts.length === 3 && method === 'DELETE') {
             social.remove(me, other);
+            // Their likes and comments on each other's workouts go with the friendship.
+            feed.forgetBetween(me, other);
             return send(res, 204);
           }
           if (parts[3] === 'accept' && parts.length === 4 && method === 'POST') {
@@ -1673,7 +1886,7 @@ export function createApp(options: AppOptions) {
         collection: rows('select entry_json from collection_gyms where user_id = ? order by gym_id').map(({ entry_json }) => JSON.parse(String(entry_json))),
         collectionResetAt: rows('select reset_at from collection_resets where user_id = ?')[0]?.reset_at ?? null,
         trainingSessions: rows(
-          `select id, name, unit, started_at as startedAt, finished_at as finishedAt, workout_id as workoutId, gym_id as gymId, exercises_json, note
+          `select id, name, unit, started_at as startedAt, finished_at as finishedAt, workout_id as workoutId, gym_id as gymId, gym_name as gymName, exercises_json, note
            from training_sessions where user_id = ? order by finished_at`,
         ).map(({ exercises_json, ...session }) => ({ ...session, exercises: JSON.parse(String(exercises_json)) })),
         subscriptions: rows(
@@ -1689,6 +1902,7 @@ export function createApp(options: AppOptions) {
         ...owners.exportFor(id),
         ...perks.exportFor(id),
         ...own.exportFor(id),
+        ...feed.exportFor(id),
       });
     }
 
@@ -2733,7 +2947,7 @@ export function createApp(options: AppOptions) {
     try {
       await route(req, res);
     } catch (error) {
-      if (error instanceof HttpError || error instanceof BillingError) {
+      if (error instanceof HttpError || error instanceof BillingError || error instanceof PayPalError) {
         const detail = error instanceof HttpError ? error.detail : undefined;
         return send(res, error.status, { error: error.message, ...(error.code ? { code: error.code } : {}), ...detail });
       }

@@ -6,7 +6,7 @@
  * pin and placed the row, so the three can never disagree.
  */
 
-import { useState } from 'react';
+import { startTransition, useEffect, useState } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import {
@@ -155,7 +155,14 @@ export function PlaceCard({
   owner,
   dayPass,
   saveAndShareElsewhere = false,
+  staged = false,
 }: {
+  /**
+   * The folded detail a frame after the rest (Explore's card, opened as the
+   * map flies to the gym). Not on the gym's own page, which puts its scroll
+   * back after a redraw and needs the whole page there to do it.
+   */
+  staged?: boolean;
   result: GymSearchResult;
   visitMinute: number;
   visitDate: string;
@@ -198,6 +205,17 @@ export function PlaceCard({
   dayPass?: React.ReactNode;
 }) {
   const [notice, setNotice] = useState<string | null>(null);
+  // Staged (Explore), the folded detail (some 400 of the card's 900 parts)
+  // comes a frame after the rest, as a transition: drawn all at once, the
+  // whole card landed on the frame a gym was picked in, as the map set off
+  // towards it, which stuttered. The top of the card (photos, actions, the
+  // facts) is what's seen first.
+  const [detail, setDetail] = useState(!staged);
+  useEffect(() => {
+    if (detail) return;
+    const frame = requestAnimationFrame(() => startTransition(() => setDetail(true)));
+    return () => cancelAnimationFrame(frame);
+  }, [detail]);
   const record = result.record;
   const location = record.location;
   const tone = TIER_COLOUR[result.tier];
@@ -473,7 +491,8 @@ export function PlaceCard({
       </FoldGroup>
 
 
-      {/* The detail, folded away ---------------------------------------- */}
+      {/* The detail, folded away (a frame later: see `detail`) ------------- */}
+      {detail && (
       <Animated.View style={styles.folds}>
         {/* The gym itself: where, what it costs, getting in, what it has. */}
         <FoldGroup>
@@ -700,6 +719,7 @@ export function PlaceCard({
         )}
         </FoldGroup>
       </Animated.View>
+      )}
 
       {/* Wherever a brand's logo shows, its credit does too. */}
       <View style={styles.logoCredit}>

@@ -26,6 +26,7 @@ import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
+  distanceLabel,
   durationLabel,
   formatWeight,
   fromKg,
@@ -37,6 +38,7 @@ import {
   unitFor,
   volumeKg,
   streakOf,
+  secondsLabel,
   type TrainingSession,
 } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -135,7 +137,9 @@ export default function ProgressScreen() {
       <ScreenOptions options={{ title: 'Progress' }} />
       <Animated.View style={styles.stats}>
         <Stat value={known ? streak.weeks : null} one="week in a row" many="weeks in a row" />
+        <View style={styles.statDivider} />
         <Stat value={known ? sessionsThisWeek(log.sessions) : null} one="this week" many="this week" />
+        <View style={styles.statDivider} />
         <Stat value={known ? log.sessions.length : null} one="workout" many="workouts" />
       </Animated.View>
       {known && streak.frozen.length > 0 && (
@@ -289,7 +293,11 @@ export default function ProgressScreen() {
                         ? `Heaviest ${keepTogether(`${formatWeight(Number(fromKg(record.heaviestKg!, unit).toFixed(1)), unit)} × ${best.reps}`)}`
                         : record.mostReps !== null
                           ? `Most reps ${record.mostReps}`
-                          : 'No sets yet'}
+                          : record.longestSeconds !== null
+                            ? `Longest ${secondsLabel(record.longestSeconds)}`
+                            : record.furthestMetres !== null
+                              ? `Furthest ${distanceLabel(record.furthestMetres)}`
+                              : 'No sets yet'}
                     </Txt>
                   </View>
                   {/* The estimated 1-rep max on the right, the figure to watch grow. */}
@@ -457,7 +465,7 @@ function SessionRow({
         <View style={styles.flex}>
           <Txt variant="body">{session.name}</Txt>
           <Txt variant="footnote" color={color.labelSecondary}>
-            {[startTime(session.startedAt), durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt)), `${setCount(session)} set${setCount(session) === 1 ? '' : 's'}`, volume > 0 ? `${Math.round(volume).toLocaleString()} ${session.unit}` : null]
+            {[startTime(session.startedAt), session.gymName ?? null, durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt)), `${setCount(session)} set${setCount(session) === 1 ? '' : 's'}`, volume > 0 ? `${Math.round(volume).toLocaleString()} ${session.unit}` : null]
               .filter(Boolean)
               .join(' · ')}
           </Txt>
@@ -545,8 +553,10 @@ const styles = themed(() => StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
   center: { textAlign: 'center' },
   flex: { flex: 1, gap: 2 },
-  stats: { flexDirection: 'row', gap: space[2] },
-  stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+  // One card, its three figures parted by hairlines: calmer than three boxes.
+  stats: { flexDirection: 'row', borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+  stat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3] },
+  statDivider: { width: StyleSheet.hairlineWidth, marginVertical: space[3], backgroundColor: color.separator },
   freeze: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[3], borderRadius: radius.lg, backgroundColor: color.brandTint },
   problem: { gap: space[2] },
   section: { marginTop: space[3], marginLeft: space[4] },

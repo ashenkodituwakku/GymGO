@@ -640,6 +640,16 @@ workouts go to your log.
   about 40%, 60% and 80% of your working weight for 5, 3 and 2 (your gym's
   plates, if you've set them), before the first working set; asking again
   replaces the ones not done yet.
+- **Holds, cardio and carries.** A plank, wall sit, hollow hold, rower or
+  bike sprints is logged by **time**: type "1:30" (or "90"), or tap ▶ for
+  a **stopwatch** on that set and tap again to stop, which puts its time in
+  and ticks it. A farmer's carry is logged by the weight carried and
+  **metres**. A blank one stands for last time's at the same place, else
+  the set above, else the plan. They have their own records (**Longest
+  yet**, **Furthest yet**) and chart, add nothing to the weight lifted, and
+  show everywhere a set does ("Plank 1:15, 1:00"); the CSV has seconds and
+  metres columns at the end. The top of a workout says the weight lifted so
+  far.
 - **RPE** (Profile → Settings → **RPE on sets**, off until you switch it
   on): a ticked set asks how hard it was, 6 to 10 in half steps, each
   said in reps you had left (10 is nothing left, 8 is two more). It shows
@@ -844,6 +854,23 @@ the city you're searching. **Everyone** lists only people who switched on
 "Be on the public board", by display name; **Friends** is you and your
 friends. Adding friends is limited to 20 codes a day, so codes can't be
 guessed.
+
+**Feed** (sidebar → Feed, Profile → Friends, or the Friends page): your
+friends' workouts, newest first, each a card with its time, volume, sets,
+records and exercises, to **like** and **comment** on. Open one for every set,
+**Do this workout** (it becomes a workout to start, with your own weights) and
+**Head to head** (Pro: your best lifts beside theirs). Sharing your own is off
+until you turn it on; friends never see your notes, and see the gym only when you tag one; hide any
+one workout from its page. Who liked or commented on yours shows at the top.
+While you train, each set shows **Previous** (last time's set at the same
+place; tap to copy it in), and a finished workout is **compared with the last
+time** you did it. A workout can be **tagged with its gym** (the chip under its title while you
+train, or Edit workout later), a friend's page lists **their workouts**, and a
+workout's page shows its **muscle split**. **Profile → Your workouts** is
+your own as friends see them, with your last twelve weeks as bars (time,
+volume or reps). A friend's workout can be **saved to My workouts** (Pro), and
+your own **shared as a picture** (from its page, or as you finish).
+`docs/FEED.md` has the details, and the Privacy Policy wording it needs.
 
 Each gym is a **trading card** with a rarity rolled by luck: every day you
 check in rolls it (Common 60%, Uncommon 25%, Rare 10%, Epic 4%, Legendary
@@ -1960,6 +1987,15 @@ Until then, email and password work as before, and the buttons simply
 don't show.
 
 ### GymGO Pro (subscriptions, through Stripe)
+
+People pay by card, Apple Pay or Google Pay on Stripe's checkout page
+(whichever are turned on in Stripe's settings; the Pro page names only those),
+or with PayPal through GymGO's own PayPal account, from its own button, once
+PayPal's keys are set. On the website, with Stripe's publishable key set, the
+Pro page also shows Apple Pay's own button on Apple devices and Google Pay's
+elsewhere, which open the wallet in one tap. `docs/PAYMENTS.md` has what to
+switch on, and the legal wording PayPal and the wallet buttons need before
+they take real payments.
 
 GymGO has two plans. When it first opens it asks **which country is
 yours**; you can change it in Profile → Country. **Free** is everything that

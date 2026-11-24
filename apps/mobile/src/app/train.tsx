@@ -13,7 +13,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useSharedValue, withTiming } from 'react-native-reanimated';
-import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, useFillBar, usePop } from '@/components/motion';
+import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, Pressy, useFillBar, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Glass } from '@/components/Glass';
 import { Icon, type IconName } from '@/components/Icon';
@@ -35,6 +35,8 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { playSound } from '@/lib/sounds';
 import { cancelRestAlert, scheduleRestAlert } from '@/lib/restAlert';
+import { compareWithLast, signed, type Compared } from '@/lib/compare';
+import { previousSet } from '@/lib/previous';
 import { RECORD_WORD, bestRecord, recordLine } from '@/lib/records';
 import { imageShareLine, shareViewAsImage } from '@/lib/shareImage';
 import { templateDayName, upNext, workoutTitle } from '@/lib/templates';
@@ -76,6 +78,11 @@ import {
   type WeightUnit,
   tidyReps,
   tidyWeight,
+  parseDistance,
+  parseTime,
+  tidyDistance,
+  tidyTime,
+  type SetMeasure,
 } from '@/lib/training';
 import { PageScroll } from '@/components/PageScroll';
 import { SessionNote } from '@/components/SessionNote';
@@ -83,7 +90,7 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { useTrainingLog } from '@/lib/useTraining';
-import { TYPICAL_KIT, exerciseName, knownKit, swapFor, type Exercise, type Kit, exerciseById } from '@/lib/workout';
+import { TYPICAL_KIT, exerciseName, knownKit, setMeasure, swapFor, type Exercise, type Kit, exerciseById } from '@/lib/workout';
 import { groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
 import { GroupControls, groupTag, joinableNext } from '@/components/GroupControls';
 import { SwapButton } from '@/components/ExerciseCard';
@@ -107,8 +114,15 @@ function useNow(active: boolean, every = 1000): number {
 }
 
 const exerciseOf = (id: string) => exerciseById(id) ?? null;
+/** How its sets are logged: reps, a time (a hold, a cardio finisher) or a distance (a carry). */
+const measureOfItem = (item: ActiveItem): SetMeasure => setMeasure(item.exerciseId, item.reps);
 /** Done for a time or a distance rather than for reps. */
-const isTimed = (item: ActiveItem) => exerciseOf(item.exerciseId)?.cardio === true || repRange(item.reps) === null;
+const isTimed = (item: ActiveItem) => measureOfItem(item) !== 'reps';
+/** The plan's first number: a time's seconds ("30–45 s" → 30) or a distance's metres ("30–40 m" → 30). */
+const planLow = (reps: string) => {
+  const match = /^(\d+)/.exec(reps.trim());
+  return match ? Number(match[1]) : null;
+};
 /** Rests to pick from mid-workout: none, or 30 seconds to 5 minutes. */
 const REST_CHOICES = [0, 30, 45, 60, 90, 120, 180, 240, 300];
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
@@ -167,7 +181,8 @@ function NoWorkout({ token }: { token: string | null }) {
       items: plan.items,
       button: 'Do it again',
       icon: 'refresh',
-      start: () => startSession({ ...plan, gymName: null, unit: latest.unit }),
+      // The same gym too, named, so the chip says where it's tagged.
+      start: () => startSession({ ...plan, gymName: latest.gymName ?? null, unit: latest.unit }),
     };
   }, [log.sessions, unit]);
   return (
@@ -330,7 +345,7 @@ export default function TrainScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const page = useOverhang();
-  const [done, setDone] = useState<{ session: TrainingSession; records: NewRecord[] } | null>(null);
+  const [done, setDone] = useState<{ session: TrainingSession; records: NewRecord[]; compared: Compared | null } | null>(null);
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = useTapAgain();
@@ -451,16 +466,29 @@ export default function TrainScreen() {
   const typedAnyWeight = session.items.some((item) => item.sets.some((set) => set.weight.trim() !== ''));
   const ticked = session.items.reduce((sum, item) => sum + item.sets.filter((set) => set.done).length, 0);
   const planned = session.items.reduce((sum, item) => sum + item.sets.length, 0);
-  // Timed work isn't logged as sets anyway, so it doesn't count as left undone.
-  const unticked = session.items.filter((item) => !isTimed(item)).reduce((sum, item) => sum + item.sets.filter((set) => !set.done).length, 0);
+  // Weight lifted so far (ticked working sets of reps, in the workout's unit), as the header says it.
+  const liftedSoFar = session.items.reduce(
+    (sum, item) =>
+      isTimed(item)
+        ? sum
+        : sum +
+          item.sets.reduce((total, set) => {
+            const weight = set.done && set.kind !== 'warmup' ? parseWeight(set.weight) : null;
+            const reps = parseReps(set.reps);
+            return typeof weight === 'number' && reps ? total + weight * reps : total;
+          }, 0),
+    0,
+  );
+  // A plank's sets are logged like a squat's (by their time), so they count as left undone too.
+  const unticked = session.items.reduce((sum, item) => sum + item.sets.filter((set) => !set.done).length, 0);
   const named = workoutTitle(session.name);
 
   const finish = async () => {
     setProblem(null);
-    // Timed and distance work (a plank, an incline walk) isn't a set of reps, so it isn't logged as one.
-    const exercises = draftToLogged(session.items.filter((item) => !isTimed(item)));
+    // Each set as it's measured: reps, or a time (a plank) or distance (a carry).
+    const exercises = draftToLogged(session.items.map((item) => ({ ...item, measure: measureOfItem(item) })));
     if (exercises.length === 0) {
-      setProblem('Tick at least one set of reps to log this workout, or discard it.');
+      setProblem('Tick at least one set to log this workout, or discard it.');
       return;
     }
     if (!token) {
@@ -485,12 +513,14 @@ export default function TrainScreen() {
     try {
       const { session: saved } = await api.logTraining(token, body);
       const records = recordsBroken(saved, log.sessions);
+      // Against the last time you did it, from the log before this one joins it.
+      const compared = compareWithLast(saved, log.sessions);
       log.add(saved);
       endSession();
       haptic.success();
       // A new record is worth a fanfare.
       if (records.length > 0) playSound('record', 250);
-      setDone({ session: saved, records });
+      setDone({ session: saved, records, compared });
     } catch (error) {
       setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your workout is still here; try again.');
     } finally {
@@ -515,9 +545,21 @@ export default function TrainScreen() {
           </Txt>
           <Txt variant="subhead" color={color.labelSecondary}>
             {named.plan ? `${named.plan} · ` : ''}
-            {session.gymName ? `${session.gymName} · ` : ''}
-            <Elapsed since={session.startedAt} /> so far · {ticked} of {planned} sets
+            <Elapsed since={session.startedAt} /> so far{liftedSoFar > 0 ? ` · ${Math.round(liftedSoFar).toLocaleString('en')}\u00a0${session.unit}` : ''} · {ticked} of {planned} sets
           </Txt>
+          {/* Where you're training: tap to tag the gym, or change it. */}
+          <Pressy
+            onPress={() => router.push({ pathname: '/gym-tag', params: { session: 'active' } })}
+            accessibilityRole="button"
+            accessibilityLabel={session.gymName ? `At ${session.gymName}. Change the gym` : 'Tag the gym you’re at'}
+            style={[styles.gymTag, !session.gymName && styles.gymTagEmpty]}
+          >
+            <Icon name="pin" size={14} color={session.gymName ? color.brand : color.labelSecondary} />
+            <Txt variant="footnote" color={session.gymName ? color.label : color.labelSecondary} numberOfLines={1} style={[styles.gymTagText, face('semibold')]}>
+              {session.gymName ?? 'Tag your gym'}
+            </Txt>
+            <Icon name="chevron" size={11} color={color.labelTertiary} />
+          </Pressy>
           <SetsBar done={ticked} planned={planned} />
         </View>
 
@@ -675,13 +717,14 @@ const ExerciseLog = memo(function ExerciseLog({
   useGlassRedraw();
   const exercise = exerciseOf(item.exerciseId);
   const name = exercise?.name ?? exerciseName(item.exerciseId);
-  const timed = isTimed(item);
+  const measure = measureOfItem(item);
+  const timed = measure !== 'reps';
   const bodyWeight = exercise ? exercise.needs.some((option) => option.length === 0) && !exercise.needs.some((option) => option.length > 0) : false;
   const barbell = exercise ? exercise.needs.some((option) => option.includes('barbells')) : false;
   const last = useMemo(() => lastTime(history, item.exerciseId), [history, item.exerciseId]);
   // Your records from before this workout, to mark a set that beats them as you tick it.
   const before = useMemo(() => personalRecords(history).get(item.exerciseId), [history, item.exerciseId]);
-  const bests = useMemo(() => (timed ? [] : bestSoFar(item.sets, unit, before)), [timed, item.sets, unit, before]);
+  const bests = useMemo(() => bestSoFar(item.sets, unit, before, measure), [item.sets, unit, before, measure]);
   const target: Target | null = useMemo(() => (isPro && !timed ? programmeTarget(last, item.reps, unit, easier) : null), [isPro, timed, last, item.reps, unit, easier]);
   const [hint, setHint] = useState<string | null>(null);
   // The set whose type is being picked (a sheet), and the set asking how hard it was (a row of chips under it).
@@ -699,6 +742,20 @@ const ExerciseLog = memo(function ExerciseLog({
   const lastWeight = last?.sets.find((set) => set.weight)?.weight ?? null;
   const weightGuess = target?.weight ?? (lastWeight !== null && last ? Number(fromKg(toKg(lastWeight, last.unit), unit).toFixed(1)) : null);
   const repsGuess = target?.reps ?? repRange(item.reps)?.low ?? null;
+  // By the clock or the tape, what a set stands for until you type: last time's at the same place,
+  // else the nearest set above this time, else the plan's ("30–45 s" → 0:30).
+  const plannedLow = planLow(item.reps);
+  const timedFor = (at: number, field: 'time' | 'distance'): string => {
+    const then = previousSet(last, item.sets, at, unit)?.[field];
+    if (then) return then;
+    for (let earlier = at - 1; earlier >= 0; earlier--) {
+      const typed = item.sets[earlier]?.[field]?.trim();
+      if (typed) return typed;
+    }
+    return plannedLow === null ? '' : field === 'time' ? clockLabel(plannedLow) : String(plannedLow);
+  };
+  // A stopwatch on one set of a hold: when it started.
+  const [watch, setWatch] = useState<{ at: number; since: number } | null>(null);
 
   const setAt = (at: number, patch: Partial<ActiveItem['sets'][number]>) => onChange(index, item.sets.map((set, i) => (i === at ? { ...set, ...patch } : set)));
 
@@ -742,10 +799,39 @@ const ExerciseLog = memo(function ExerciseLog({
     AccessibilityInfo.announceForAccessibility(`${ramp.length} warm-up sets added to ${name}`);
   };
 
-  const tick = (at: number) => {
+  const tick = (at: number, timedAs?: string) => {
     const set = item.sets[at]!;
     if (set.done) {
       setAt(at, { done: false });
+      return;
+    }
+    if (timed) {
+      // A time (typed, from the stopwatch, else last time's or the plan's), or a distance and any weight carried.
+      const weight = measure === 'distance' ? tidyWeight(set.weight, unit).trim() || weightFor(item.sets, at, weightGuess) : '';
+      if (parseWeight(weight) === undefined) return setHint(`That weight doesn’t read as a number of ${unit}.`);
+      const patch: Partial<ActiveItem['sets'][number]> = { done: true, weight, reps: '' };
+      // Ticked while its stopwatch runs: the stopwatch stops, and its time goes in.
+      const watched = !timedAs && watch?.at === at ? clockLabel(Math.max(1, Math.floor((Date.now() - watch.since) / 1000))) : undefined;
+      if (watch?.at === at) setWatch(null);
+      if (measure === 'time') {
+        const time = timedAs ?? watched ?? (tidyTime(set.time ?? '').trim() || timedFor(at, 'time'));
+        if (parseTime(time) === undefined) return setHint('Type how long it took (1:30, or 90 for 90 seconds), or use the stopwatch.');
+        patch.time = time;
+      } else {
+        const distance = tidyDistance(set.distance ?? '').trim() || timedFor(at, 'distance');
+        if (parseDistance(distance) === undefined) return setHint('Type how far it was, in metres.');
+        patch.distance = distance;
+      }
+      setHint(null);
+      const sets = item.sets.map((each, i) => (i === at ? { ...each, ...patch } : each));
+      const best = bestSoFar(sets, unit, before, measure)[at];
+      if (best) {
+        haptic.success();
+        playSound('record');
+        AccessibilityInfo.announceForAccessibility(`${RECORD_WORD[best]} on ${name}`);
+      } else haptic.tap();
+      onChange(index, sets);
+      onRest(index, at);
       return;
     }
     // As typed, tidied ("62.5 kg" → "62.5", "135 lb" in kg converted, "8 reps" → "8"): ticking straight
@@ -767,6 +853,19 @@ const ExerciseLog = memo(function ExerciseLog({
     onRest(index, at);
     // With RPE on, the set asks how hard it was (not a warm-up: it's meant to be easy).
     if (rpeOn && !timed && set.kind !== 'warmup') setRating(at);
+  };
+
+  // The stopwatch: tap to start it on a set; tap again to stop, which puts its time in and ticks the set.
+  const startWatch = (at: number) => {
+    haptic.select();
+    setHint(null);
+    setWatch({ at, since: Date.now() });
+  };
+  const stopWatch = () => {
+    if (!watch) return;
+    const seconds = Math.max(1, Math.floor((Date.now() - watch.since) / 1000));
+    setWatch(null);
+    tick(watch.at, clockLabel(seconds));
   };
 
   return (
@@ -793,48 +892,44 @@ const ExerciseLog = memo(function ExerciseLog({
             <Txt variant="footnote" color={color.labelSecondary} style={styles.meta}>
               {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · ${restLabel(item.restSeconds)} rest` : ''}`}
             </Txt>
-            {(swapTo || barbell || !timed) && (
-              <View style={styles.metaButtons}>
-                {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
-                {!timed && (
-                  <Pressable
-                    onPress={() => {
-                      haptic.select();
-                      setResting((open) => !open);
-                    }}
-                    accessibilityRole="button"
-                    aria-expanded={resting}
-                    accessibilityLabel={`Rest after each set of ${name}: ${item.restSeconds ? restLabel(item.restSeconds) : 'none'}. Change it`}
-                    hitSlop={8}
-                    style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
-                  >
-                    <Icon name="timer" size={15} color={color.brandOnTint} />
-                    <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
-                      Rest
-                    </Txt>
-                  </Pressable>
-                )}
-                {barbell && (
-                  <Pressable
-                    onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Plates to load on the bar for ${name}`}
-                    hitSlop={8}
-                    style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
-                  >
-                    <Icon name="plates" size={15} color={color.brandOnTint} />
-                    <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
-                      Plates
-                    </Txt>
-                  </Pressable>
-                )}
-              </View>
-            )}
+            <View style={styles.metaButtons}>
+              {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
+              <Pressable
+                onPress={() => {
+                  haptic.select();
+                  setResting((open) => !open);
+                }}
+                accessibilityRole="button"
+                aria-expanded={resting}
+                accessibilityLabel={`Rest after each set of ${name}: ${item.restSeconds ? restLabel(item.restSeconds) : 'none'}. Change it`}
+                hitSlop={8}
+                style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
+              >
+                <Icon name="timer" size={15} color={color.brandOnTint} />
+                <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
+                  Rest
+                </Txt>
+              </Pressable>
+              {barbell && (
+                <Pressable
+                  onPress={() => onPlates(item.sets.find((set) => set.weight.trim())?.weight ?? (weightGuess !== null ? String(weightGuess) : null))}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Plates to load on the bar for ${name}`}
+                  hitSlop={8}
+                  style={({ pressed }) => [styles.platesButton, pressed && { opacity: 0.6 }]}
+                >
+                  <Icon name="plates" size={15} color={color.brandOnTint} />
+                  <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
+                    Plates
+                  </Txt>
+                </Pressable>
+              )}
+            </View>
           </View>
         </View>
       </View>
 
-      {resting && !timed && (
+      {resting && (
         <View style={styles.restPicker} role="radiogroup" accessibilityLabel={`Rest after each set of ${name}`}>
           <Txt variant="caption" color={color.labelSecondary}>
             Rest after each set, for this workout
@@ -858,7 +953,7 @@ const ExerciseLog = memo(function ExerciseLog({
 
       <ExerciseNote exerciseId={item.exerciseId} name={name} editing={noting} onEditing={setNoting} />
 
-      {!timed && (
+      {(!timed || last) && (
         <View style={styles.guides}>
           <Txt variant="footnote" color={color.labelSecondary}>
             {last
@@ -875,6 +970,7 @@ const ExerciseLog = memo(function ExerciseLog({
             </View>
           ) : (
             !isPro &&
+            !timed &&
             last && (
               <Pressable onPress={onPro} accessibilityRole="button" accessibilityLabel="Next-session targets are part of GymGO Pro" style={styles.proHint}>
                 <Icon name="target" size={13} color={color.brand} />
@@ -888,6 +984,33 @@ const ExerciseLog = memo(function ExerciseLog({
       )}
 
       {/* Headings are words to read, so secondary grey (tertiary is for what needn't be). */}
+      {timed && (
+        <View style={styles.setHead}>
+          <Txt variant="caption" color={color.labelSecondary} style={styles.setCol}>
+            SET
+          </Txt>
+          {measure === 'distance' && (
+            <>
+              <Txt variant="caption" color={color.labelSecondary} style={styles.inputCol}>
+                {unit.toUpperCase()}
+              </Txt>
+              <View style={styles.times} />
+            </>
+          )}
+          <Txt variant="caption" color={color.labelSecondary} style={styles.inputCol}>
+            {measure === 'time' ? 'TIME' : 'METRES'}
+          </Txt>
+          {measure === 'time' && <View style={styles.watchCol} />}
+          {last ? (
+            <Txt variant="caption" color={color.labelSecondary} style={[styles.flex, styles.previous]}>
+              PREVIOUS
+            </Txt>
+          ) : (
+            <View style={styles.flex} />
+          )}
+          <View style={styles.tickCol} />
+        </View>
+      )}
       {!timed && (
         <View style={[styles.setHead, rpeColumn && styles.tight]}>
           <Txt variant="caption" color={color.labelSecondary} style={styles.setCol}>
@@ -900,7 +1023,14 @@ const ExerciseLog = memo(function ExerciseLog({
           <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
             REPS
           </Txt>
-          <View style={styles.flex} />
+          {/* Last time's set at the same place, in the room before the tick (not beside RPE's column: no room). */}
+          {!rpeColumn && last ? (
+            <Txt variant="caption" color={color.labelSecondary} style={[styles.flex, styles.previous]}>
+              PREVIOUS
+            </Txt>
+          ) : (
+            <View style={styles.flex} />
+          )}
           {rpeColumn && <RpeHead />}
           <View style={styles.tickCol} />
         </View>
@@ -911,27 +1041,81 @@ const ExerciseLog = memo(function ExerciseLog({
       {item.sets.map((set, at) => (
         <Fragment key={at}>
         <View style={[styles.setRow, rpeColumn && styles.tight, set.done && styles.setDone, !!bests[at] && styles.setBest]}>
-          {/* A hold or a run has nothing to type: a set of them reads "Set 2 · 30–45 s". */}
-          {timed ? (
-            <Txt variant="subhead" color={color.labelSecondary} style={[styles.flex, face('semibold')]}>
-              {item.sets.length > 1 ? `Set ${at + 1} · ${item.reps}` : 'Done?'}
-            </Txt>
-          ) : (
-            // The set's number, or W, D or F: a tap picks what kind of set it is.
-            <Pressable
-              onPress={() => pickKind(at)}
-              accessibilityRole="button"
-              accessibilityLabel={`${name}, ${tags[at]!.spoken}${set.kind ? '' : ', an ordinary set'}. Change the kind of set`}
-              hitSlop={6}
-              style={({ pressed }) => [styles.setNumber, pressed && { opacity: 0.6 }]}
-            >
-              <View style={[styles.setTag, set.kind && styles.setTagKind]}>
-                <Txt variant="subhead" color={bests[at] ? color.maybeInk : set.kind ? KIND_INK[set.kind]() : color.labelSecondary} style={face('semibold')}>
-                  {tags[at]!.tag}
-                </Txt>
-              </View>
-              {!!bests[at] && <BestMark />}
-            </Pressable>
+          {/* The set's number, or W, D or F: a tap picks what kind of set it is. */}
+          <Pressable
+            onPress={() => pickKind(at)}
+            accessibilityRole="button"
+            accessibilityLabel={`${name}, ${tags[at]!.spoken}${set.kind ? '' : ', an ordinary set'}. Change the kind of set`}
+            hitSlop={6}
+            style={({ pressed }) => [styles.setNumber, pressed && { opacity: 0.6 }]}
+          >
+            <View style={[styles.setTag, set.kind && styles.setTagKind]}>
+              <Txt variant="subhead" color={bests[at] ? color.maybeInk : set.kind ? KIND_INK[set.kind]() : color.labelSecondary} style={face('semibold')}>
+                {tags[at]!.tag}
+              </Txt>
+            </View>
+            {!!bests[at] && <BestMark />}
+          </Pressable>
+          {timed && (
+            <>
+              {measure === 'distance' && (
+                <>
+                  <Input
+                    value={set.weight}
+                    onChangeText={(weight) => setAt(at, { weight })}
+                    onBlur={() => {
+                      const tidy = tidyWeight(set.weight, unit);
+                      if (tidy !== set.weight) setAt(at, { weight: tidy });
+                    }}
+                    placeholder={weightFor(item.sets, at, weightGuess) || '—'}
+                    placeholderTextColor={color.labelTertiary}
+                    keyboardType="decimal-pad"
+                    inputMode="decimal"
+                    editable={!set.done}
+                    style={[styles.input, set.done && styles.inputDone]}
+                    accessibilityLabel={`${name}, ${tags[at]!.spoken} weight in ${unit}, blank for none`}
+                  />
+                  <Txt variant="subhead" color={color.labelTertiary} style={styles.times} aria-hidden>
+                    ×
+                  </Txt>
+                </>
+              )}
+              {measure === 'time' && watch?.at === at ? (
+                <Stopwatch since={watch.since} label={`${name}, ${tags[at]!.spoken}: stopwatch running`} />
+              ) : (
+                <Input
+                  value={(measure === 'time' ? set.time : set.distance) ?? ''}
+                  onChangeText={(text) => setAt(at, measure === 'time' ? { time: text } : { distance: text })}
+                  // Leaving the box tidies it: "90" → "1:30", "1.2 km" → "1200".
+                  onBlur={() => {
+                    const typed = (measure === 'time' ? set.time : set.distance) ?? '';
+                    const tidy = measure === 'time' ? tidyTime(typed) : tidyDistance(typed);
+                    if (tidy !== typed) setAt(at, measure === 'time' ? { time: tidy } : { distance: tidy });
+                  }}
+                  placeholder={timedFor(at, measure) || (measure === 'time' ? '0:00' : '—')}
+                  placeholderTextColor={color.labelTertiary}
+                  keyboardType={measure === 'time' ? 'numbers-and-punctuation' : 'decimal-pad'}
+                  inputMode={measure === 'time' ? 'text' : 'decimal'}
+                  editable={!set.done}
+                  style={[styles.input, set.done && styles.inputDone]}
+                  accessibilityLabel={`${name}, ${tags[at]!.spoken} ${measure === 'time' ? 'time, in minutes and seconds' : 'distance in metres'}`}
+                />
+              )}
+              {measure === 'time' &&
+                (set.done ? (
+                  <View style={styles.watchCol} />
+                ) : (
+                  <Pressable
+                    onPress={() => (watch?.at === at ? stopWatch() : startWatch(at))}
+                    accessibilityRole="button"
+                    accessibilityLabel={watch?.at === at ? `Stop the stopwatch: ${name}, ${tags[at]!.spoken} done` : `Start a stopwatch: ${name}, ${tags[at]!.spoken}`}
+                    hitSlop={6}
+                    style={({ pressed }) => [styles.watchCol, styles.watchButton, watch?.at === at && styles.watchOn, pressed && { opacity: 0.6 }]}
+                  >
+                    <Icon name={watch?.at === at ? 'pause' : 'play'} size={14} color={watch?.at === at ? color.onBrand : color.brandOnTint} />
+                  </Pressable>
+                ))}
+            </>
           )}
           {!timed && (
             <>
@@ -972,7 +1156,31 @@ const ExerciseLog = memo(function ExerciseLog({
               />
             </>
           )}
-          {!timed && <View style={styles.flex} />}
+          {(() => {
+            const previous = !rpeColumn ? previousSet(last, item.sets, at, unit) : null;
+            // A hold's Previous is a time, a carry's a distance; last time's reps don't go in their boxes.
+            if (!previous || (timed && !(measure === 'time' ? previous.time : previous.distance))) return <View style={styles.flex} />;
+            // Tap to copy last time's set in, while the set's still to do.
+            const copy = timed
+              ? measure === 'time'
+                ? { time: previous.time }
+                : { weight: previous.weight, distance: previous.distance }
+              : { weight: bodyWeight ? '' : previous.weight, reps: previous.reps };
+            return (
+              <Pressable
+                onPress={set.done ? undefined : () => setAt(at, copy)}
+                disabled={set.done}
+                accessibilityRole="button"
+                accessibilityLabel={`${name}, ${tags[at]!.spoken}: last time ${previous.label}${set.done ? '' : '. Use it'}`}
+                hitSlop={4}
+                style={({ pressed }) => [styles.flex, styles.previousCell, pressed && { opacity: 0.5 }]}
+              >
+                <Txt variant="footnote" color={color.labelTertiary} numberOfLines={1} style={styles.previous}>
+                  {previous.label}
+                </Txt>
+              </Pressable>
+            );
+          })()}
           {/* How hard it was, once it's done (not a warm-up: it's meant to be easy). */}
           {rpeColumn && (
             <RpeCell
@@ -1005,70 +1213,71 @@ const ExerciseLog = memo(function ExerciseLog({
         )}
       </LiveLine>
 
-      {!timed && (
-        <View style={styles.setButtons}>
+      <View style={styles.setButtons}>
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            const previous = item.sets[item.sets.length - 1];
+            onChange(index, [
+              ...item.sets,
+              { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: false, ...(previous?.time ? { time: previous.time } : {}), ...(previous?.distance ? { distance: previous.distance } : {}) },
+            ]);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Add set: ${name}`}
+          style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
+        >
+          <Icon name="plus" size={13} color={color.brand} />
+          <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+            Add set
+          </Txt>
+        </Pressable>
+        {barbell && (
+          <Pressable
+            onPress={addWarmUps}
+            accessibilityRole="button"
+            accessibilityLabel={isPro ? `Warm-ups: add warm-up sets before ${name}` : `Warm-ups for ${name}, with GymGO Pro`}
+            style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
+          >
+            <Icon name="sunrise" size={13} color={color.brand} />
+            <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+              {isPro ? 'Warm-ups' : 'Warm-ups · Pro'}
+            </Txt>
+          </Pressable>
+        )}
+        {!note && !noting && (
           <Pressable
             onPress={() => {
               haptic.select();
-              const previous = item.sets[item.sets.length - 1];
-              onChange(index, [...item.sets, { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: false }]);
+              setNoting(true);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Add set: ${name}`}
+            accessibilityLabel={`Add a note on ${name}, shown each time you do it`}
             style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
           >
-            <Icon name="plus" size={13} color={color.brand} />
+            <Icon name="note" size={13} color={color.brand} />
             <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-              Add set
+              Note
             </Txt>
           </Pressable>
-          {barbell && (
-            <Pressable
-              onPress={addWarmUps}
-              accessibilityRole="button"
-              accessibilityLabel={isPro ? `Warm-ups: add warm-up sets before ${name}` : `Warm-ups for ${name}, with GymGO Pro`}
-              style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
-            >
-              <Icon name="sunrise" size={13} color={color.brand} />
-              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-                {isPro ? 'Warm-ups' : 'Warm-ups · Pro'}
-              </Txt>
-            </Pressable>
-          )}
-          {!note && !noting && (
-            <Pressable
-              onPress={() => {
-                haptic.select();
-                setNoting(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Add a note on ${name}, shown each time you do it`}
-              style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
-            >
-              <Icon name="note" size={13} color={color.brand} />
-              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-                Note
-              </Txt>
-            </Pressable>
-          )}
-          {item.sets.length > 1 && !item.sets[item.sets.length - 1]!.done && (
-            <Pressable
-              onPress={() => {
-                haptic.select();
-                onChange(index, item.sets.slice(0, -1));
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Remove the last set of ${name}`}
-              style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
-            >
-              <Icon name="minus" size={13} color={color.labelSecondary} />
-              <Txt variant="footnote" color={color.labelSecondary} style={face('semibold')}>
-                Remove set
-              </Txt>
-            </Pressable>
-          )}
-        </View>
-      )}
+        )}
+        {item.sets.length > 1 && !item.sets[item.sets.length - 1]!.done && (
+          <Pressable
+            onPress={() => {
+              haptic.select();
+              onChange(index, item.sets.slice(0, -1));
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove the last set of ${name}`}
+            style={({ pressed }) => [styles.smallButton, pressed && { opacity: 0.6 }]}
+          >
+            <Icon name="minus" size={13} color={color.labelSecondary} />
+            <Txt variant="footnote" color={color.labelSecondary} style={face('semibold')}>
+              Remove set
+            </Txt>
+          </Pressable>
+        )}
+      </View>
 
       <GroupControls name={name} group={group} nextName={nextName} onLink={() => onLink(index)} onUnlink={() => onUnlink(index)} />
       {typing !== null && item.sets[typing] && (
@@ -1119,6 +1328,18 @@ function StayAwake() {
 function Elapsed({ since }: { since: string }) {
   const now = useNow(true);
   return <>{clockLabel((now - Date.parse(since)) / 1000)}</>;
+}
+
+/** A hold's stopwatch, in its time box's place: counting up, by itself, so the card doesn't redraw. */
+function Stopwatch({ since, label }: { since: number; label: string }) {
+  const now = useNow(true, 250);
+  return (
+    <View style={[styles.input, styles.watching]} accessible accessibilityLabel={label}>
+      <Txt variant="body" color={color.brand} style={[face('semibold'), styles.watchText]}>
+        {clockLabel(Math.floor((now - since) / 1000))}
+      </Txt>
+    </View>
+  );
 }
 
 // --- Rest ------------------------------------------------------------------------
@@ -1226,14 +1447,15 @@ function Summary({
   onClose,
   onProgress,
 }: {
-  result: { session: TrainingSession; records: NewRecord[] };
+  result: { session: TrainingSession; records: NewRecord[]; compared: Compared | null };
   /** This week against your weekly goal, when you've set one. */
   week: WeekAfter | null;
   onClose: () => void;
   onProgress: () => void;
 }) {
-  const { session, records } = result;
+  const { session, records, compared } = result;
   const { prefs, billing } = useApp();
+  const router = useRouter();
   const celebration = celebrationFor(prefs.celebration, billing.isPro);
   // Worked out as the summary opens: the log taking in this workout afterwards doesn't change what it said.
   const [weekNow] = useState(week);
@@ -1271,22 +1493,39 @@ function Summary({
         </Txt>
       </View>
       <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
-        {session.name}
+        {session.gymName ? `${session.name} · ${session.gymName}` : session.name}
       </Txt>
       {/* The workout in three figures, counting up as the page arrives. */}
       <View style={styles.summaryStats}>
         <SummaryStat label="time" spoken={`Time, ${durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))}`}>
           <Txt variant="figure">{durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))}</Txt>
         </SummaryStat>
-        <SummaryStat label={setCount(session) === 1 ? 'set' : 'sets'} spoken={`${setCount(session)} ${setCount(session) === 1 ? 'set' : 'sets'}`}>
+        <SummaryStat line label={setCount(session) === 1 ? 'set' : 'sets'} spoken={`${setCount(session)} ${setCount(session) === 1 ? 'set' : 'sets'}`}>
           <CountUp id={`summary.${session.id}.sets`} value={setCount(session)} variant="figure" />
         </SummaryStat>
         {volume > 0 && (
-          <SummaryStat label={`${unit} lifted`} spoken={`${Math.round(volume).toLocaleString()} ${unit} lifted`}>
+          <SummaryStat line label={`${unit} lifted`} spoken={`${Math.round(volume).toLocaleString()} ${unit} lifted`}>
             <CountUp id={`summary.${session.id}.volume`} value={Math.round(volume)} variant="figure" />
           </SummaryStat>
         )}
       </View>
+      {/* Against the last time you did the same workout: more lifted, more sets, quicker or longer. */}
+      {compared && (
+        <View
+          style={[styles.didCard, styles.compareCard]}
+          accessible
+          accessibilityLabel={`Compared with your last ${compared.last.name}, ${agoLabel(daysAgo(compared.last.finishedAt)).toLowerCase()}: volume ${signed(fromKg(compared.volumeKg, unit), unit)}, sets ${signed(compared.sets)}, time ${signed(compared.minutes, 'min')}`}
+        >
+          <Txt variant="label" color={color.labelSecondary} numberOfLines={2}>
+            {`Compared with your last ${compared.last.name} · ${agoLabel(daysAgo(compared.last.finishedAt))}`}
+          </Txt>
+          <View style={styles.deltas}>
+            <Delta label="volume" value={signed(fromKg(compared.volumeKg, unit), unit)} better={compared.volumeKg > 0.5 ? true : compared.volumeKg < -0.5 ? false : null} />
+            <Delta label="sets" value={signed(compared.sets)} better={compared.sets > 0 ? true : compared.sets < 0 ? false : null} />
+            <Delta label="time" value={signed(compared.minutes, 'min')} better={null} />
+          </View>
+        </View>
+      )}
       {weekNow && <WeekLine week={weekNow} />}
       {best && (
         <View style={styles.recordCard}>
@@ -1342,6 +1581,8 @@ function Summary({
         <View style={styles.savedCard}>
           {[
             ...(best ? [{ id: 'record', icon: 'share' as IconName, title: sharingCard ? 'Making the picture…' : 'Share your record', go: () => void shareCard(), busy: sharingCard }] : []),
+            // The workout as a picture, as a training app shares it (app/share-workout.tsx).
+            { id: 'picture', icon: 'photo' as IconName, title: 'Share as a picture', go: () => router.push({ pathname: '/share-workout', params: { id: session.id } }), busy: false },
             { id: 'workout', icon: 'share' as IconName, title: 'Share this workout', go: () => void share(), busy: false },
             { id: 'progress', icon: 'chart' as IconName, title: 'See your progress', go: onProgress, busy: false },
           ].map((row, index) => (
@@ -1372,6 +1613,28 @@ function Summary({
       </View>
     </PageScroll>
     {(records.length > 0 || weekNow?.justMet) && <Celebration style={celebration} />}
+    </View>
+  );
+}
+
+/** One change against last time: up in green with an arrow, down plainly; time just says how it went. */
+function Delta({ label, value, better }: { label: string; value: string; better: boolean | null }) {
+  const ink = better === true ? color.goodInk : color.label;
+  return (
+    <View style={styles.delta}>
+      <View style={styles.deltaValue}>
+        {better !== null && value !== 'same' && (
+          <View style={better ? styles.up : styles.down}>
+            <Icon name="chevron" size={11} color={ink} />
+          </View>
+        )}
+        <Txt variant="headline" color={ink} numberOfLines={1}>
+          {value}
+        </Txt>
+      </View>
+      <Txt variant="caption" color={color.labelSecondary}>
+        {label}
+      </Txt>
     </View>
   );
 }
@@ -1409,9 +1672,9 @@ function WeekLine({ week }: { week: WeekAfter }) {
 }
 
 /** One of the summary's figures. Read out whole and final (`spoken`), not as it counts up. */
-function SummaryStat({ label, spoken, children }: { label: string; spoken: string; children: ReactNode }) {
+function SummaryStat({ label, spoken, children, line = false }: { label: string; spoken: string; children: ReactNode; /** A hairline before it: not the first. */ line?: boolean }) {
   return (
-    <View style={styles.summaryStat} accessible accessibilityLabel={spoken}>
+    <View style={[styles.summaryStat, line && styles.summaryStatLine]} accessible accessibilityLabel={spoken}>
       {children}
       <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
         {label}
@@ -1446,6 +1709,10 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2, marginBottom: space[1] },
+  // The gym you're at, as a small chip under the title.
+  gymTag: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, maxWidth: '100%', marginTop: space[2], marginBottom: space[1], paddingHorizontal: space[3], minHeight: 32, borderRadius: radius.pill, backgroundColor: color.brandTint },
+  gymTagEmpty: { backgroundColor: color.fill },
+  gymTagText: { flexShrink: 1 },
   center: { textAlign: 'center' },
   flex: { flex: 1 },
   noWorkout: { flexGrow: 1, justifyContent: 'center', paddingVertical: space[8], gap: space[5] },
@@ -1477,6 +1744,15 @@ const styles = themed(() => StyleSheet.create({
   inputCol: { flex: 1, minWidth: 64, maxWidth: 112, textAlign: 'center' },
   times: { width: 10, textAlign: 'center' },
   tickCol: { width: 30 },
+  // A hold's stopwatch button, beside its time.
+  watchCol: { width: 32 },
+  watchButton: { height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
+  watchOn: { backgroundColor: color.brand },
+  watching: { justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: color.brand },
+  watchText: { fontVariant: ['tabular-nums'] },
+  // Last time's set, right up against the tick: read across, it says "beat this".
+  previous: { textAlign: 'right', fontVariant: ['tabular-nums'] },
+  previousCell: { alignSelf: 'stretch', justifyContent: 'center', paddingRight: space[1] },
   setNumber: { width: 36, minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 3 },
   setTag: { minWidth: 22, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: 6 },
   setTagKind: { backgroundColor: color.fill },
@@ -1498,6 +1774,12 @@ const styles = themed(() => StyleSheet.create({
     ...shadow.plate,
   },
   againStrip: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] + 2, marginVertical: space[2] },
+  compareCard: { paddingBottom: space[4] },
+  deltas: { flexDirection: 'row', marginTop: space[2] },
+  delta: { flex: 1, minWidth: 0, gap: 2 },
+  deltaValue: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  up: { transform: [{ rotate: '-90deg' }] },
+  down: { transform: [{ rotate: '90deg' }] },
   didCard: {
     alignSelf: 'stretch',
     width: '100%',
@@ -1547,17 +1829,21 @@ const styles = themed(() => StyleSheet.create({
   restButton: { paddingHorizontal: space[3], paddingVertical: space[2], borderRadius: radius.pill, backgroundColor: color.brandTint },
   restButtonStrong: { backgroundColor: color.brandFill },
   summary: { alignItems: 'stretch', paddingTop: space[8] },
-  summaryStats: { flexDirection: 'row', gap: space[2], marginVertical: space[2] },
-  summaryStat: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-    paddingVertical: space[3],
+  // The three figures in one card, parted by hairlines (as Progress has them).
+  summaryStats: {
+    flexDirection: 'row',
+    alignSelf: 'stretch',
+    width: '100%',
+    maxWidth: 480,
+    marginHorizontal: 'auto',
+    marginVertical: space[2],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.plate,
     ...shadow.plate,
   },
+  summaryStat: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: space[3] },
+  summaryStatLine: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: color.separator },
   record: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
   weekMet: { backgroundColor: color.goodTint },
   weekDots: { flexDirection: 'row', gap: 4 },

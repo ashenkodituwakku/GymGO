@@ -54,6 +54,7 @@ const ICON: Record<string, PhosphorName> = {
   '/workouts': 'clipboard-text',
   '/programme': 'calendar-dots',
   '/collection': 'cards',
+  '/feed': 'pulse',
   '/friends': 'users-three',
   '/appearance': 'palette',
 };

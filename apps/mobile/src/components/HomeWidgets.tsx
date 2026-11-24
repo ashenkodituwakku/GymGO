@@ -144,7 +144,7 @@ export function LastWorkoutWidget({ log, busy }: { log: LogState; /** A workout'
           <Pressy
             onPress={() => {
               haptic.success();
-              startSession({ ...plan, gymName: null, unit: latest.unit });
+              startSession({ ...plan, gymName: latest.gymName ?? null, unit: latest.unit });
               router.push('/train');
             }}
             accessibilityRole="button"

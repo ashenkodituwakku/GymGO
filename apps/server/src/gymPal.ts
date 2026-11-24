@@ -33,6 +33,7 @@
  * gyms or notes), built here from what they've logged.
  */
 
+import { isDoneSet, isTimedSet } from '@gymgo/domain';
 import { GYMPAL_GUIDE } from './gymPalGuide';
 
 type Fetch = typeof fetch;
@@ -161,7 +162,7 @@ export interface LoggedSession {
   unit: 'kg' | 'lb';
   startedAt: string;
   finishedAt: string;
-  exercises: Array<{ exerciseId: string; sets: Array<{ weight: number | null; reps: number; kind?: 'warmup' | 'drop' | 'failure'; rpe?: number }> }>;
+  exercises: Array<{ exerciseId: string; sets: Array<{ weight: number | null; reps: number; kind?: 'warmup' | 'drop' | 'failure'; rpe?: number; seconds?: number; metres?: number }> }>;
 }
 
 /**
@@ -184,10 +185,18 @@ export function trainingSummary(sessions: readonly LoggedSession[], now: Date, n
     const minutes = Math.max(1, Math.round((Date.parse(session.finishedAt) - Date.parse(session.startedAt)) / 60_000));
     const exercises = session.exercises.slice(0, 10).map((exercise) => {
       const sets = exercise.sets
-        .filter((set) => set.reps > 0)
+        .filter(isDoneSet)
         .slice(0, 8)
         .map((set) => {
-          const done = set.weight === null ? `body weight × ${set.reps}` : `${set.weight} ${session.unit} × ${set.reps}`;
+          // A plank by its time, a carry by its distance (and the weight carried); the rest by weight and reps.
+          const measured = [set.metres ? `${set.metres} m` : null, set.seconds ? `${set.seconds} s` : null].filter(Boolean).join(' in ');
+          const done = isTimedSet(set)
+            ? set.weight === null
+              ? measured
+              : `${set.weight} ${session.unit} for ${measured}`
+            : set.weight === null
+              ? `body weight × ${set.reps}`
+              : `${set.weight} ${session.unit} × ${set.reps}`;
           // Its type and RPE, when given: a warm-up isn't a working set, and RPE says how hard it was.
           const kind = set.kind === 'warmup' ? ' (warm-up)' : set.kind === 'drop' ? ' (drop set)' : set.kind === 'failure' ? ' (to failure)' : '';
           return `${done}${kind}${set.rpe !== undefined ? ` at RPE ${set.rpe}` : ''}`;

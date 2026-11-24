@@ -12,7 +12,7 @@ import { FREE_CELEBRATION, cleanCelebration, type CelebrationStyle } from './cel
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { AppState as NativeAppState } from 'react-native';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, startTransition, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { LIMITS, haversineKm } from '@gymgo/domain';
 import { ApiError, problemText } from './api';
 import { FOCUS_COUNTRY, canSearchIn, deviceTimeZone, openingPlace } from './country';
@@ -120,7 +120,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'exercises' | 'splits' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds' | 'gympal';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'exercises' | 'splits' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds' | 'gympal' | 'headToHead';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -434,10 +434,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [findMe, prefsReady, prefs.country]);
 
   const addRecent = useCallback((gymId: string) => {
-    setRecents((current) => {
-      const next = [gymId, ...current.filter((id) => id !== gymId)].slice(0, MAX_RECENTS);
-      storeJson(RECENTS_KEY, next);
-      return next;
+    // Not urgent, so it waits its turn: a new recent changes this whole
+    // context, which redraws most of the app (744 components on Explore), and
+    // done at once it landed on the very frame a gym was picked in, as its
+    // card opened and the map set off towards it, which stuttered. As a
+    // transition React does it in slices between the animation's frames.
+    startTransition(() => {
+      setRecents((current) => {
+        // Already the latest (the same gym opened again): nothing to redraw.
+        if (current[0] === gymId) return current;
+        const next = [gymId, ...current.filter((id) => id !== gymId)].slice(0, MAX_RECENTS);
+        storeJson(RECENTS_KEY, next);
+        return next;
+      });
     });
   }, []);
 

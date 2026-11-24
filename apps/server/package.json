@@ -14,7 +14,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
-    "stripe:setup": "node --no-warnings=ExperimentalWarning --import tsx src/stripe-setup.ts"
+    "stripe:setup": "node --no-warnings=ExperimentalWarning --import tsx src/stripe-setup.ts",
+    "paypal:setup": "node --no-warnings=ExperimentalWarning --import tsx src/paypal-setup.ts"
   },
   "dependencies": {
     "@gymgo/au-data": "workspace:*",

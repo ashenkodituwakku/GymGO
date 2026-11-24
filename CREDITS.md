@@ -200,3 +200,15 @@ GymGO's short vertical videos are made with:
 Every frame of app in them is a screenshot of GymGO itself. The gyms shown
 are real independents without logos, with the facts and sources the app
 gives them. The training shown is sample data in the local test account.
+
+## Launch ads (`marketing/launch-ads`)
+
+The TikTok-style launch ads use the same Remotion, Inter (with its Black cut
+added, `marketing/launch-ads/public/fonts`), React and the iart.ai skills'
+contact-sheet and probe scripts as the short videos. Their music and effects
+are made from scratch by `marketing/launch-ads/music.py` (numpy synthesis, no
+samples), and the app sounds in them are GymGO's own (made by its own
+script). The emoji in the captions are drawn by the rendering machine's
+[Noto Color Emoji](https://github.com/googlefonts/noto-emoji) (SIL Open Font
+License 1.1). Every frame of app is a screenshot of GymGO from a free local
+test account with sample training.

@@ -1,0 +1,6 @@
+node_modules/
+out/
+# Screenshots of the app, made by capture.cjs (they need the app running and a signed-in account).
+public/shots/
+# The music and effects (music.py) and the app's own sounds (copied by render.mjs).
+public/audio/

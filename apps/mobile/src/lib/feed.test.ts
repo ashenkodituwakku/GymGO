@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { FeedItem } from './api';
-import { ahead, bestLine, muscleSplit, bestSetLine, feedCardLabel, feedExerciseName, feedWhen, likedLine, recordsFor, volumeLine } from './feed';
+import { ahead, bestLine, friendWorkoutPlan, muscleSplit, bestSetLine, feedCardLabel, feedExerciseName, feedWhen, likedLine, recordsFor, volumeLine } from './feed';
 
 describe('when a workout was, in the feed', () => {
   const now = new Date(2026, 10, 23, 18, 0); // 23 Nov 2026, 6 pm, this device's time
@@ -101,5 +101,20 @@ describe('muscle split', () => {
   it('is empty for exercises it doesn’t know or sets not done', () => {
     expect(muscleSplit([{ exerciseId: 'mine-abcdefghij', sets: [{ weight: 10, reps: 10 }] }])).toEqual([]);
     expect(muscleSplit([{ exerciseId: 'bench-press', sets: [{ weight: 10, reps: 0 }] }])).toEqual([]);
+  });
+});
+
+describe('a friend’s workout, to keep', () => {
+  it('is the same exercises, sets and reps, without their own exercises, in a saved workout’s limits', () => {
+    const many = Array.from({ length: 14 }, (_, at) => ({ exerciseId: at === 0 ? 'mine-abcdefghij' : 'bench-press', sets: Array.from({ length: at === 1 ? 12 : 3 }, () => ({ weight: 50, reps: 8 })) }));
+    const kept = friendWorkoutPlan({ id: 'w', name: 'Their push day', unit: 'kg', startedAt: '2026-11-23T10:00:00Z', finishedAt: '2026-11-23T11:00:00Z', exercises: many })!;
+    expect(kept.name).toBe('Their push day');
+    expect(kept.plan.items).toHaveLength(12);
+    expect(kept.plan.items.every((item) => !item.exerciseId.startsWith('mine-'))).toBe(true);
+    expect(kept.plan.items[0]!.sets).toBe(10);
+    expect(kept.plan.items[1]).toMatchObject({ sets: 3, reps: '8', uses: [], confirmed: false });
+  });
+  it('is nothing when only their own exercises are in it', () => {
+    expect(friendWorkoutPlan({ id: 'w', name: 'Mine', unit: 'kg', startedAt: '2026-11-23T10:00:00Z', finishedAt: '2026-11-23T11:00:00Z', exercises: [{ exerciseId: 'mine-abcdefghij', sets: [{ weight: 10, reps: 10 }] }] })).toBeNull();
   });
 });

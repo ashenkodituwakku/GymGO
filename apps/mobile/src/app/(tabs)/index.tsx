@@ -124,7 +124,10 @@ export default function Home() {
   const locked = !mayExplore(filters.countryCode);
   const router = useRouter();
   // The narrowest phones (an iPhone SE's 320 points) stack the finders' icons over their words.
-  const narrow = useWindowDimensions().width < 360;
+  const { width } = useWindowDimensions();
+  const narrow = width < 360;
+  // A phone (or a phone-width window): Home with more room, as a phone wants it. Wider, Home as it was.
+  const roomy = width < 600;
 
   const asOf = useMemo(() => new Date(), [filters, data.records]);
   // Each gym once: not the map's own copy of one GymGO carries too.
@@ -208,8 +211,25 @@ export default function Home() {
   const order = shortcutsFirst ? chosen.slice(1) : chosen;
   const weightUnit = unitFor(prefs.country);
 
-  // Quick searches as one row of pills under the search, sliding sideways where they don't all fit: room to breathe, not a grid of boxes.
-  const shortcutsView = (
+  // On a phone, quick searches as one row of pills under the search, sliding sideways where they don't all fit: room to breathe, not a grid of boxes.
+  const shortcutsView = !roomy ? (
+        <View style={styles.shortcuts}>
+          {shortcuts.map((item) => (
+            <Pressy
+              key={item.title}
+              onPress={item.onPress}
+              accessibilityRole="button"
+              accessibilityLabel={item.title}
+              style={styles.shortcut}
+            >
+              <Icon name={item.icon} size={22} color={color.brand} />
+              <Txt variant="footnote" style={[styles.center, face('medium')]} numberOfLines={2} hyphens>
+                {item.title}
+              </Txt>
+            </Pressy>
+          ))}
+        </View>
+  ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsScroll} contentContainerStyle={styles.pills}>
           {shortcuts.map((item) => (
             <Pressy
@@ -235,7 +255,7 @@ export default function Home() {
         return shortcutsView;
       case 'workout':
         return (
-          <View style={styles.group}>
+          <View style={[styles.group, roomy && styles.groupRoomy]}>
                 <Pressy
                   onPress={() => {
                     haptic.select();
@@ -243,9 +263,26 @@ export default function Home() {
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Build a workout: tap the muscles you want to train"
-                  style={styles.workout}
+                  style={roomy ? styles.workout : styles.workoutWide}
                 >
                   <BrandFill round={radius.xl} />
+                  {!roomy ? (
+                    <>
+                      <View style={styles.workoutIcon}>
+                        <Icon name="workout" size={26} color={color.onBrand} />
+                      </View>
+                      <View style={styles.flex}>
+                        <Txt variant="headline" color={color.onBrand}>
+                          Build a workout
+                        </Txt>
+                        <Txt variant="footnote" color={color.onBrandSoft}>
+                          Pick muscles, get a plan
+                        </Txt>
+                      </View>
+                      <Icon name="chevron" size={14} color={color.onBrandSoft} />
+                    </>
+                  ) : (
+                  <>
                   <View style={[styles.flex, styles.workoutWords]}>
                     <Txt variant="title2" color={color.onBrand} style={face('bold')}>
                       Build a workout
@@ -264,9 +301,11 @@ export default function Home() {
                   <View style={styles.workoutArt} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
                     <ExerciseGlyph exerciseId="bench-press" size={92} ink={color.onBrand} accent={color.onBrandSoft} moving reps={2} />
                   </View>
+                  </>
+                  )}
                 </Pressy>
                 {/* Up next and the other templates: one card, two actions; alone, the templates are a plain link. */}
-                <View style={(plan && planDay) || onProgramme ? styles.planCard : undefined}>
+                <View style={!roomy || (plan && planDay) || onProgramme ? styles.planCard : undefined}>
                 {onProgramme && (
                   <ProgrammeUpNext
                     programme={onProgramme.programme}
@@ -315,7 +354,11 @@ export default function Home() {
                   onPress={() => router.push('/templates')}
                   accessibilityRole="link"
                   accessibilityLabel="Templates and programmes"
-                  style={({ pressed }) => [styles.templatesRow, ((!!plan && planDay) || !!onProgramme) ? styles.templatesUnder : styles.templatesAlone, pressed && { opacity: 0.6 }]}
+                  style={({ pressed }) => [
+                    styles.templatesRow,
+                    (!!plan && planDay) || !!onProgramme ? styles.templatesUnder : roomy ? styles.templatesAlone : null,
+                    pressed && (roomy ? { opacity: 0.6 } : { backgroundColor: color.fill }),
+                  ]}
                 >
                   <Icon name="list" size={15} color={color.brand} />
                   <Txt variant="footnote" color={color.brand} style={[face('semibold'), styles.flex]}>
@@ -328,7 +371,7 @@ export default function Home() {
         );
       case 'finders':
         return (
-          <View style={styles.group}>
+          <View style={[styles.group, roomy && styles.groupRoomy]}>
                 {trip && (
                   <Pressy
                     onPress={() => {
@@ -351,10 +394,14 @@ export default function Home() {
                 )}
                 <View style={styles.finders}>
                   {finders.map((item) => (
-                    <Pressy key={item.title} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, narrow && styles.finderNarrow]}>
-                      <View style={styles.finderIcon}>
-                        <Icon name={item.icon} size={18} color={color.brand} />
-                      </View>
+                    <Pressy key={item.title} onPress={item.onPress} accessibilityRole="button" accessibilityLabel={item.label} style={[styles.finder, roomy && styles.finderRoomy, narrow && styles.finderNarrow]}>
+                      {roomy ? (
+                        <View style={styles.finderIcon}>
+                          <Icon name={item.icon} size={18} color={color.brand} />
+                        </View>
+                      ) : (
+                        <Icon name={item.icon} size={20} color={color.brand} />
+                      )}
                       <View style={narrow ? styles.finderTextNarrow : styles.flex}>
                         <Txt variant="subhead" style={[face('semibold'), narrow && styles.center]} numberOfLines={1}>
                           {item.title}
@@ -687,7 +734,7 @@ export default function Home() {
       }
     >
       {/* The search, a workout under way and the gym you're at: always first, whatever else Home has (resting while you edit). */}
-      <View style={[styles.group, editing && styles.resting]}>
+      <View style={[styles.group, roomy && styles.groupRoomy, editing && styles.resting]}>
       <SearchButton placeholder={prefsReady ? searchPrompt(prefs.country) : 'Search'} onPress={() => explore({ focusSearch: true })} />
       {shortcutsFirst && !editing && shortcutsView}
       </View>
@@ -959,14 +1006,27 @@ const styles = themed(() => StyleSheet.create({
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space[3],
-    padding: space[4],
+    gap: space[2],
+    padding: space[3],
     borderRadius: radius.lg,
     borderCurve: 'continuous',
     backgroundColor: color.plate,
     ...shadow.plate,
   },
   resumeIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: color.good, alignItems: 'center', justifyContent: 'center' },
+  // Wider than a phone: the banner as it was, compact.
+  workoutWide: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    padding: space[4],
+    borderRadius: radius.xl,
+    borderCurve: 'continuous',
+    backgroundColor: color.brandFill,
+    ...shadowUnder(shadow.plate),
+  },
+  workoutIcon: { width: 32, height: 40, alignItems: 'center', justifyContent: 'center' },
+  finderRoomy: { gap: space[3], padding: space[4] },
   workout: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1016,7 +1076,8 @@ const styles = themed(() => StyleSheet.create({
 
   section: { gap: space[3] },
   /** Things that belong together, closer to each other than to the next group. */
-  group: { gap: space[4] },
+  group: { gap: space[3] },
+  groupRoomy: { gap: space[4] },
   carousel: { marginHorizontal: -space[4] },
   carouselContent: { paddingHorizontal: space[4], paddingBottom: space[2], gap: space[3] },
   carouselInColumn: { paddingHorizontal: 0 },

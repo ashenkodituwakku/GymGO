@@ -1276,6 +1276,7 @@ function Summary({
 }) {
   const { session, records, compared } = result;
   const { prefs, billing } = useApp();
+  const router = useRouter();
   const celebration = celebrationFor(prefs.celebration, billing.isPro);
   // Worked out as the summary opens: the log taking in this workout afterwards doesn't change what it said.
   const [weekNow] = useState(week);
@@ -1401,6 +1402,8 @@ function Summary({
         <View style={styles.savedCard}>
           {[
             ...(best ? [{ id: 'record', icon: 'share' as IconName, title: sharingCard ? 'Making the picture…' : 'Share your record', go: () => void shareCard(), busy: sharingCard }] : []),
+            // The workout as a picture, as a training app shares it (app/share-workout.tsx).
+            { id: 'picture', icon: 'photo' as IconName, title: 'Share as a picture', go: () => router.push({ pathname: '/share-workout', params: { id: session.id } }), busy: false },
             { id: 'workout', icon: 'share' as IconName, title: 'Share this workout', go: () => void share(), busy: false },
             { id: 'progress', icon: 'chart' as IconName, title: 'See your progress', go: onProgress, busy: false },
           ].map((row, index) => (

@@ -280,6 +280,18 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Weekly chart, save a friend's, share a picture; Home roomy on phones
+  only** (24 Nov, Update 255). Home (app/(tabs)/index.tsx) is roomy only
+  when `width < 600` (`roomy`): pills, the lifter card, the templates link
+  alone, finder tiles and `groupRoomy`. Wider it's as before Update 254
+  (shortcut tiles, `workoutWide`). `WeatherCompact` likewise (one line on a
+  phone). lib/weekly.ts + components/WeeklyChart.tsx on `/feed?person=<you>`
+  (`mine` in feed/index.tsx loads `useTrainingLog`); Profile → Your
+  workouts. feed/[id].tsx: Save to my workouts (`friendWorkoutPlan`,
+  `api.saveWorkout`, Pro; `pro_required` goes to Pro). app/share-workout.tsx
+  (`id` from the log) with components/WorkoutShareCard.tsx; no
+  `numberOfLines={1}` on the card's short texts, since the exported picture
+  draws text a little wider and cut them off.
 - **Roomier Home, Previous, compare** (23 Nov, Update 254). Home
   (app/(tabs)/index.tsx): quick searches as `styles.pills` in a horizontal
   ScrollView, the workout card with an `ExerciseGlyph` (bench-press, moving,

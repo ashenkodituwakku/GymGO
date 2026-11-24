@@ -856,7 +856,10 @@ While you train, each set shows **Previous** (last time's set at the same
 place; tap to copy it in), and a finished workout is **compared with the last
 time** you did it. A workout can be **tagged with its gym** (the chip under its title while you
 train, or Edit workout later), a friend's page lists **their workouts**, and a
-workout's page shows its **muscle split**.
+workout's page shows its **muscle split**. **Profile → Your workouts** is
+your own as friends see them, with your last twelve weeks as bars (time,
+volume or reps). A friend's workout can be **saved to My workouts** (Pro), and
+your own **shared as a picture** (from its page, or as you finish).
 `docs/FEED.md` has the details, and the Privacy Policy wording it needs.
 
 Each gym is a **trading card** with a rarity rolled by luck: every day you

@@ -30,6 +30,16 @@ GymGO's own look; nothing of Hevy's is copied.
 - **The gym** (Update 253): tagged while training (the chip under the title,
   Which gym?) or from Edit workout; shown on the card and the workout's page,
   which opens the gym.
+- **Your workouts** (Profile → Your workouts, Update 255): the feed for just
+  you, as friends see it, with your last twelve weeks as bars on top (time,
+  volume or reps; tap a week to read it).
+- **Save to my workouts** (Pro), on a friend's workout (Update 255): the same
+  exercises, sets and reps saved to My workouts, as Do this workout would
+  start them (exercises they made themselves left out).
+- **Share as a picture**, on your own workout and when you finish one
+  (Update 255): a card with the name, day, gym, time, volume, sets, records
+  and up to six exercises with their best set, to share or save. Never the
+  notes.
 - **Head to head** (Pro), on a friend's page: your best on every exercise
   you've both done beside theirs (heaviest lift, estimated 1-rep max, most
   reps at body weight), the one ahead marked. Free accounts see what it is
@@ -107,4 +117,10 @@ I haven't changed the legal pages, because that wording is yours to approve
   lines), `components/FeedCard.tsx`, `components/HeadToHead.tsx`,
   `app/feed/index.tsx`, `app/feed/[id].tsx`; the sidebar's Feed (Phosphor's
   pulse, whose line draws itself under the mouse).
-- Tests: `apps/server/src/feed.test.ts` (11) and `apps/mobile/src/lib/feed.test.ts` (10).
+- Update 255: `lib/weekly.ts` (`weeklyTotals`, `weekTotalLabel`) and
+  `components/WeeklyChart.tsx` on `/feed?person=<your id>`;
+  `friendWorkoutPlan` in lib/feed.ts for Save to my workouts
+  (`api.saveWorkout`, Pro); `components/WorkoutShareCard.tsx` and the
+  `share-workout` modal (`shareViewAsImage`).
+- Tests: `apps/server/src/feed.test.ts` (11), `apps/mobile/src/lib/feed.test.ts`
+  and `apps/mobile/src/lib/weekly.test.ts`.

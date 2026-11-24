@@ -9,6 +9,39 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 255 · Your weeks as bars, save a friend's workout, share a workout as a picture
+
+*24 Nov 2026 · the commit "Your weeks as bars; save a friend's workout; share a workout as a picture; roomy Home on phones only"*
+
+You asked to keep polishing and add more of Hevy's features. You also said the web version of Home was fine and only the phone's looked compacted. As before, Hevy's patterns are drawn in GymGO's own look.
+
+- **Home is roomy on phones only.** Update 254's roomier Home now applies only below 600 points wide:
+  - the quick-search pills;
+  - the lifter card;
+  - the templates link on its own;
+  - the finder tiles;
+  - the wider gaps.
+  
+  On a computer or tablet, Home is as it was before. The weather's one-line caption is phone-only too.
+- **Your workouts, with your weeks as bars** (Profile → Your workouts): your own workouts as friends see them. On top are your last twelve weeks as bars, for time trained, weight lifted or reps. This week's bar is in the accent, with its total and workout count above. Tap any bar to read that week.
+- **Save to my workouts** (Pro), on a friend's workout: it saves the same exercises, sets and reps to My workouts, ready to start again any time. Exercises they made themselves are left out. On a free account it opens Pro.
+- **Share as a picture**: on your own workout's page, and in the list when you finish one. The picture is a card with:
+  - the workout's name, day and gym;
+  - its time, volume, sets and any records (in gold);
+  - up to six exercises with their best set.
+  
+  On a phone it goes to the share sheet. In a browser it's shared or saved to your downloads. "Share as text" is next to it. Notes never go on the picture.
+- **Fixed before it shipped:**
+  - The picture cut short a gym name and best sets ("Doherty's G…"), because an exported picture draws text a little wider than the screen. Those lines now have no length limit.
+  - The chart's month names were clipped to one letter. They now run on under the next bars.
+
+- Checked: every package's tests, lint and typecheck pass (app 651, with 5 new: 3 for the weekly totals and 2 for a friend's workout as a plan; server 359; domain 205). In a browser against the local server with test friends:
+  - Profile → Your workouts showed the chart (This week 55 min, 3 workouts; Volume 3,855 kg; Reps 42);
+  - a friend's workout saved to My workouts;
+  - the picture downloaded and looked at, with nothing cut off;
+  - Home at 390 (roomy) and 1280 (as before) wide.
+- Not checked: the phone's share sheet for the picture (no phone here).
+
 ## Update 254 · A roomier Home, Previous beside every set, and how it compares with last time
 
 *23 Nov 2026 · the commit "Home: room to breathe; Previous beside each set; compared with last time"*

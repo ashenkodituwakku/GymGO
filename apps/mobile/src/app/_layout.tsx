@@ -394,6 +394,7 @@ function ThemedStack() {
               <Stack.Screen name="trips/[id]" options={{ headerShown: true, title: 'Trip' }} />
               <Stack.Screen name="card/[id]" options={{ ...MODAL, headerShown: true, title: 'Card' }} />
               <Stack.Screen name="gym-tag" options={{ ...MODAL, headerShown: true, title: 'Which gym?' }} />
+              <Stack.Screen name="share-workout" options={{ ...MODAL, headerShown: true, title: 'Share' }} />
               <Stack.Screen name="feed/index" options={{ headerShown: true, title: 'Feed' }} />
               <Stack.Screen name="feed/[id]" options={{ headerShown: true, title: 'Workout' }} />
               <Stack.Screen name="friends/index" options={{ headerShown: true, title: 'Friends' }} />

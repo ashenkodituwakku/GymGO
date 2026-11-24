@@ -178,6 +178,8 @@ export default function Profile() {
 
       <Group header="Training">
         <Row icon="chart" tile={TILE.green} title="Progress" subtitle="Your log, records and streak" onPress={() => router.push('/progress')} />
+        {/* Your workouts as your friends see them, with your last 12 weeks in a chart. */}
+        {me && <Row icon="workout" tile={TILE.indigo} title="Your workouts" subtitle="As friends see them, with your weeks" onPress={() => router.push({ pathname: '/feed', params: { person: me.id, name: 'You' } })} />}
         {!LIMITED && <Row icon="trophy" tile={TILE.pink} title="Lifetime" subtitle={billing.isPro ? 'Every kilo, rep and hour, added up' : 'Every kilo, rep and hour, added up, with Pro'} onPress={() => router.push('/lifetime')} />}
         <Row icon="workout" tile={TILE.orange} title="My workouts" subtitle="Ones you built or made, to start again" onPress={() => router.push('/workouts')} />
         <Row icon="calendar" tile={TILE.blue} title="Training programme" subtitle="Weeks planned for you, with easier weeks" onPress={() => router.push('/programme')} />

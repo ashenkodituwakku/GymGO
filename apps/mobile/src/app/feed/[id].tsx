@@ -23,11 +23,11 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { ListSkeleton } from '@/components/Skeleton';
 import { Card, Input, LiveLine, PrimaryButton, Txt } from '@/components/ui';
-import { api, problemText, type FeedComment, type FeedItem } from '@/lib/api';
+import { ApiError, api, problemText, type FeedComment, type FeedItem } from '@/lib/api';
 import { startSession, useActiveSession } from '@/lib/activeSession';
 import { againPlan } from '@/lib/again';
 import { useApp } from '@/lib/app-state';
-import { feedExerciseName, feedWhen, firstName, likedLine, muscleSplit, recordsFor } from '@/lib/feed';
+import { feedExerciseName, feedWhen, firstName, friendWorkoutPlan, likedLine, muscleSplit, recordsFor } from '@/lib/feed';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { RECORD_WORD, recordSet } from '@/lib/records';
@@ -40,7 +40,7 @@ export default function FeedWorkoutScreen() {
   useGlassRedraw();
   const router = useRouter();
   const { id = '', comment: wantsComment } = useLocalSearchParams<{ id: string; comment?: string }>();
-  const { account, prefs } = useApp();
+  const { account, prefs, billing } = useApp();
   const token = account.token;
   const active = useActiveSession();
   const [item, setItem] = useState<FeedItem | null>(null);
@@ -160,6 +160,28 @@ export default function FeedWorkoutScreen() {
   const split = item ? muscleSplit(item.exercises) : [];
   // A friend's workout, to do yourself: the same exercises, sets and reps (theirs that they made themselves left out); your weights come from your own log.
   const plan = item && !item.you ? againPlan({ ...item, workoutId: null, gymId: null, exercises: item.exercises.filter((exercise) => !exercise.exerciseId.startsWith('mine-')) }) : null;
+  // Kept as one of yours (Pro: My workouts), as it was done.
+  const [kept, setKept] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const keep = async () => {
+    if (!item || !token) return;
+    if (!billing.isPro) {
+      router.push({ pathname: '/pro', params: { reason: 'workouts' } });
+      return;
+    }
+    const saving = friendWorkoutPlan(item);
+    if (!saving) return;
+    setKept('saving');
+    try {
+      await api.saveWorkout(token, { name: saving.name, gymId: null, plan: saving.plan });
+      haptic.success();
+      setKept('saved');
+    } catch (error) {
+      haptic.warn();
+      setKept('idle');
+      if (error instanceof ApiError && error.code === 'pro_required') router.push({ pathname: '/pro', params: { reason: 'workouts' } });
+      else setProblem(problemText(error));
+    }
+  };
   const doIt = () => {
     if (!plan || !item) return;
     haptic.success();
@@ -249,6 +271,16 @@ export default function FeedWorkoutScreen() {
           {!item.you && (
             <Group footer={active ? 'Finish the workout you’re doing first, then you can start this one.' : 'The same exercises, sets and reps. Your weights come from your own log.'}>
               {plan && !active && <Row icon="play" tile={TILE.green} title="Do this workout" subtitle={`${plan.items.length} exercise${plan.items.length === 1 ? '' : 's'}, as ${firstName(item.person)} did it`} onPress={doIt} />}
+              {plan && (
+                <Row
+                  icon={kept === 'saved' ? 'check' : 'save'}
+                  tile={TILE.orange}
+                  title={kept === 'saved' ? 'Saved to My workouts' : kept === 'saving' ? 'Saving…' : 'Save to my workouts'}
+                  subtitle={kept === 'saved' ? 'Start it any time from My workouts' : billing.isPro ? 'Keep it, to do again' : 'Keep it, to do again (Pro)'}
+                  onPress={kept === 'idle' ? () => void keep() : undefined}
+                  chevron={kept === 'idle'}
+                />
+              )}
               <Row icon="compare" tile={TILE.indigo} title={`Head to head with ${firstName(item.person)}`} subtitle="Your best lifts beside theirs" onPress={() => router.push({ pathname: '/friends/[id]', params: { id: item.person.id, name: item.person.displayName } })} />
             </Group>
           )}
@@ -283,6 +315,7 @@ export default function FeedWorkoutScreen() {
           {item.you && (
             <Group footer={item.hidden ? 'Only you can see this workout.' : 'While you share your workouts, your friends see this one, and its gym if you tagged one. Your notes stay private.'}>
               <Row icon="eyeOff" tile={TILE.indigo} title="Hide from friends" toggle={{ value: item.hidden === true, onChange: (on) => void hide(on) }} />
+              <Row icon="photo" tile={TILE.green} title="Share as a picture" subtitle="Its numbers and exercises, on one card" onPress={() => router.push({ pathname: '/share-workout', params: { id: item.id } })} />
               <Row icon="note" tile={TILE.orange} title="Change this workout" subtitle="Its name, sets or times" onPress={() => router.push({ pathname: '/session-edit', params: { id: item.id } })} />
             </Group>
           )}

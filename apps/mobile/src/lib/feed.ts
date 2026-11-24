@@ -6,6 +6,7 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
+import { againPlan } from './again';
 import { exerciseById, exerciseName, muscleLabel, type Muscle } from './workout';
 import { durationLabel, formatWeight, fromKg, repsWords, workingSets, type LoggedSet, type NewRecord, type WeightUnit } from './training';
 import { RECORD_WORD } from './records';
@@ -142,4 +143,19 @@ export function muscleSplit(exercises: ReadonlyArray<{ exerciseId: string; sets:
     .map(([muscle, count]) => ({ muscle, label: muscleLabel(muscle), share: count / total }))
     .filter((item) => item.share >= 0.05)
     .sort((a, b) => b.share - a.share);
+}
+
+/**
+ * A friend's workout as one of yours to keep (My workouts): the same
+ * exercises, sets and reps (theirs that they made themselves left out), in
+ * the shape a saved workout takes: up to 12 exercises, 10 sets each.
+ */
+export function friendWorkoutPlan(item: Pick<FeedItem, 'name' | 'exercises' | 'unit' | 'startedAt' | 'finishedAt' | 'id'>) {
+  const plan = againPlan({ ...item, workoutId: null, gymId: null, exercises: item.exercises.filter((exercise) => !exercise.exerciseId.startsWith('mine-')) });
+  if (!plan || plan.items.length === 0) return null;
+  const items = plan.items.slice(0, 12).map((entry) => ({ ...entry, sets: Math.min(10, Math.max(1, entry.sets)), reps: entry.reps.slice(0, 20), uses: [] as string[], confirmed: false }));
+  const muscles = muscleSplit(item.exercises)
+    .slice(0, 4)
+    .map((part) => part.muscle);
+  return { name: item.name.slice(0, 80), plan: { muscles, goal: null, gymName: null, items, uncovered: [] as string[] } };
 }

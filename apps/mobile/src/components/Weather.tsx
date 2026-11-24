@@ -13,7 +13,7 @@
 
 import { WEATHER_CREDIT, hoursFrom, tempLabel, tempUnitFor, weatherWords, type Weather, type WeatherHour } from '@gymgo/domain';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, ReduceMotion } from 'react-native-reanimated';
 import { useApp } from '@/lib/app-state';
 import { timeLabel } from '@/lib/copy';
@@ -97,6 +97,7 @@ function useShown() {
 /** Home's Weather: one row, now. */
 export function WeatherCompact() {
   const { state, read, unit, where, timezone } = useShown();
+  const { width } = useWindowDimensions();
   if (state.status !== 'ready' || !read) {
     return (
       <View style={[styles.compact, styles.card]} aria-live="polite">
@@ -111,6 +112,7 @@ export function WeatherCompact() {
   }
   const words = weatherWords(read.current.symbol);
   const temp = tempLabel(read.current.tempC, unit);
+  const phone = width < 600;
   return (
     <Animated.View
       entering={FadeIn.duration(200).easing(ARRIVE_CURVE).reduceMotion(ReduceMotion.System)}
@@ -126,9 +128,9 @@ export function WeatherCompact() {
         <Txt variant="subhead" style={face('semibold')} numberOfLines={1}>
           {words ?? 'Now'}
         </Txt>
-        {/* Short on Home: the place and the source (the screen reader hears the whole line, with when it was made). */}
-        <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
-          {`${capital(where).replace(/^The /, '').replace(/ area$/, '')} · MET Norway`}
+        {/* Short on a phone: the place and the source (the screen reader hears the whole line, with when it was made). */}
+        <Txt variant="caption" color={color.labelSecondary} numberOfLines={phone ? 1 : 2}>
+          {phone ? `${capital(where).replace(/^The /, '').replace(/ area$/, '')} · MET Norway` : `${capital(where)} · MET Norway, ${madeAt(state.weather, timezone)}`}
         </Txt>
       </View>
     </Animated.View>

@@ -15,6 +15,7 @@ import { useCallback, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { FeedCard } from '@/components/FeedCard';
+import { WeeklyChart } from '@/components/WeeklyChart';
 import { Pressable } from '@/components/motion';
 import { HeroMark } from '@/components/HeroMark';
 import { Group, Row, TILE } from '@/components/ios';
@@ -26,6 +27,8 @@ import { ListSkeleton } from '@/components/Skeleton';
 import { Card, LiveLine, PrimaryButton, Txt } from '@/components/ui';
 import { api, problemText, type FeedActivity, type FeedItem } from '@/lib/api';
 import { feedWhen } from '@/lib/feed';
+import { unitFor } from '@/lib/training';
+import { useTrainingLog } from '@/lib/useTraining';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { LIMITED } from '@/lib/limited';
@@ -40,13 +43,17 @@ const ACTIVITY_FIRST = 3;
 export default function FeedScreen() {
   useGlassRedraw();
   const router = useRouter();
+  const { account, prefs } = useApp();
   // One person's workouts (from a friend's page, or your own), or everyone's.
   const { person: personId, name: personName } = useLocalSearchParams<{ person?: string; name?: string }>();
   const only = personId ?? null;
   const [who, setWho] = useState<{ name: string; workouts: number } | null>(null);
+  // Your own: "Your workouts", with your weeks drawn from your log.
+  const mine = only !== null && account.account?.id === only;
   const title = only ? (who?.name ?? personName ?? 'Workouts') : 'Feed';
-  usePageTitle(only ? `${title}’s workouts` : 'Feed');
-  const { account } = useApp();
+  const heading = mine ? 'Your workouts' : only ? `${title}’s workouts` : 'Feed';
+  usePageTitle(heading);
+  const log = useTrainingLog(mine ? account.token : null);
   const token = account.token;
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [next, setNext] = useState<string | null>(null);
@@ -166,7 +173,7 @@ export default function FeedScreen() {
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
-      <ScreenOptions options={{ title: only ? `${title}’s workouts` : 'Feed' }} />
+      <ScreenOptions options={{ title: heading }} />
       <LiveLine>
         {problem && (
           <Txt variant="footnote" color={color.noInk}>
@@ -174,6 +181,9 @@ export default function FeedScreen() {
           </Txt>
         )}
       </LiveLine>
+
+      {/* Yours: your last 12 weeks, as bars. */}
+      {mine && log.sessions.length > 0 && <WeeklyChart sessions={log.sessions} unit={unitFor(prefs.country)} />}
 
       {/* One person's: who, and how many. */}
       {only && who && (

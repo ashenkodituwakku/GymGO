@@ -7,11 +7,13 @@
 
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { Platform, StyleSheet, TextInput, View, type TextInputProps, type TextInputInstance } from 'react-native';
+import { Platform, StyleSheet, TextInput, View, useWindowDimensions, type TextInputProps, type TextInputInstance } from 'react-native';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { serverOfflineLine } from '@/lib/copy';
-import Animated, { ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
-import { FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
+import Animated, { FadeInDown, ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { AuthPerks, AuthShowcase } from '@/components/AuthShowcase';
+import { EASE_OUT, FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
+import { passwordStrength } from '@/lib/passwordStrength';
 import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
@@ -48,6 +50,9 @@ export default function SignInScreen() {
   const params = useLocalSearchParams<{ mode?: string }>();
   const { account } = useApp();
   const router = useRouter();
+  // A wide screen has the form beside a panel that says what GymGO is (components/AuthShowcase.tsx).
+  const { width } = useWindowDimensions();
+  const wide = width >= 960;
   const [mode, setMode] = useState<Mode>(params.mode === 'create' || (params.mode !== 'sign_in' && account.newcomer) ? 'create' : 'sign_in');
   usePageTitle(mode === 'create' ? 'Create an account' : 'Sign in');
   const [name, setName] = useState('');
@@ -215,17 +220,22 @@ export default function SignInScreen() {
   return (
     <PageScroll
       style={styles.page}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, wide && styles.contentWide]}
     >
       <ScreenOptions options={{ title: '' }} />
-      <Animated.View style={styles.hero}>
-        <View style={styles.badge}>
-          <AppBadge size={64} />
-        </View>
-        <Txt variant="largeTitle" style={styles.center} accessibilityRole="header">
+      {wide && <AuthShowcase mode={mode} />}
+      <View style={[styles.column, wide && styles.columnWide]}>
+      <Animated.View entering={FadeInDown.duration(520).easing(EASE_OUT).reduceMotion(ReduceMotion.System)} style={[styles.hero, wide && styles.heroWide]}>
+        {/* The panel beside a wide form shows the logo already. */}
+        {!wide && (
+          <View style={styles.badge}>
+            <AppBadge size={64} />
+          </View>
+        )}
+        <Txt variant="largeTitle" style={!wide && styles.center} accessibilityRole="header">
           {mode === 'create' ? 'Join GymGO' : 'Welcome back'}
         </Txt>
-        <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
+        <Txt variant="subhead" color={color.labelSecondary} style={!wide && styles.center}>
           {mode === 'create'
             ? ACCOUNT_OPTIONAL
               ? 'Make a free account to save gyms on every device, write reviews and keep your training log.'
@@ -234,6 +244,7 @@ export default function SignInScreen() {
               ? 'Sign in to pick up your saved gyms, workouts and training log.'
               : 'Sign in to find gyms, and pick up your saved gyms, workouts and training log.'}
         </Txt>
+        {mode === 'create' && !wide && <AuthPerks />}
       </Animated.View>
 
       <Segmented
@@ -349,6 +360,7 @@ export default function SignInScreen() {
             </Txt>
           </Animated.View>
         )}
+        {mode === 'create' && password.length >= 8 && <StrengthMeter password={password} hints={[name, email.split('@')[0] ?? '']} />}
         {mode === 'create' && <BornField value={born} onChange={setBorn} onSubmit={() => void submit()} />}
         {mode === 'create' && <TermsBox agreed={agreed} onChange={setAgreed} />}
       </Animated.View>
@@ -393,7 +405,31 @@ export default function SignInScreen() {
           </Txt>
         </Pressable>
       )}
+      </View>
     </PageScroll>
+  );
+}
+
+/**
+ * How strong a new password looks (lib/passwordStrength.ts): four bars that
+ * fill and colour as it grows, and a word. Advice: 8 characters is still the
+ * only rule.
+ */
+function StrengthMeter({ password, hints }: { password: string; hints: string[] }) {
+  const strength = passwordStrength(password, hints);
+  const tone = strength.score <= 1 ? color.danger : strength.score === 2 ? color.maybe : color.good;
+  const ink = strength.score <= 1 ? color.dangerInk : strength.score === 2 ? color.maybeInk : color.goodInk;
+  return (
+    <View style={styles.meter} accessible accessibilityLabel={`Password strength: ${strength.label}`}>
+      <View style={styles.meterBars}>
+        {[1, 2, 3, 4].map((bar) => (
+          <View key={bar} style={[styles.meterBar, bar <= strength.score && { backgroundColor: tone }]} />
+        ))}
+      </View>
+      <Txt variant="footnote" color={ink} style={[face('semibold'), styles.meterLabel]}>
+        {strength.label}
+      </Txt>
+    </View>
   );
 }
 
@@ -519,8 +555,13 @@ function AuthField({
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
-    content: { padding: space[4], paddingBottom: space[8], gap: space[4], width: '100%', maxWidth: 460, alignSelf: 'center' },
+    content: { padding: space[4], paddingBottom: space[8], width: '100%', maxWidth: 460, alignSelf: 'center' },
+    // Wide: the panel and the form side by side, the form its usual width.
+    contentWide: { maxWidth: 1120, flexDirection: 'row', alignItems: 'stretch', gap: space[8], padding: space[6] },
+    column: { gap: space[4] },
+    columnWide: { width: 420, justifyContent: 'center', paddingVertical: space[6] },
     hero: { alignItems: 'center', gap: space[2], marginTop: space[2], marginBottom: space[1] },
+    heroWide: { alignItems: 'flex-start' },
     badge: { borderRadius: 14.4, marginBottom: space[2], ...dropShadow(0.18, 12, 6, 6) },
     center: { textAlign: 'center' },
     flex: { flex: 1 },
@@ -548,6 +589,10 @@ const styles = themed(() =>
     pending: { gap: space[3] },
     bornWrap: { gap: space[1] },
     rule: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[1] },
+    meter: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginLeft: space[1] },
+    meterBars: { flex: 1, flexDirection: 'row', gap: 4 },
+    meterBar: { flex: 1, height: 5, borderRadius: 3, backgroundColor: color.fill },
+    meterLabel: { minWidth: 56, textAlign: 'right' },
     error: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },
     small: { textAlign: 'center', marginTop: space[2] },
     terms: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginLeft: space[1], marginTop: space[1] },

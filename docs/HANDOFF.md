@@ -296,6 +296,18 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Scroll tour and sign-up page** (24 Nov, Update 261). app/welcome.tsx:
+  one Animated.ScrollView; `Hero`, three `Scene`s (`SCENE` = 2.1 screens
+  each: a stage `screen` tall that holds while `progress` runs 0 to 1) and
+  `Finale`. Holding is `position: sticky` on the web (`STICKY`) and a
+  translateY from the scroll handler on phones. Parts' visuals animate from
+  `progress` with `eased`/`rise` worklets. `useCalm()` drops the holding and
+  shows everything finished. Next scrolls to each part's top + 90% of its
+  span; `room` comes from onContentSizeChange as well as onScroll (the first
+  Next went nowhere without it). components/SampleCard.tsx (Common, Rare,
+  Legendary looks; no gym names) is shared with components/AuthShowcase.tsx
+  (the wide sign-in panel, `width >= 960`; `AuthPerks` on a phone).
+  lib/passwordStrength.ts feeds `StrengthMeter` in sign-in.tsx.
 - **Timed and distance sets** (24 Nov, Update 256). `LoggedSet.seconds` /
   `.metres` (packages/domain/src/lifting.ts) with reps 0; `isDoneSet`
   (workingSets uses it), `isTimedSet`, `secondsLabel`, `distanceLabel`;

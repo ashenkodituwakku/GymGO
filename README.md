@@ -1097,9 +1097,14 @@ up, resetting a password, the legal pages, bug reports, Stripe's callbacks,
 Pro's prices and image files (phones and browsers load those without the
 app's sign-in; each is reached only from a signed-in screen). A route added
 later is closed unless it's put on that list. Straight after making an
-account there's a **welcome tour** (three pages: find a gym that lets you
-in, know what to do there, collect it; Skip any time), then on to where you
-were going.
+account there's a **welcome tour**, one page you scroll, as a product page
+plays as you scroll: find a gym that lets you in (pins drop, one opens),
+know what to do there (sets tick off, a record, the rest), collect it
+(cards fan out). Each part holds still while your scrolling plays it.
+**Next** plays the next part, Skip leaves any time, and with Reduce Motion
+every part is simply shown. Then on to where you were going. The sign-up
+page has a brand panel beside the form on a wide screen, and a password
+strength meter (advice only; 8 characters is the rule).
 
 Your saved gyms follow you between your PC and your phone, and you can
 write reviews. Accounts live in the GymGO server's database:

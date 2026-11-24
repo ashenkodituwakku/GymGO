@@ -9,6 +9,46 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 261 · A welcome tour you scroll, and a better sign-up page
+
+*24 Nov 2026 · the commit "Welcome tour you scroll, as a product page; sign-up page with a brand panel and a password meter"*
+
+You asked to make the onboarding look cool and interactive, with scroll animations like Apple's, and to upgrade the sign-up page.
+
+- **The welcome tour is one page you scroll**, shown once after making an account, as a product page plays as you scroll:
+  - **It opens big:** the badge settles in, "Welcome to GymGO" in large type, then "Find a gym. Train. Collect it." word by word. It drifts up and away as you start to scroll.
+  - **Find:** this part holds on screen while your scrolling plays it.
+    - Pins drop onto a map, green, amber and grey, each with a small bounce.
+    - One grows as it's picked.
+    - A card rises from below: "Lets visitors in", price of a visit and guest hours "Published", what to bring "Call first".
+  - **Train:** a bench press card with the lifter moving.
+    - The three sets tick off one by one, and "Heaviest yet" lands on the last.
+    - The rest bar fills.
+  - **Collect:** three cards (Common, Legendary, Rare) fan out from a stack.
+    - The Legendary one rises, and a band of light sweeps across it.
+    - The Bronze, Silver, Gold and Platinum tiers follow.
+  - **The end:** "You're all set", and **Get started**.
+- **Moving through it:**
+  - A thin bar under the top shows how far through you are.
+  - **Next** scrolls on to where the next part has played through, so it plays; **Skip** leaves at any time.
+  - On a wide screen each part has its words on the left and its picture on the right.
+  - With Reduce Motion on (the phone's, or Appearance's), nothing holds or moves: every part is shown finished, one after another.
+- **Nothing on the tour is a real gym:** no names, prices or photos. The cards have bars where a name goes.
+- **The sign-up page:**
+  - **On a wide screen,** the form sits beside a deep violet panel. It has the logo, "Find a gym. Train. Collect it." ("Good to see you again." when signing in), GymGO's three things, and three sample cards drifting gently at the foot.
+  - **On a phone,** the heading eases in, and making an account shows what's free with one: Save gyms, Log workouts, Collect cards.
+  - **A password strength meter:** four bars and a word (Weak, Okay, Good, Strong). Length counts most, then a mix of kinds of character. A well-known password, or one with your name or email in it, is called weak. It's advice only: 8 characters is still the only rule.
+  - Everything else on the page is as it was: the age question, the terms, Apple and Google, Forgot your password.
+
+- Checked: every package's tests, lint and typecheck pass (app 663, with 3 new for the meter; server 360; domain 205). In a browser against the local server:
+  - the tour at 390 light, 1280 dark and with Reduce Motion, screenshotted part by part as it scrolled;
+  - Next stepping through all parts to Get started, then Home;
+  - the sign-up page at 390 light, 1280 dark and 1440 light, in both modes;
+  - the meter saying Strong and Weak;
+  - no sideways scroll;
+  - a new local test account made, which landed on the tour.
+- Not checked: on a phone. There a part holds by moving with the scroll on the UI thread rather than the browser's `position: sticky`, so how smoothly it holds there is unseen.
+
 ## Update 260 · Text fields keep their box in Windows High Contrast; timed sets checked end to end
 
 *24 Nov 2026 · the commit "Text fields keep their box in High Contrast"*

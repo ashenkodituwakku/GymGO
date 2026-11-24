@@ -84,6 +84,10 @@ describe('head to head', () => {
     expect(ahead({ heaviestKg: 100, e1rmKg: 110, mostReps: null }, { heaviestKg: 90, e1rmKg: 120, mostReps: null })).toBe('you');
     expect(ahead({ heaviestKg: 100, e1rmKg: 110, mostReps: null }, { heaviestKg: 100, e1rmKg: 120, mostReps: null })).toBe('them');
     expect(ahead({ heaviestKg: null, e1rmKg: null, mostReps: 12 }, { heaviestKg: null, e1rmKg: null, mostReps: 12 })).toBeNull();
+    // A plank by its longest, a carry by its furthest.
+    expect(ahead({ heaviestKg: null, e1rmKg: null, mostReps: null, longestSeconds: 90 }, { heaviestKg: null, e1rmKg: null, mostReps: null, longestSeconds: 75 })).toBe('you');
+    expect(bestLine({ heaviestKg: null, e1rmKg: null, mostReps: null, longestSeconds: 90 }, 'kg')).toEqual({ main: '1:30', under: 'longest' });
+    expect(bestLine({ heaviestKg: null, e1rmKg: null, mostReps: null, furthestMetres: 40 }, 'kg')).toEqual({ main: '40\u00a0m', under: 'furthest' });
   });
 });
 

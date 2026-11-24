@@ -280,6 +280,24 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Timed and distance sets** (24 Nov, Update 256). `LoggedSet.seconds` /
+  `.metres` (packages/domain/src/lifting.ts) with reps 0; `isDoneSet`
+  (workingSets uses it), `isTimedSet`, `secondsLabel`, `distanceLabel`;
+  records `longestSeconds`/`furthestMetres`, NewRecord kinds `longest` and
+  `furthest` (RECORD_WORD, RANK, insights' RECORD_KIND). The server's
+  `cleanTrainingSession` takes whole seconds ≤ 6 h and metres ≤ 100 km,
+  and the "at least one set" check uses `isDoneSet`. App: `setMeasure(id,
+  planReps)` in lib/workout.ts decides reps/time/distance (TIMED set,
+  farmer-carry, cardio, else the plan's "s"/"m"); `DraftSet.time` /
+  `.distance`; `parseTime`, `tidyTime`, `parseDistance`, `timedSetLine`,
+  `setLine`, `TIMED_METRICS` in lib/training.ts; `draftToLogged` takes a
+  `measure` per item; `bestSoFar(..., measure)`. train.tsx: `timedFor`
+  (Previous, else the set above, else the plan), the stopwatch (`watch`,
+  `Stopwatch`; ticking while it runs uses its time), `liftedSoFar` in the
+  header. sessionEdit.ts `EditedExercise.measure`. Head to head has
+  optional `longestSeconds`/`furthestMetres`. CSV: `seconds`, `metres`
+  last. Older app builds ignore timed sets (their workingSets needs reps),
+  and an old build's Edit workout would drop them on save.
 - **Weekly chart, save a friend's, share a picture; Home roomy on phones
   only** (24 Nov, Update 255). Home (app/(tabs)/index.tsx) is roomy only
   when `width < 600` (`roomy`): pills, the lifter card, the templates link

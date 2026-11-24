@@ -26,6 +26,7 @@ import { timeLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import {
+  distanceLabel,
   durationLabel,
   formatWeight,
   fromKg,
@@ -37,6 +38,7 @@ import {
   unitFor,
   volumeKg,
   streakOf,
+  secondsLabel,
   type TrainingSession,
 } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -291,7 +293,11 @@ export default function ProgressScreen() {
                         ? `Heaviest ${keepTogether(`${formatWeight(Number(fromKg(record.heaviestKg!, unit).toFixed(1)), unit)} × ${best.reps}`)}`
                         : record.mostReps !== null
                           ? `Most reps ${record.mostReps}`
-                          : 'No sets yet'}
+                          : record.longestSeconds !== null
+                            ? `Longest ${secondsLabel(record.longestSeconds)}`
+                            : record.furthestMetres !== null
+                              ? `Furthest ${distanceLabel(record.furthestMetres)}`
+                              : 'No sets yet'}
                     </Txt>
                   </View>
                   {/* The estimated 1-rep max on the right, the figure to watch grow. */}

@@ -31,7 +31,7 @@ import { feedExerciseName, feedWhen, firstName, friendWorkoutPlan, likedLine, mu
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { RECORD_WORD, recordSet } from '@/lib/records';
-import { formatWeight, setTags, unitFor, type LoggedSet, type NewRecord, type WeightUnit } from '@/lib/training';
+import { formatWeight, isDoneSet, isTimedSet, setLine, setTags, unitFor, type LoggedSet, type NewRecord, type WeightUnit } from '@/lib/training';
 import { color, face, radius, space, themed } from '@/lib/theme';
 
 const MAX_COMMENT = 300;
@@ -380,10 +380,10 @@ export default function FeedWorkoutScreen() {
   );
 }
 
-/** Each set: its tag (W, 1, 2, D), the weight and reps, how hard it was, and a trophy on the set that made a record. */
+/** Each set: its tag (W, 1, 2, D), the weight and reps (or a time or distance), how hard it was, and a trophy on the set that made a record. */
 function SetTable({ sets, unit, records }: { sets: LoggedSet[]; unit: WeightUnit; records: NewRecord[] }) {
   const tags = setTags(sets);
-  const done = sets.map((set, at) => ({ set, tag: tags[at]! })).filter(({ set }) => set.reps > 0);
+  const done = sets.map((set, at) => ({ set, tag: tags[at]! })).filter(({ set }) => isDoneSet(set));
   // The set each record came from (the same set object, so it can be found among them).
   const made = new Map<LoggedSet, string>();
   const alone = { id: '', name: '', unit, startedAt: '', finishedAt: '', workoutId: null, gymId: null, exercises: [{ exerciseId: 'this', sets }] };
@@ -394,12 +394,12 @@ function SetTable({ sets, unit, records }: { sets: LoggedSet[]; unit: WeightUnit
   return (
     <View style={styles.sets}>
       {done.map(({ set, tag }, at) => (
-        <View key={at} style={[styles.set, at % 2 === 0 && styles.setShaded]} accessible accessibilityLabel={`${tag.spoken}: ${set.weight ? `${formatWeight(set.weight, unit)}, ` : ''}${set.reps} reps${set.rpe ? `, RPE ${set.rpe}` : ''}${made.has(set) ? `. ${made.get(set)}` : ''}`}>
+        <View key={at} style={[styles.set, at % 2 === 0 && styles.setShaded]} accessible accessibilityLabel={`${tag.spoken}: ${isTimedSet(set) ? setLine(set, unit) : `${set.weight ? `${formatWeight(set.weight, unit)}, ` : ''}${set.reps} reps`}${set.rpe ? `, RPE ${set.rpe}` : ''}${made.has(set) ? `. ${made.get(set)}` : ''}`}>
           <Txt variant="subhead" color={set.kind ? color.maybeInk : color.labelSecondary} style={[styles.setTag, face('semibold')]}>
             {tag.tag}
           </Txt>
           <Txt variant="subhead" style={styles.flex}>
-            {set.weight ? `${formatWeight(set.weight, unit)} × ${set.reps}` : `${set.reps} reps`}
+            {setLine(set, unit)}
           </Txt>
           {set.rpe !== undefined && (
             <Txt variant="footnote" color={color.labelSecondary}>

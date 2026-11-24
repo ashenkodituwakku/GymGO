@@ -376,6 +376,25 @@ const TIMED = new Set(['plank', 'side-plank', 'superman', 'copenhagen', 'wall-si
 type Measure = 'reps' | 'time' | 'distance';
 const measureOf = (exercise: Exercise): Measure => (TIMED.has(exercise.id) || exercise.timed ? 'time' : exercise.id === 'farmer-carry' ? 'distance' : 'reps');
 
+/**
+ * How a set of this exercise is logged while you train: reps, a time (a
+ * hold, or a cardio finisher such as a rower or bike sprints) or a distance
+ * (a carry). From what GymGO knows of the exercise, else from its plan:
+ * "30–40 m" is a distance, "30–45 s" (or anything that isn't reps) a time.
+ */
+export function setMeasure(exerciseId: string, planReps = ''): Measure {
+  const exercise = exerciseById(exerciseId);
+  if (exercise) {
+    const measure = measureOf(exercise);
+    if (measure !== 'reps') return measure;
+    if (exercise.cardio) return 'time';
+  }
+  const plan = planReps.trim();
+  if (!plan) return 'reps';
+  if (/\d\s*m$/.test(plan)) return 'distance';
+  return /^\d+(?:\s*[–-]\s*\d+)?$/.test(plan) ? 'reps' : 'time';
+}
+
 /** Sets, reps (or a time or distance) and rest for an exercise, as the builder plans it for a goal. */
 export function doseFor(exercise: Exercise, goal: Goal): { sets: number; reps: string; restSeconds: number; measure: Measure } {
   const [sets, reps, restSeconds] = DOSE[goal][exercise.compound ? 'compound' : 'isolation'];

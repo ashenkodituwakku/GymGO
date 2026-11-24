@@ -640,6 +640,16 @@ workouts go to your log.
   about 40%, 60% and 80% of your working weight for 5, 3 and 2 (your gym's
   plates, if you've set them), before the first working set; asking again
   replaces the ones not done yet.
+- **Holds, cardio and carries.** A plank, wall sit, hollow hold, rower or
+  bike sprints is logged by **time**: type "1:30" (or "90"), or tap ▶ for
+  a **stopwatch** on that set and tap again to stop, which puts its time in
+  and ticks it. A farmer's carry is logged by the weight carried and
+  **metres**. A blank one stands for last time's at the same place, else
+  the set above, else the plan. They have their own records (**Longest
+  yet**, **Furthest yet**) and chart, add nothing to the weight lifted, and
+  show everywhere a set does ("Plank 1:15, 1:00"); the CSV has seconds and
+  metres columns at the end. The top of a workout says the weight lifted so
+  far.
 - **RPE** (Profile → Settings → **RPE on sets**, off until you switch it
   on): a ticked set asks how hard it was, 6 to 10 in half steps, each
   said in reps you had left (10 is nothing left, 8 is two more). It shows

@@ -8,7 +8,7 @@
 
 import { againPlan } from './again';
 import { exerciseById, exerciseName, muscleLabel, type Muscle } from './workout';
-import { durationLabel, formatWeight, fromKg, repsWords, workingSets, type LoggedSet, type NewRecord, type WeightUnit } from './training';
+import { distanceLabel, durationLabel, formatWeight, fromKg, isTimedSet, repsWords, secondsLabel, timedSetLine, workingSets, type LoggedSet, type NewRecord, type WeightUnit } from './training';
 import { RECORD_WORD } from './records';
 import type { FeedItem, FeedPerson, HeadToHeadBest } from './api';
 
@@ -50,9 +50,18 @@ export function likedLine(item: Pick<FeedItem, 'likes' | 'liked' | 'likedBy'>): 
 /** An exercise's name in the feed: the one its owner gave theirs, or GymGO's. */
 export const feedExerciseName = (exercise: { exerciseId: string; name?: string }) => exercise.name ?? exerciseName(exercise.exerciseId);
 
-/** The best working set, for a one-line summary: the heaviest ("100 kg × 5"), or the most reps at body weight ("15 reps"). */
+/**
+ * The best working set, for a one-line summary: the heaviest ("100 kg × 5"),
+ * or the most reps at body weight ("15 reps"); by the clock or the tape, the
+ * longest ("1:30") or furthest ("24 kg × 40 m").
+ */
 export function bestSetLine(sets: readonly LoggedSet[], unit: WeightUnit): string {
-  const working = workingSets(sets);
+  const timed = workingSets(sets).filter(isTimedSet);
+  if (timed.length > 0) {
+    const best = [...timed].sort((a, b) => (b.metres ?? 0) - (a.metres ?? 0) || (b.seconds ?? 0) - (a.seconds ?? 0))[0]!;
+    return timedSetLine(best, unit);
+  }
+  const working = workingSets(sets).filter((set) => !isTimedSet(set));
   const weighted = working.filter((set) => set.weight !== null && set.weight > 0);
   if (weighted.length > 0) {
     const best = [...weighted].sort((a, b) => b.weight! - a.weight! || b.reps - a.reps)[0]!;
@@ -105,15 +114,19 @@ export function bestLine(best: HeadToHeadBest, unit: WeightUnit): { main: string
   const weight = (kg: number) => formatWeight(Math.round(fromKg(kg, unit) * 2) / 2, unit);
   if (best.heaviestKg !== null) return { main: weight(best.heaviestKg), under: best.e1rmKg !== null ? `1-rep max ${weight(best.e1rmKg)}` : null };
   if (best.mostReps !== null) return { main: repsWords([best.mostReps]), under: null };
+  if (best.longestSeconds) return { main: secondsLabel(best.longestSeconds), under: 'longest' };
+  if (best.furthestMetres) return { main: distanceLabel(best.furthestMetres), under: 'furthest' };
   return { main: '—', under: null };
 }
 
-/** Who's ahead on an exercise: the heavier lift, else the stronger set, else more reps; null for level, or nothing to compare. */
+/** Who's ahead on an exercise: the heavier lift, else the stronger set, else more reps, else longer or further; null for level, or nothing to compare. */
 export function ahead(you: HeadToHeadBest, them: HeadToHeadBest): 'you' | 'them' | null {
   const pairs: Array<[number | null, number | null]> = [
     [you.heaviestKg, them.heaviestKg],
     [you.e1rmKg, them.e1rmKg],
     [you.mostReps, them.mostReps],
+    [you.longestSeconds ?? null, them.longestSeconds ?? null],
+    [you.furthestMetres ?? null, them.furthestMetres ?? null],
   ];
   for (const [a, b] of pairs) {
     if (a === null || b === null) continue;

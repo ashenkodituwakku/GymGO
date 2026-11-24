@@ -10,8 +10,12 @@
 import {
   LB_PER_KG,
   byFinish as byDate,
+  distanceLabel,
   fromKg,
+  isDoneSet,
+  isTimedSet,
   oneRepMax,
+  secondsLabel,
   toKg,
   workingSets,
   type ExerciseRecords,
@@ -27,11 +31,15 @@ import {
 // What a session is and its records are shared with the server (packages/domain/src/lifting.ts), so friends see the same records you do.
 export {
   LB_PER_KG,
+  distanceLabel,
   fromKg,
+  isDoneSet,
+  isTimedSet,
   oneRepMax,
   personalRecords,
   recordsBroken,
   setCount,
+  secondsLabel,
   toKg,
   volumeKg,
   workingSets,
@@ -121,7 +129,7 @@ const RPE_MEANS: Record<string, string> = {
 export const rpeMeaning = (rpe: number) => RPE_MEANS[String(rpe)] ?? '';
 
 /** How many warm-up sets were done. */
-export const warmUpCount = (sets: ReadonlyArray<{ reps: number; kind?: SetKind }>) => sets.filter((set) => set.reps > 0 && set.kind === 'warmup').length;
+export const warmUpCount = (sets: ReadonlyArray<{ reps: number; kind?: SetKind; seconds?: number; metres?: number }>) => sets.filter((set) => isDoneSet(set) && set.kind === 'warmup').length;
 
 // --- Strength ------------------------------------------------------------------
 
@@ -152,11 +160,43 @@ export const repsWords = (reps: number[]) => `${reps.join(', ')} ${reps.length =
 const repsOf = (set: LoggedSet) => (set.kind === 'failure' ? `${set.reps} to failure` : set.kind === 'drop' ? `${set.reps} (drop)` : String(set.reps));
 
 /**
+ * One set by the clock or the tape: "1:30", "45 s", "20 kg · 1:00" (a plate
+ * on a plank), "24 kg × 40 m" (a carry), "400 m in 1:45".
+ */
+export function timedSetLine(set: LoggedSet, unit: WeightUnit, clock = false): string {
+  const weight = set.weight !== null && set.weight > 0 ? formatWeight(set.weight, unit) : null;
+  // In a list with a minute or more in it, every time as a clock ("1:15, 0:45"), not "1:15, 45 s".
+  const said = (seconds: number) => (clock ? clockLabel(seconds) : secondsLabel(seconds));
+  if (set.metres) {
+    const far = distanceLabel(set.metres);
+    const line = set.seconds ? `${far} in ${said(set.seconds)}` : far;
+    return weight ? `${weight} × ${line}` : line;
+  }
+  const time = said(set.seconds ?? 0);
+  return weight ? `${weight} · ${time}` : time;
+}
+
+/** Any one set, as a line: "100 kg × 5", "12 reps", "1:30", "24 kg × 40 m". */
+export function setLine(set: LoggedSet, unit: WeightUnit): string {
+  if (isTimedSet(set)) return timedSetLine(set, unit);
+  return set.weight !== null && set.weight > 0 ? `${formatWeight(set.weight, unit)} × ${set.reps}` : repsWords([set.reps]);
+}
+
+/**
  * "60 kg × 10, 10, 9", "12, 10 reps" for body weight, "60 kg × 10 · 62.5 kg
  * × 8". The working sets, saying which went to failure or were drop sets,
- * and how many warm-ups came first ("· 2 warm-ups").
+ * and how many warm-ups came first ("· 2 warm-ups"). Sets by the clock or
+ * the tape say their time or distance ("0:45, 1:00").
  */
 export function setsSummary(sets: LoggedSet[], unit: WeightUnit): string {
+  const timed = workingSets(sets).filter(isTimedSet);
+  if (timed.length > 0) {
+    const clock = timed.length > 1 && timed.some((set) => (set.seconds ?? 0) >= 60);
+    const parts = timed.map((set) => timedSetLine(set, unit, clock));
+    const warmUps = warmUpCount(sets);
+    if (warmUps) parts.push(`${warmUps} warm-up${warmUps === 1 ? '' : 's'}`);
+    return parts.join(', ');
+  }
   const groups: Array<{ weight: number | null; sets: LoggedSet[] }> = [];
   for (const set of workingSets(sets)) {
     const last = groups[groups.length - 1];
@@ -316,7 +356,7 @@ export function warmUpSets(working: number, unit: WeightUnit, bar = BAR[unit], p
 // --- Over time -------------------------------------------------------------------
 
 /** What an exercise's chart can follow over time. */
-export type ExerciseMetric = 'e1rm' | 'heaviest' | 'setVolume' | 'sessionVolume' | 'reps';
+export type ExerciseMetric = 'e1rm' | 'heaviest' | 'setVolume' | 'sessionVolume' | 'reps' | 'longest' | 'furthest';
 
 export const EXERCISE_METRICS: ReadonlyArray<{ id: ExerciseMetric; label: string; title: string; about: string }> = [
   { id: 'e1rm', label: '1-rep max', title: 'Estimated 1-rep max', about: 'Each point is your best set that day, as an estimated 1-rep max (sets of 12 reps or fewer).' },
@@ -326,9 +366,17 @@ export const EXERCISE_METRICS: ReadonlyArray<{ id: ExerciseMetric; label: string
   { id: 'reps', label: 'Reps', title: 'Reps that day', about: 'Each point is every working rep you did that day.' },
 ];
 
+/** The charts for work by the clock (a plank) or the tape (a carry). */
+export const TIMED_METRICS: ReadonlyArray<{ id: ExerciseMetric; label: string; title: string; about: string }> = [
+  { id: 'longest', label: 'Longest', title: 'Longest set', about: 'Each point is your longest set that day, in seconds.' },
+  { id: 'furthest', label: 'Furthest', title: 'Furthest set', about: 'Each point is your furthest set that day, in metres.' },
+];
+
 /** One session's value for a metric, in kg (or reps); 0 when it has none (a body-weight set has no weight). */
 function sessionValue(sets: LoggedSet[], unit: WeightUnit, metric: ExerciseMetric): number {
-  const working = workingSets(sets);
+  const all = workingSets(sets);
+  // A weight's charts count lifts in reps; a plank's plate isn't a lift.
+  const working = metric === 'longest' || metric === 'furthest' ? all : all.filter((set) => !isTimedSet(set));
   const kgOf = (set: LoggedSet) => (set.weight && set.weight > 0 ? toKg(set.weight, unit) : 0);
   switch (metric) {
     case 'e1rm':
@@ -341,6 +389,10 @@ function sessionValue(sets: LoggedSet[], unit: WeightUnit, metric: ExerciseMetri
       return working.reduce((sum, set) => sum + kgOf(set) * set.reps, 0);
     case 'reps':
       return working.reduce((sum, set) => sum + set.reps, 0);
+    case 'longest':
+      return Math.max(0, ...working.map((set) => (isTimedSet(set) ? (set.seconds ?? 0) : 0)));
+    case 'furthest':
+      return Math.max(0, ...working.map((set) => (isTimedSet(set) ? (set.metres ?? 0) : 0)));
   }
 }
 
@@ -390,7 +442,7 @@ export function repRecords(sessions: TrainingSession[], exerciseId: string): Rep
     for (const logged of session.exercises) {
       if (logged.exerciseId !== exerciseId) continue;
       for (const set of workingSets(logged.sets)) {
-        if (!set.weight || set.weight <= 0 || set.reps > 20) continue;
+        if (!set.weight || set.weight <= 0 || set.reps < 1 || set.reps > 20) continue;
         const kg = toKg(set.weight, session.unit);
         const now = best.get(set.reps);
         if (!now || kg > now.kg + 1e-9) best.set(set.reps, { reps: set.reps, kg, set: { weight: set.weight, reps: set.reps, unit: session.unit, date: session.finishedAt } });
@@ -547,6 +599,61 @@ export interface DraftSet {
   /** Absent for an ordinary set. */
   kind?: SetKind;
   rpe?: number;
+  /** For work by the clock: the time as typed ("1:30", "90"). */
+  time?: string;
+  /** For a carry or a run: the distance as typed, in metres ("40", "1.2 km"). */
+  distance?: string;
+}
+
+/** How a set of an exercise is measured: reps, a time (a plank, a bike sprint) or a distance (a carry). */
+export type SetMeasure = 'reps' | 'time' | 'distance';
+
+/** Six hours: no set lasts longer. */
+const MAX_SECONDS = 6 * 3600;
+
+/**
+ * A typed time, in whole seconds: "90" or "90 s" is 90, "1:30" is 90,
+ * "1:05:00" is 3,900, "2 min" is 120, "1m 30s" is 90. Blank or unreadable,
+ * or over six hours, is undefined.
+ */
+export function parseTime(text: string): number | undefined {
+  const clean = text.trim().toLowerCase().replace(',', '.');
+  if (!clean) return undefined;
+  let seconds: number | undefined;
+  const clock = /^(?:(\d{1,2}):)?(\d{1,3}):(\d{1,2})$/.exec(clean);
+  const words = /^(?:(\d{1,3})\s*(?:m|min|mins|minutes?))?\s*(?:(\d{1,4})\s*(?:s|sec|secs|seconds?))?$/.exec(clean);
+  if (clock) {
+    const secs = Number(clock[3]);
+    if (secs < 60) seconds = Number(clock[1] ?? 0) * 3600 + Number(clock[2]) * 60 + secs;
+  } else if (/^\d{1,5}$/.test(clean)) seconds = Number(clean);
+  else if (/^\d{1,3}(\.\d)?\s*(m|min|mins|minutes?)$/.test(clean)) seconds = Math.round(parseFloat(clean) * 60);
+  else if (words && (words[1] || words[2])) seconds = Number(words[1] ?? 0) * 60 + Number(words[2] ?? 0);
+  return seconds !== undefined && seconds >= 1 && seconds <= MAX_SECONDS ? seconds : undefined;
+}
+
+/** A typed time tidied to a clock ("90" → "1:30", "45" → "0:45"); anything unreadable comes back as typed. */
+export function tidyTime(text: string): string {
+  const seconds = parseTime(text);
+  return seconds === undefined ? text : clockLabel(seconds);
+}
+
+/**
+ * A typed distance, in metres: "40" or "40 m" is 40, "1.2 km" is 1,200,
+ * "0,4km" is 400. Whole metres, 1 m to 100 km; anything else is undefined.
+ */
+export function parseDistance(text: string): number | undefined {
+  const clean = text.trim().toLowerCase().replace(',', '.');
+  const match = /^(\d{1,6}(?:\.\d{1,3})?)\s*(m|metres?|meters?|km|kms|kilometres?|kilometers?)?$/.exec(clean);
+  if (!match) return undefined;
+  const value = Number(match[1]) * (match[2]?.startsWith('k') ? 1000 : 1);
+  const metres = Math.round(value);
+  return metres >= 1 && metres <= 100_000 ? metres : undefined;
+}
+
+/** A typed distance tidied to whole metres ("1.2 km" → "1200"); unreadable comes back as typed. */
+export function tidyDistance(text: string): string {
+  const metres = parseDistance(text);
+  return metres === undefined ? text : String(metres);
 }
 
 /**
@@ -609,12 +716,25 @@ export function parseReps(text: string): number | undefined {
  * recordsBroken: an exercise's first time sets a baseline, not a record,
  * and a heavier weight counts first, then a stronger set.
  */
-export function bestSoFar(sets: DraftSet[], unit: WeightUnit, before: ExerciseRecords | undefined): Array<NewRecord['kind'] | null> {
+export function bestSoFar(sets: DraftSet[], unit: WeightUnit, before: ExerciseRecords | undefined, measure: SetMeasure = 'reps'): Array<NewRecord['kind'] | null> {
   if (!before || before.sessions === 0) return sets.map(() => null);
-  let { heaviestKg, e1rmKg, mostReps, setVolumeKg } = before;
+  let { heaviestKg, e1rmKg, mostReps, setVolumeKg, longestSeconds, furthestMetres } = before;
   return sets.map((set) => {
     // A warm-up is never a record.
     if (!set.done || set.kind === 'warmup') return null;
+    // By the clock or the tape: longer or further than ever, against a time or distance you'd logged before.
+    if (measure === 'time') {
+      const seconds = parseTime(set.time ?? '');
+      if (seconds === undefined || longestSeconds === null || seconds <= longestSeconds) return null;
+      longestSeconds = seconds;
+      return 'longest';
+    }
+    if (measure === 'distance') {
+      const metres = parseDistance(set.distance ?? '');
+      if (metres === undefined || furthestMetres === null || metres <= furthestMetres) return null;
+      furthestMetres = metres;
+      return 'furthest';
+    }
     const weight = parseWeight(set.weight);
     const reps = parseReps(set.reps);
     if (weight === undefined || reps === undefined || reps < 1) return null;
@@ -638,13 +758,20 @@ export function bestSoFar(sets: DraftSet[], unit: WeightUnit, before: ExerciseRe
 }
 
 /** The sets you ticked, as they'll be kept. Sets left unticked, or unreadable, aren't logged. */
-export function draftToLogged(items: Array<{ exerciseId: string; sets: DraftSet[] }>): LoggedExercise[] {
+export function draftToLogged(items: Array<{ exerciseId: string; sets: DraftSet[]; measure?: SetMeasure }>): LoggedExercise[] {
   return items
     .map((item) => ({
       exerciseId: item.exerciseId,
-      sets: item.sets.flatMap((set) => {
+      sets: item.sets.flatMap((set): LoggedSet[] => {
         if (!set.done) return [];
         const weight = parseWeight(set.weight);
+        if (item.measure === 'time' || item.measure === 'distance') {
+          // A time or distance, and any weight added or carried; reps 0. Without one it isn't logged.
+          const seconds = parseTime(set.time ?? '');
+          const metres = item.measure === 'distance' ? parseDistance(set.distance ?? '') : undefined;
+          if (weight === undefined || (item.measure === 'time' ? seconds === undefined : metres === undefined)) return [];
+          return [{ weight, reps: 0, ...(seconds !== undefined ? { seconds } : {}), ...(metres !== undefined ? { metres } : {}), ...(set.kind ? { kind: set.kind } : {}) }];
+        }
         const reps = parseReps(set.reps);
         if (weight === undefined || reps === undefined || reps === 0) return [];
         // A warm-up is meant to be easy: no RPE, even one given before it was made a warm-up.

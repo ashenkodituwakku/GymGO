@@ -30,14 +30,46 @@ export interface LoggedSet {
   kind?: SetKind;
   /** How hard it was (RPE), when you chose to say. */
   rpe?: number;
+  /**
+   * How long, in whole seconds, for work done by the clock: a plank, a hold,
+   * a row or a bike sprint. Its reps are then 0, and its weight is any added
+   * (a plate on your back), else null.
+   */
+  seconds?: number;
+  /** How far, in metres, for a carry or a run; reps 0 again, the weight carried if any. */
+  metres?: number;
 }
 
+/** A set that was done: reps, or a time or distance for work that isn't counted in reps. */
+export function isDoneSet(set: { reps: number; seconds?: number; metres?: number }): boolean {
+  return set.reps > 0 || (set.seconds ?? 0) > 0 || (set.metres ?? 0) > 0;
+}
+
+/** Done by the clock or the tape, not in reps (a plank, a carry). */
+export const isTimedSet = (set: { reps: number; seconds?: number; metres?: number }) => set.reps <= 0 && ((set.seconds ?? 0) > 0 || (set.metres ?? 0) > 0);
+
 /**
- * The sets that count: done (reps above 0) and not warm-ups. Records,
- * totals, set counts, muscle balance and "last time" use only these.
+ * The sets that count: done (reps above 0, or a time or distance) and not
+ * warm-ups. Records, totals, set counts, muscle balance and "last time" use
+ * only these.
  */
-export function workingSets<T extends { reps: number; kind?: SetKind }>(sets: readonly T[]): T[] {
-  return sets.filter((set) => set.reps > 0 && set.kind !== 'warmup');
+export function workingSets<T extends { reps: number; kind?: SetKind; seconds?: number; metres?: number }>(sets: readonly T[]): T[] {
+  return sets.filter((set) => isDoneSet(set) && set.kind !== 'warmup');
+}
+
+/** A time, short: "45 s"; from a minute, a clock ("1:30", "1:05:00"). A non-breaking space, as for weights. */
+export function secondsLabel(seconds: number): string {
+  const whole = Math.max(0, Math.round(seconds));
+  if (whole < 60) return `${whole}\u00a0s`;
+  const secs = String(whole % 60).padStart(2, '0');
+  if (whole < 3600) return `${Math.floor(whole / 60)}:${secs}`;
+  return `${Math.floor(whole / 3600)}:${String(Math.floor((whole % 3600) / 60)).padStart(2, '0')}:${secs}`;
+}
+
+/** A distance: "40 m"; from a kilometre, "1.2 km". */
+export function distanceLabel(metres: number): string {
+  if (metres < 1000) return `${Math.round(metres)}\u00a0m`;
+  return `${Number((metres / 1000).toFixed(2))}\u00a0km`;
 }
 
 export interface LoggedExercise {
@@ -93,6 +125,12 @@ export interface ExerciseRecords {
   /** The most lifted in one session (every working set's weight × reps), in kg, and when. */
   sessionVolumeKg: number | null;
   sessionVolumeDate: string | null;
+  /** The longest set by the clock (a plank), in seconds, and when. */
+  longestSeconds: number | null;
+  longestDate: string | null;
+  /** The furthest set (a carry), in metres, and when. */
+  furthestMetres: number | null;
+  furthestDate: string | null;
   sessions: number;
 }
 
@@ -103,11 +141,38 @@ export function personalRecords(sessions: TrainingSession[]): Map<string, Exerci
     for (const logged of session.exercises) {
       const record =
         records.get(logged.exerciseId) ??
-        ({ e1rmKg: null, e1rmSet: null, heaviestKg: null, heaviestSet: null, mostReps: null, setVolumeKg: null, setVolumeSet: null, sessionVolumeKg: null, sessionVolumeDate: null, sessions: 0 } satisfies ExerciseRecords);
+        ({
+          e1rmKg: null,
+          e1rmSet: null,
+          heaviestKg: null,
+          heaviestSet: null,
+          mostReps: null,
+          setVolumeKg: null,
+          setVolumeSet: null,
+          sessionVolumeKg: null,
+          sessionVolumeDate: null,
+          longestSeconds: null,
+          longestDate: null,
+          furthestMetres: null,
+          furthestDate: null,
+          sessions: 0,
+        } satisfies ExerciseRecords);
       const working = workingSets(logged.sets);
       if (working.length) record.sessions += 1;
       let sessionKg = 0;
       for (const set of working) {
+        // By the clock or the tape: its own records, never a weight's (a 10 kg plate on a plank isn't a 10 kg lift).
+        if (isTimedSet(set)) {
+          if (set.seconds && (record.longestSeconds === null || set.seconds > record.longestSeconds)) {
+            record.longestSeconds = set.seconds;
+            record.longestDate = session.finishedAt;
+          }
+          if (set.metres && (record.furthestMetres === null || set.metres > record.furthestMetres)) {
+            record.furthestMetres = set.metres;
+            record.furthestDate = session.finishedAt;
+          }
+          continue;
+        }
         if (set.weight === null || set.weight <= 0) {
           if (record.mostReps === null || set.reps > record.mostReps) record.mostReps = set.reps;
           continue;
@@ -142,8 +207,8 @@ export function personalRecords(sessions: TrainingSession[]): Map<string, Exerci
 
 export interface NewRecord {
   exerciseId: string;
-  /** Heaviest weight; strongest set (estimated 1-rep max); biggest set (weight × reps); most reps at body weight. */
-  kind: 'heaviest' | 'e1rm' | 'volume' | 'reps';
+  /** Heaviest weight; strongest set (estimated 1-rep max); biggest set (weight × reps); most reps at body weight; longest by the clock; furthest. */
+  kind: 'heaviest' | 'e1rm' | 'volume' | 'reps' | 'longest' | 'furthest';
 }
 
 /**
@@ -162,6 +227,8 @@ export function recordsBroken(session: TrainingSession, earlier: TrainingSession
     else if (mine.e1rmKg !== null && old.e1rmKg !== null && mine.e1rmKg > old.e1rmKg + 1e-6) broken.push({ exerciseId, kind: 'e1rm' });
     else if (mine.setVolumeKg !== null && old.setVolumeKg !== null && mine.setVolumeKg > old.setVolumeKg + 1e-6) broken.push({ exerciseId, kind: 'volume' });
     if (mine.mostReps !== null && old.mostReps !== null && mine.mostReps > old.mostReps) broken.push({ exerciseId, kind: 'reps' });
+    if (mine.longestSeconds !== null && old.longestSeconds !== null && mine.longestSeconds > old.longestSeconds) broken.push({ exerciseId, kind: 'longest' });
+    if (mine.furthestMetres !== null && old.furthestMetres !== null && mine.furthestMetres > old.furthestMetres) broken.push({ exerciseId, kind: 'furthest' });
   }
   return broken;
 }

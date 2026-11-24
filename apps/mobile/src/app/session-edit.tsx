@@ -31,7 +31,7 @@ import { checkEdits, draftsOf, finishFor, minutesOf, type EditedExercise } from 
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { setTags, type DraftSet, type SetKind, type WeightUnit } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { exerciseName, exerciseById } from '@/lib/workout';
+import { exerciseName, exerciseById, setMeasure } from '@/lib/workout';
 
 interface Draft {
   name: string;
@@ -238,8 +238,10 @@ export default function SessionEditScreen() {
         const name = exerciseName(item.exerciseId);
         const tags = setTags(item.sets);
         const bodyWeight = bodyWeightOnly(item.exerciseId);
-        // RPE's column: with it switched on, or for an exercise with a set that has one.
-        const rpeColumn = prefs.rpe || item.sets.some((set) => set.rpe !== undefined);
+        // A plank's sets are times, a carry's distances (with the weight carried).
+        const timed = item.measure !== 'reps';
+        // RPE's column: with it switched on, or for an exercise with a set that has one (never by the clock).
+        const rpeColumn = !timed && (prefs.rpe || item.sets.some((set) => set.rpe !== undefined));
         return (
           <View key={`${item.exerciseId}-${exerciseAt}`} style={styles.card}>
             <View style={styles.head}>
@@ -268,12 +270,16 @@ export default function SessionEditScreen() {
                 <Txt variant="caption" color={color.labelSecondary} style={styles.setCol}>
                   SET
                 </Txt>
+                {item.measure !== 'time' && (
+                  <>
+                    <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
+                      {bodyWeight ? 'ADDED' : draft.unit.toUpperCase()}
+                    </Txt>
+                    <View style={styles.times} />
+                  </>
+                )}
                 <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
-                  {bodyWeight ? 'ADDED' : draft.unit.toUpperCase()}
-                </Txt>
-                <View style={styles.times} />
-                <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
-                  REPS
+                  {item.measure === 'time' ? 'TIME' : item.measure === 'distance' ? 'METRES' : 'REPS'}
                 </Txt>
                 <View style={styles.flex} />
                 {rpeColumn && <RpeHead />}
@@ -300,28 +306,44 @@ export default function SessionEditScreen() {
                         </Txt>
                       </View>
                     </Pressable>
-                    <Input
-                      value={set.weight}
-                      onChangeText={(weight) => changeSet(where, (each) => ({ ...each, weight }))}
-                      placeholder={bodyWeight ? 'BW' : '—'}
-                      keyboardType="decimal-pad"
-                      inputMode="decimal"
-                      style={[styles.input, rpeColumn && styles.narrow]}
-                      accessibilityLabel={`${spoken} weight in ${draft.unit}${bodyWeight ? ', blank for body weight' : ''}`}
-                    />
-                    {/* Between the boxes, decoration: the headings above say weight and reps. */}
-                    <Txt variant="subhead" color={color.labelTertiary} style={styles.times} aria-hidden>
-                      ×
-                    </Txt>
-                    <Input
-                      value={set.reps}
-                      onChangeText={(reps) => changeSet(where, (each) => ({ ...each, reps }))}
-                      placeholder="—"
-                      keyboardType="number-pad"
-                      inputMode="numeric"
-                      style={[styles.input, rpeColumn && styles.narrow]}
-                      accessibilityLabel={`${spoken} reps`}
-                    />
+                    {item.measure !== 'time' && (
+                      <>
+                        <Input
+                          value={set.weight}
+                          onChangeText={(weight) => changeSet(where, (each) => ({ ...each, weight }))}
+                          placeholder={bodyWeight && !timed ? 'BW' : '—'}
+                          keyboardType="decimal-pad"
+                          inputMode="decimal"
+                          style={[styles.input, rpeColumn && styles.narrow]}
+                          accessibilityLabel={`${spoken} weight in ${draft.unit}${timed ? ', blank for none' : bodyWeight ? ', blank for body weight' : ''}`}
+                        />
+                        {/* Between the boxes, decoration: the headings above say weight and reps. */}
+                        <Txt variant="subhead" color={color.labelTertiary} style={styles.times} aria-hidden>
+                          ×
+                        </Txt>
+                      </>
+                    )}
+                    {item.measure === 'reps' ? (
+                      <Input
+                        value={set.reps}
+                        onChangeText={(reps) => changeSet(where, (each) => ({ ...each, reps }))}
+                        placeholder="—"
+                        keyboardType="number-pad"
+                        inputMode="numeric"
+                        style={[styles.input, rpeColumn && styles.narrow]}
+                        accessibilityLabel={`${spoken} reps`}
+                      />
+                    ) : (
+                      <Input
+                        value={(item.measure === 'time' ? set.time : set.distance) ?? ''}
+                        onChangeText={(text) => changeSet(where, (each) => (item.measure === 'time' ? { ...each, time: text } : { ...each, distance: text }))}
+                        placeholder={item.measure === 'time' ? '0:00' : '—'}
+                        keyboardType={item.measure === 'time' ? 'numbers-and-punctuation' : 'decimal-pad'}
+                        inputMode={item.measure === 'time' ? 'text' : 'decimal'}
+                        style={styles.input}
+                        accessibilityLabel={`${spoken} ${item.measure === 'time' ? 'time, in minutes and seconds' : 'distance in metres'}`}
+                      />
+                    )}
                     <View style={styles.flex} />
                     {rpeColumn && (
                       <RpeCell value={set.rpe} label={spoken} open={rated} onPress={set.kind !== 'warmup' ? () => setRating(rated ? null : where) : null} />
@@ -348,7 +370,10 @@ export default function SessionEditScreen() {
               onPress={() => {
                 haptic.select();
                 const previous = item.sets[item.sets.length - 1];
-                changeSets(exerciseAt, [...item.sets, { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: true }]);
+                changeSets(exerciseAt, [
+                  ...item.sets,
+                  { weight: previous?.weight ?? '', reps: previous?.reps ?? '', done: true, ...(previous?.time ? { time: previous.time } : {}), ...(previous?.distance ? { distance: previous.distance } : {}) },
+                ]);
               }}
               accessibilityRole="button"
               accessibilityLabel={`Add set: ${name}`}
@@ -365,7 +390,9 @@ export default function SessionEditScreen() {
 
       <AddExercise
         inWorkout={inWorkout}
-        onAdd={(exercise) => setDraft({ ...draft, exercises: [...draft.exercises, { exerciseId: exercise.id, sets: [{ weight: '', reps: '', done: true }] }] })}
+        onAdd={(exercise) =>
+          setDraft({ ...draft, exercises: [...draft.exercises, { exerciseId: exercise.id, measure: setMeasure(exercise.id), sets: [{ weight: '', reps: '', done: true }] }] })
+        }
       />
 
       <View style={styles.actions}>

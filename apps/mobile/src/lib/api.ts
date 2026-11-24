@@ -223,11 +223,13 @@ export interface FeedPage {
   person?: { person: FeedPerson; workouts: number };
 }
 
-/** Each one's best on an exercise, in kg (null where there's none). */
+/** Each one's best on an exercise, in kg (null where there's none); a plank's longest or a carry's furthest when there is one. */
 export interface HeadToHeadBest {
   heaviestKg: number | null;
   e1rmKg: number | null;
   mostReps: number | null;
+  longestSeconds?: number;
+  furthestMetres?: number;
 }
 
 export interface HeadToHead {

@@ -182,6 +182,7 @@ import {
   COLLECTION_MAX_GYMS,
   cleanCollectedGym,
   mergeCollectedGym,
+  isDoneSet,
   type CollectedGym,
 } from '@gymgo/domain';
 import {
@@ -471,7 +472,9 @@ const SET_KINDS = new Set(['warmup', 'drop', 'failure']);
 
 /**
  * A logged session, checked field by field. A weight left blank is body
- * weight (null), never zero; reps of 0 are a set planned but not done.
+ * weight (null), never zero; reps of 0 are a set planned but not done,
+ * unless it has a time (a plank, in whole seconds up to six hours) or a
+ * distance (a carry, in whole metres up to 100 km).
  */
 export function cleanTrainingSession(input: unknown, now: Date) {
   const body = (input ?? {}) as Record<string, unknown>;
@@ -505,16 +508,23 @@ export function cleanTrainingSession(input: unknown, now: Date) {
         if (set.kind !== undefined && set.kind !== null && !SET_KINDS.has(set.kind as string)) throw bad();
         // How hard it was (RPE), 6 to 10 in half steps, when given.
         if (set.rpe !== undefined && set.rpe !== null && !(typeof set.rpe === 'number' && set.rpe >= 6 && set.rpe <= 10 && Number.isInteger(set.rpe * 2))) throw bad();
+        // By the clock or the tape, when given: whole seconds (six hours at most) or whole metres (100 km at most).
+        const whole = (value: unknown, max: number) => (value === undefined || value === null ? null : typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= max ? value : undefined);
+        const seconds = whole(set.seconds, 6 * 3600);
+        const metres = whole(set.metres, 100_000);
+        if (seconds === undefined || metres === undefined) throw bad();
         return {
           weight,
           reps,
           ...(typeof set.kind === 'string' ? { kind: set.kind as 'warmup' | 'drop' | 'failure' } : {}),
           ...(typeof set.rpe === 'number' ? { rpe: set.rpe } : {}),
+          ...(seconds !== null ? { seconds } : {}),
+          ...(metres !== null ? { metres } : {}),
         };
       }),
     };
   });
-  if (!clean.some((item) => item.sets.some((set) => set.reps > 0 && set.kind !== 'warmup'))) throw new HttpError(400, 'Log at least one set before finishing (warm-ups on their own don’t count).');
+  if (!clean.some((item) => item.sets.some((set) => isDoneSet(set) && set.kind !== 'warmup'))) throw new HttpError(400, 'Log at least one set before finishing (warm-ups on their own don’t count).');
   return {
     name,
     unit,

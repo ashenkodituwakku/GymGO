@@ -9,6 +9,43 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 256 · Planks, holds, cardio and carries are logged, with a stopwatch
+
+*24 Nov 2026 · the commit "Timed and distance sets: planks, holds, cardio and carries logged, with a stopwatch"*
+
+You asked to keep polishing and add more of Hevy's features. Until now, a plank, a wall sit, a rower finisher or a farmer's carry in a workout had a "Done?" tick, but it wasn't saved: only sets of reps were. Hevy logs these by time or distance, and now GymGO does too, in its own look.
+
+- **Holds and cardio, by time.** A plank, side plank, hollow hold, wall sit, rower or bike sprints has a **TIME** box in place of weight and reps:
+  - Type "1:30" or "90"; it tidies to a clock as you leave the box.
+  - Or tap **▶** to start a **stopwatch** on that set, then tap again to stop: its time goes in and the set is ticked. Ticking the set while the stopwatch runs does the same.
+  - A set left blank stands for last time's at the same place, else the set above, else the plan ("30–45 s" → 0:30).
+- **Carries, by distance.** A farmer's carry has the weight carried and **METRES** (or "1.2 km").
+- **Everywhere a set shows:**
+  - Previous beside each set ("1:15", "24 × 40 m"), to tap and copy in;
+  - "Last time", the summary, your workout's page and friends' feed ("Plank 1:15, 1:00, 0:45");
+  - Edit workout, with the same boxes. Before, editing a workout would have dropped any such set.
+  - The share picture and the shared text, and the CSV export, which has new **seconds** and **metres** columns at the end so older sheets keep their columns.
+  - GymPal's summary of your training.
+- **Their own records.** Longest set ("Longest yet") and furthest ("Furthest yet"):
+  - marked with the trophy as you tick;
+  - on the summary, the feed and Progress ("Longest 1:15");
+  - on the exercise's page, with a chart of your longest (or furthest) set each day;
+  - in Head to head.
+  
+  A plate on your back during a plank never counts as a heavy lift.
+- **Weight lifted so far**, beside the time and sets at the top of a workout ("12:06 so far · 480 kg · 1 of 5 sets").
+- **The server** keeps a set's `seconds` (whole, up to six hours) and `metres` (whole, up to 100 km), and a workout of only planks counts as a workout.
+
+- Checked: every package's tests, lint and typecheck pass (app 660, with 9 new and three widened; server 360, with 1 new; domain 205). In a browser against the local server, at 390 light, 1280 dark and 320:
+  - a plank, a carry and a bench press logged: a typed time, the stopwatch, a time as planned and 24 kg × 40 m;
+  - "Finish anyway" with one carry set unticked;
+  - the summary;
+  - the plank's page (Longest, its chart);
+  - Edit workout showing the times and distance;
+  - ticking while the stopwatch ran;
+  - no sideways scroll at 320.
+- Not checked: on a phone (the iPhone's numbers-and-punctuation keyboard for the time box is unseen).
+
 ## Update 255 · Your weeks as bars, save a friend's workout, share a workout as a picture
 
 *24 Nov 2026 · the commit "Your weeks as bars; save a friend's workout; share a workout as a picture; roomy Home on phones only"*

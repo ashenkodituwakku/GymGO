@@ -181,6 +181,22 @@ describe('what a session may hold', () => {
     expect(() => clean({ exercises: [{ exerciseId: 'squat', sets: [{ weight: 60, reps: 5, kind: 'warmup' }] }] })).toThrow(/at least one set/);
   });
 
+  it('keeps a plank’s time and a carry’s distance, a workout of them alone too, and refuses odd ones', () => {
+    const exercises = clean({
+      exercises: [
+        { exerciseId: 'plank', sets: [{ weight: null, reps: 0, seconds: 75 }, { weight: 10, reps: 0, seconds: 45 }] },
+        { exerciseId: 'farmer-carry', sets: [{ weight: 24, reps: 0, metres: 40 }] },
+      ],
+    }).exercises;
+    expect(exercises[0]!.sets).toEqual([{ weight: null, reps: 0, seconds: 75 }, { weight: 10, reps: 0, seconds: 45 }]);
+    expect(exercises[1]!.sets).toEqual([{ weight: 24, reps: 0, metres: 40 }]);
+    expect(() => clean({ exercises: [{ exerciseId: 'plank', sets: [{ weight: null, reps: 0, seconds: 2.5 }] }] })).toThrow();
+    expect(() => clean({ exercises: [{ exerciseId: 'plank', sets: [{ weight: null, reps: 0, seconds: 0 }] }] })).toThrow();
+    expect(() => clean({ exercises: [{ exerciseId: 'plank', sets: [{ weight: null, reps: 0, seconds: 7 * 3600 }] }] })).toThrow();
+    expect(() => clean({ exercises: [{ exerciseId: 'farmer-carry', sets: [{ weight: 24, reps: 0, metres: '40' }] }] })).toThrow();
+    expect(() => clean({ exercises: [{ exerciseId: 'farmer-carry', sets: [{ weight: 24, reps: 0, metres: 200_000 }] }] })).toThrow();
+  });
+
   it('needs at least one set done, and times that make sense', () => {
     expect(() => clean({ exercises: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 0 }] }] })).toThrow(/at least one set/);
     expect(() => clean({ finishedAt: '2026-09-25T12:00:00Z' })).toThrow(/future/);

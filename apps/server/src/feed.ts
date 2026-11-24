@@ -23,7 +23,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { personalRecords, recordsBroken, setCount, volumeKg, type LoggedExercise, type NewRecord, type TrainingSession, type WeightUnit } from '@gymgo/domain';
+import { personalRecords, recordsBroken, setCount, volumeKg, type ExerciseRecords, type LoggedExercise, type NewRecord, type TrainingSession, type WeightUnit } from '@gymgo/domain';
 import type { Db } from './db';
 
 export class FeedError extends Error {
@@ -145,8 +145,17 @@ export interface HeadToHeadRow {
   exerciseId: string;
   /** For an exercise one of you made. */
   name?: string;
-  you: { heaviestKg: number | null; e1rmKg: number | null; mostReps: number | null };
-  them: { heaviestKg: number | null; e1rmKg: number | null; mostReps: number | null };
+  you: HeadToHeadBest;
+  them: HeadToHeadBest;
+}
+
+/** One person's best on an exercise; by the clock or the tape (a plank, a carry), the longest or furthest too, when there is one. */
+export interface HeadToHeadBest {
+  heaviestKg: number | null;
+  e1rmKg: number | null;
+  mostReps: number | null;
+  longestSeconds?: number;
+  furthestMetres?: number;
 }
 
 /** Where the next page starts: after this workout. */
@@ -312,10 +321,12 @@ export class Feed {
       );
     const mine = personalRecords(sessions(userId, false));
     const theirs = personalRecords(sessions(friendId, true));
-    const best = (record: { heaviestKg: number | null; e1rmKg: number | null; mostReps: number | null }) => ({
+    const best = (record: ExerciseRecords): HeadToHeadBest => ({
       heaviestKg: record.heaviestKg === null ? null : Math.round(record.heaviestKg * 10) / 10,
       e1rmKg: record.e1rmKg === null ? null : Math.round(record.e1rmKg * 10) / 10,
       mostReps: record.mostReps,
+      ...(record.longestSeconds !== null ? { longestSeconds: record.longestSeconds } : {}),
+      ...(record.furthestMetres !== null ? { furthestMetres: record.furthestMetres } : {}),
     });
     // An exercise someone made is theirs alone, so it can't be shared; GymGO's own can.
     const rows: HeadToHeadRow[] = [];

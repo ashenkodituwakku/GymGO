@@ -7,27 +7,52 @@
  * No React Native here, so it is unit-tested in Node.
  */
 
-import { parseReps, parseWeight, setTags, type DraftSet, type LoggedExercise, type TrainingSession, type WeightUnit } from './training';
-import { exerciseName } from './workout';
+import {
+  clockLabel,
+  isDoneSet,
+  isTimedSet,
+  parseDistance,
+  parseReps,
+  parseTime,
+  parseWeight,
+  setTags,
+  type DraftSet,
+  type LoggedExercise,
+  type LoggedSet,
+  type SetMeasure,
+  type TrainingSession,
+  type WeightUnit,
+} from './training';
+import { exerciseName, setMeasure } from './workout';
 
 export interface EditedExercise {
   exerciseId: string;
   sets: DraftSet[];
+  /** Reps, or a time (a plank) or distance (a carry): which boxes its sets have. */
+  measure: SetMeasure;
+}
+
+/** How a logged exercise was measured: by its sets (a time or distance), else by what GymGO knows of it. */
+function loggedMeasure(exerciseId: string, sets: readonly LoggedSet[]): SetMeasure {
+  const timed = sets.find(isTimedSet);
+  if (timed) return timed.metres ? 'distance' : 'time';
+  return sets.some((set) => set.reps > 0) ? 'reps' : setMeasure(exerciseId);
 }
 
 /** A logged session's exercises as rows to edit: every set done, its numbers as text. */
 export function draftsOf(session: TrainingSession): EditedExercise[] {
   return session.exercises.map((logged) => ({
     exerciseId: logged.exerciseId,
-    sets: logged.sets
-      .filter((set) => set.reps > 0)
-      .map((set) => ({
-        weight: set.weight === null ? '' : String(set.weight),
-        reps: String(set.reps),
-        done: true,
-        ...(set.kind ? { kind: set.kind } : {}),
-        ...(set.rpe !== undefined ? { rpe: set.rpe } : {}),
-      })),
+    measure: loggedMeasure(logged.exerciseId, logged.sets),
+    sets: logged.sets.filter(isDoneSet).map((set) => ({
+      weight: set.weight === null ? '' : String(set.weight),
+      reps: isTimedSet(set) ? '' : String(set.reps),
+      done: true,
+      ...(set.seconds ? { time: clockLabel(set.seconds) } : {}),
+      ...(set.metres ? { distance: String(set.metres) } : {}),
+      ...(set.kind ? { kind: set.kind } : {}),
+      ...(set.rpe !== undefined ? { rpe: set.rpe } : {}),
+    })),
   }));
 }
 
@@ -46,6 +71,19 @@ export function checkEdits(drafts: readonly EditedExercise[], unit: WeightUnit):
     const tags = setTags(draft.sets);
     for (const [at, set] of draft.sets.entries()) {
       const where = `${exerciseName(draft.exerciseId)}, ${tags[at]!.spoken}`;
+      if (draft.measure === 'time' || draft.measure === 'distance') {
+        // A time, or a distance (with a time if it had one); any weight added or carried.
+        const typedTime = (set.time ?? '').trim();
+        const seconds = typedTime ? parseTime(typedTime) : undefined;
+        const metres = draft.measure === 'distance' ? parseDistance(set.distance ?? '') : undefined;
+        if (draft.measure === 'time' && seconds === undefined) return { ok: false, problem: `${where}: type how long it took (1:30, or 90 for 90 seconds), or remove the set.` };
+        if (draft.measure === 'distance' && metres === undefined) return { ok: false, problem: `${where}: type how far it was in metres, or remove the set.` };
+        if (typedTime && seconds === undefined) return { ok: false, problem: `${where}: that time doesn’t read as minutes and seconds.` };
+        const weight = parseWeight(set.weight);
+        if (weight === undefined) return { ok: false, problem: `${where}: that weight doesn’t read as a number of ${unit}.` };
+        sets.push({ weight, reps: 0, ...(seconds !== undefined ? { seconds } : {}), ...(metres !== undefined ? { metres } : {}), ...(set.kind ? { kind: set.kind } : {}) });
+        continue;
+      }
       const reps = parseReps(set.reps);
       if (reps === undefined || reps === 0) return { ok: false, problem: `${where}: type how many reps, or remove the set.` };
       const weight = parseWeight(set.weight);

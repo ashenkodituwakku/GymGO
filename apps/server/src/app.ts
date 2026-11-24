@@ -432,7 +432,7 @@ function cleanWorkoutPlan(input: unknown) {
     const sets = int(item.sets, 1, 10);
     const reps = text(item.reps, 20);
     const restSeconds = int(item.restSeconds, 0, 600);
-    if (!exerciseId || sets === null || !reps || restSeconds === null) throw new HttpError(400, 'That workout isn’t in a shape GymGO can save.');
+    if (!exerciseId || sets === null || !reps || restSeconds === null) throw new HttpError(400, 'Some details in this workout aren’t valid.');
     // Its superset or circuit: a letter shared with its neighbours (the app's lib/supersets.ts).
     const group = typeof item.group === 'string' && /^[A-L]$/.test(item.group) ? item.group : null;
     return { exerciseId, sets, reps, restSeconds, uses: texts(item.uses, 4, 40), confirmed: item.confirmed === true, ...(group ? { group } : {}) };
@@ -461,7 +461,7 @@ export const MAX_TRAINING_NOTE = 500;
 /** A session's note: trimmed, at most MAX_TRAINING_NOTE characters; blank is no note. */
 export function cleanTrainingNote(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  if (typeof value !== 'string') throw new HttpError(400, 'A note is text.');
+  if (typeof value !== 'string') throw new HttpError(400, 'The note must be text.');
   // Line breaks kept (a list of how it went), runs of spaces and tabs folded.
   const note = value.replace(/\r\n?/g, '\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   if (note.length > MAX_TRAINING_NOTE) throw new HttpError(400, `Keep the note to ${MAX_TRAINING_NOTE} characters.`);
@@ -478,7 +478,7 @@ const SET_KINDS = new Set(['warmup', 'drop', 'failure']);
  */
 export function cleanTrainingSession(input: unknown, now: Date) {
   const body = (input ?? {}) as Record<string, unknown>;
-  const bad = () => new HttpError(400, 'That session isn’t in a shape GymGO can keep.');
+  const bad = () => new HttpError(400, 'Some details in this workout aren’t valid.');
   const name = typeof body.name === 'string' ? body.name.trim().replace(/\s+/g, ' ') : '';
   if (name.length < 1 || name.length > 80) throw new HttpError(400, 'Give it a name of up to 80 characters.');
   const unit = body.unit === 'kg' || body.unit === 'lb' ? body.unit : null;
@@ -931,7 +931,7 @@ export function createApp(options: AppOptions) {
         if (middle && middle.countryCode !== home) {
           const { account } = caller(req);
           if (!account || !billing.isPro(account.id)) {
-            throw new HttpError(403, 'Gyms outside the country you chose are part of GymGO Pro.', 'pro_required', { countryCode: middle.countryCode });
+            throw new HttpError(403, 'Gyms in other countries are part of GymGO Pro.', 'pro_required', { countryCode: middle.countryCode });
           }
         }
         if (area.needsFetch(box) && !areaLimiter.allow(clientAddress(req), now().getTime())) {
@@ -955,14 +955,14 @@ export function createApp(options: AppOptions) {
       if (country !== home) {
         const { account } = caller(req);
         if (!account || !billing.isPro(account.id)) {
-          throw new HttpError(403, 'Gyms outside the country you chose are part of GymGO Pro.', 'pro_required', { countryCode: country });
+          throw new HttpError(403, 'Gyms in other countries are part of GymGO Pro.', 'pro_required', { countryCode: country });
         }
       }
       const status = packs.status(country);
       if (parts.length === 5) return send(res, 200, status);
       const pack = packs.pack(country);
       if (!pack) {
-        if (status.state === 'failed') throw new HttpError(503, 'The map service didn’t answer. Try again later.', 'upstream');
+        if (status.state === 'failed') throw new HttpError(503, 'The map service isn’t responding. Try again later.', 'upstream');
         return send(res, 202, status);
       }
       const etag = `"${pack.builtAt}"`;
@@ -986,7 +986,7 @@ export function createApp(options: AppOptions) {
       const query = url.searchParams.get('q') ?? '';
       try {
         if (places.cached(query) === undefined && !placeLimiter.allow(clientAddress(req), now().getTime())) {
-          throw new HttpError(429, 'That’s a lot of place searches. Try again in a little while.');
+          throw new HttpError(429, 'Too many searches. Try again in a few minutes.');
         }
         return send(res, 200, { places: await places.search(query), attribution: '© OpenStreetMap contributors (ODbL), via Photon by komoot' });
       } catch (error) {
@@ -997,7 +997,7 @@ export function createApp(options: AppOptions) {
 
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts.length === 3) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
-      if (!record) throw new HttpError(404, 'No gym with that id.');
+      if (!record) throw new HttpError(404, 'Couldn’t find that gym.');
       return send(res, 200, { gym: withOwner(record) });
     }
 
@@ -1116,7 +1116,7 @@ export function createApp(options: AppOptions) {
     if (method === 'POST' && path === '/api/billing/wallet') {
       const { account } = requireAccount(req);
       // Made each time the Pro page shows the button for a plan, so a limit well above any real browsing.
-      if (!walletLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That’s a lot of checkouts for one hour. Try again later.');
+      if (!walletLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'Too many checkout attempts. Try again in an hour.');
       const body = (await readJson(req)) as Record<string, unknown>;
       const interval = body.interval;
       const currency = body.currency;
@@ -1151,7 +1151,7 @@ export function createApp(options: AppOptions) {
         }
         if (path === '/api/billing/gifts' && method === 'GET') return send(res, 200, { gifts: perks.giftsBoughtBy(account.id) });
         if (path === '/api/billing/redeem' && method === 'POST') {
-          if (!redeemLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That’s a lot of codes for one day. Try again tomorrow.');
+          if (!redeemLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'You’ve reached today’s limit for codes. Try again tomorrow.');
           const body = (await readJson(req)) as Record<string, unknown>;
           perks.redeem(account.id, typeof body.code === 'string' ? body.code : '');
           return send(res, 200, { ...billing.planFor(account.id), available: billing.enabled });
@@ -1170,7 +1170,7 @@ export function createApp(options: AppOptions) {
           if (parts.length === 3 && method === 'POST') {
             const body = (await readJson(req)) as Record<string, unknown>;
             const gymId = typeof body.gymId === 'string' ? body.gymId : '';
-            if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+            if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
             return send(res, 201, perks.addPass(account.id, gymId, body));
           }
           if (parts.length === 4 && method === 'DELETE') {
@@ -1225,7 +1225,7 @@ export function createApp(options: AppOptions) {
         return send(res, 200, { workout: { id: same.id, name: same.name, gymId: same.gym_id, createdAt: same.created_at, plan: JSON.parse(same.plan_json) } });
       }
       const count = (db.prepare('select count(*) as n from workouts where user_id = ?').get(account.id) as { n: number }).n;
-      if (count >= LIMITS.pro.savedWorkouts) throw new HttpError(409, `You’ve saved ${count} workouts, the most there’s room for. Delete one first.`);
+      if (count >= LIMITS.pro.savedWorkouts) throw new HttpError(409, `You’ve reached the limit of ${count} saved workouts. Delete one to save another.`);
       const id = randomUUID();
       const createdAt = now().toISOString();
       db.prepare('insert into workouts (id, user_id, name, gym_id, plan_json, created_at) values (?, ?, ?, ?, ?, ?)').run(
@@ -1328,7 +1328,7 @@ export function createApp(options: AppOptions) {
         .get(account.id, session.startedAt) as TrainingRow | undefined;
       if (again) return send(res, 200, { session: trainingView(again) });
       const count = (db.prepare('select count(*) as n from training_sessions where user_id = ?').get(account.id) as { n: number }).n;
-      if (count >= MAX_TRAINING_SESSIONS) throw new HttpError(409, `You’ve logged ${count} sessions, the most there’s room for. Delete some old ones first.`);
+      if (count >= MAX_TRAINING_SESSIONS) throw new HttpError(409, `You’ve reached the limit of ${count} logged workouts. Delete some old ones to log more.`);
       const id = randomUUID();
       // The gym it was at, named as GymGO knows it (never words sent with it), when GymGO knows the gym.
       const gymName = session.gymId ? (gymRecord(db, session.gymId)?.location.name ?? null) : null;
@@ -1524,7 +1524,7 @@ export function createApp(options: AppOptions) {
             return send(res, 204);
           }
           if (parts.length === 5 && parts[4] === 'report' && method === 'POST') {
-            if (!commentReportLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of reports for one day. Try again tomorrow.');
+            if (!commentReportLimiter.allow(me, now().getTime())) throw new HttpError(429, 'You’ve reached today’s limit for reports. Try again tomorrow.');
             const reported = feed.report(me, commentId);
             if (reported) {
               const id = bugReports.create(
@@ -1545,11 +1545,11 @@ export function createApp(options: AppOptions) {
           const sessionId = decodeURIComponent(parts[2]!);
           if (parts.length === 3 && method === 'GET') return send(res, 200, feed.item(me, sessionId));
           if (parts.length === 4 && parts[3] === 'like' && (method === 'PUT' || method === 'DELETE')) {
-            if (!likeLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of likes for one hour. Try again later.');
+            if (!likeLimiter.allow(me, now().getTime())) throw new HttpError(429, 'You’ve reached the hourly limit for likes. Try again later.');
             return send(res, 200, feed.like(me, sessionId, method === 'PUT'));
           }
           if (parts.length === 4 && parts[3] === 'comments' && method === 'POST') {
-            if (!commentLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of comments for one hour. Try again later.');
+            if (!commentLimiter.allow(me, now().getTime())) throw new HttpError(429, 'You’ve reached the hourly limit for comments. Try again later.');
             const body = (await readJson(req)) as Record<string, unknown>;
             return send(res, 201, { comment: feed.comment(me, sessionId, body.body) });
           }
@@ -1568,7 +1568,7 @@ export function createApp(options: AppOptions) {
       try {
         if (path === '/api/friends' && method === 'GET') return send(res, 200, social.overview(me));
         if (path === '/api/friends' && method === 'POST') {
-          if (!friendLimiter.allow(me, now().getTime())) throw new HttpError(429, 'That’s a lot of friend codes for one day. Try again tomorrow.');
+          if (!friendLimiter.allow(me, now().getTime())) throw new HttpError(429, 'You’ve reached today’s limit for friend codes. Try again tomorrow.');
           const body = (await readJson(req)) as Record<string, unknown>;
           return send(res, 200, social.add(me, typeof body.code === 'string' ? body.code : ''));
         }
@@ -1638,10 +1638,10 @@ export function createApp(options: AppOptions) {
       // owner, never one taken from the request, which anyone can change.
       const mail = options.mail;
       if (!mail || !options.publicUrl) {
-        throw new HttpError(503, 'This GymGO server can’t send email, so passwords can’t be reset by email here. Ask whoever runs it for help.', 'reset_off');
+        throw new HttpError(503, 'Password reset by email isn’t available on this server. Contact its admin for help.', 'reset_off');
       }
       if (!forgotLimiter.allow(clientAddress(req), now().getTime()) || !forgotEmailLimiter.allow(email, now().getTime())) {
-        throw new HttpError(429, 'That’s a lot of reset emails. Wait an hour and try again.');
+        throw new HttpError(429, 'Too many reset emails. Wait an hour and try again.');
       }
       const account = findByEmail(db, email);
       if (account && !account.blocked) {
@@ -1735,7 +1735,7 @@ export function createApp(options: AppOptions) {
       let created = false;
       if (!account) {
         if (!who.email || !who.emailVerified) {
-          throw new HttpError(400, `${label(provider)} didn’t share a verified email address, which a GymGO account needs.`);
+          throw new HttpError(400, `${label(provider)} didn’t share a verified email address. GymGO needs one to create your account.`);
         }
         const existing = db.prepare('select * from users where email = ?').get(who.email) as AccountRow | undefined;
         if (existing && hasPassword(existing)) {
@@ -1755,7 +1755,7 @@ export function createApp(options: AppOptions) {
           // A new account: the same age check as signing up with an email.
           // The app asks, then sends the same sign-in again with the answer.
           if (body.birthMonth === undefined || body.birthMonth === null || body.birthMonth === '') {
-            throw new HttpError(400, 'Before GymGO makes your account: which month and year were you born?', 'age_needed');
+            throw new HttpError(400, 'Enter your birth month and year to create your account.', 'age_needed');
           }
           checkAge(body.birthMonth, now());
           checkTermsAccepted(body.acceptTerms);
@@ -1799,7 +1799,7 @@ export function createApp(options: AppOptions) {
           | { user_id: string }
           | undefined;
         if (taken && taken.user_id !== account.id) {
-          throw new HttpError(409, `That ${label(provider)} account already signs in to a different GymGO account.`);
+          throw new HttpError(409, `That ${label(provider)} account is already linked to another GymGO account.`);
         }
         if (!taken) {
           db.prepare('delete from identities where user_id = ? and provider = ?').run(account.id, provider);
@@ -1925,7 +1925,7 @@ export function createApp(options: AppOptions) {
         if (raw.length > MAX_AVATAR_BYTES) throw new HttpError(413, 'Profile pictures can be up to 2 MB.');
         const clean = cleanPhoto(raw);
         if (!clean) throw new HttpError(400, 'That isn\u2019t a JPEG or PNG picture we can read.');
-        if (!avatarLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of new pictures for one day. Try again tomorrow.');
+        if (!avatarLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'You\u2019ve reached today\u2019s limit for new pictures. Try again tomorrow.');
         next = { id: `avatar-${randomUUID()}`, type: clean.type };
         photos.save(next.id, next.type, clean.bytes);
       }
@@ -1952,7 +1952,7 @@ export function createApp(options: AppOptions) {
     if (method === 'POST' && path === '/api/me/terms') {
       const { account } = requireAccount(req);
       const body = (await readJson(req)) as Record<string, unknown>;
-      if (body.version !== LEGAL_VERSION) throw new HttpError(409, 'The terms have changed again. Reopen GymGO to see them.');
+      if (body.version !== LEGAL_VERSION) throw new HttpError(409, 'The terms have been updated. Reopen GymGO to see them.');
       db.prepare('update users set terms_version = ?, terms_accepted_at = ? where id = ?').run(LEGAL_VERSION, now().toISOString(), account.id);
       return send(res, 200, { account: accountJson({ ...account, terms_version: LEGAL_VERSION }) });
     }
@@ -1994,12 +1994,12 @@ export function createApp(options: AppOptions) {
       const { account } = requireAccount(req);
       const gymId = decodeURIComponent(parts[2]!);
       if (method === 'PUT') {
-        if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+        if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
         const limit = billing.planFor(account.id).limits.savedGyms;
         const already = db.prepare('select 1 from saved_gyms where user_id = ? and gym_id = ?').get(account.id, gymId);
         const count = (db.prepare('select count(*) as n from saved_gyms where user_id = ?').get(account.id) as { n: number }).n;
         if (!already && count >= limit) {
-          throw new HttpError(403, `Free accounts can save ${limit} gyms. GymGO Pro saves as many as you like.`, 'pro_required');
+          throw new HttpError(403, `Free accounts can save up to ${limit} gyms. Pro has no limit.`, 'pro_required');
         }
         db.prepare('insert or ignore into saved_gyms (user_id, gym_id, created_at) values (?, ?, ?)').run(
           account.id,
@@ -2015,7 +2015,7 @@ export function createApp(options: AppOptions) {
     // --- Reviews ---------------------------------------------------------
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'reviews' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
 
       if (method === 'GET') {
         const { account } = caller(req);
@@ -2043,7 +2043,7 @@ export function createApp(options: AppOptions) {
           if (!Number.isInteger(stars) || stars < 1 || stars > 5) throw new HttpError(400, `Rate ${aspect} from 1 to 5 stars, or leave it out.`);
           return stars;
         });
-        if (text.length < 10) throw new HttpError(400, 'Say a little more: at least 10 characters.');
+        if (text.length < 10) throw new HttpError(400, 'Write at least 10 characters.');
         if (text.length > 2000) throw new HttpError(400, 'Keep it under 2,000 characters.');
         const existing = db
           .prepare(`select 1 from reviews where gym_id = ? and user_id = ? and status in ('pending', 'published')`)
@@ -2061,7 +2061,7 @@ export function createApp(options: AppOptions) {
     // --- Photos ------------------------------------------------------------
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'photos' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
 
       if (method === 'GET') {
         const { account } = caller(req);
@@ -2087,7 +2087,7 @@ export function createApp(options: AppOptions) {
       if (method === 'POST') {
         const { account, user } = requireAccount(req);
         requirePermission(user, 'review.create', gymId);
-        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to photograph.');
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is a demo gym, so photos can\u2019t be added.');
         // Base64 inflates by a third; allow for that plus the JSON around it.
         const body = (await readJson(req, Math.ceil(MAX_PHOTO_BYTES * 1.4) + 1024)) as Record<string, unknown>;
         if (body.consent !== true) {
@@ -2098,7 +2098,7 @@ export function createApp(options: AppOptions) {
         if (raw.length > MAX_PHOTO_BYTES) throw new HttpError(413, 'Photos can be up to 4 MB.');
         const clean = cleanPhoto(raw);
         if (!clean) throw new HttpError(400, 'That isn\u2019t a JPEG or PNG photo we can read.');
-        if (!photoLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of photos for one day. Try again tomorrow.');
+        if (!photoLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'You\u2019ve reached today\u2019s limit for photos. Try again tomorrow.');
         const id = randomUUID();
         photos.save(id, clean.type, clean.bytes);
         db.prepare(`insert into photos (id, gym_id, user_id, type, bytes, status, created_at) values (?, ?, ?, ?, ?, 'pending', ?)`).run(
@@ -2145,7 +2145,7 @@ export function createApp(options: AppOptions) {
     // what the gym itself publishes, and never decide a search result.
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'equipment' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
 
       if (method === 'GET') {
         const { account } = caller(req);
@@ -2181,9 +2181,9 @@ export function createApp(options: AppOptions) {
       if (method === 'PUT') {
         const { account, user } = requireAccount(req);
         requirePermission(user, 'correction.create', gymId);
-        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is a demo gym, so reports can\u2019t be added.');
         const body = (await readJson(req)) as Record<string, unknown>;
-        if (!Array.isArray(body.items)) throw new HttpError(400, 'Send the list of what you saw.');
+        if (!Array.isArray(body.items)) throw new HttpError(400, 'Choose what you saw.');
         const seen = new Set<string>();
         const items = body.items.map((raw) => {
           const item = (raw ?? {}) as Record<string, unknown>;
@@ -2191,7 +2191,7 @@ export function createApp(options: AppOptions) {
           if (!type) throw new HttpError(400, 'That isn\u2019t equipment we track.');
           if (seen.has(type.id)) throw new HttpError(400, `${type.label} is listed twice.`);
           seen.add(type.id);
-          if (item.presence !== 'yes' && item.presence !== 'no') throw new HttpError(400, `Say yes or no for ${type.label}.`);
+          if (item.presence !== 'yes' && item.presence !== 'no') throw new HttpError(400, `Choose yes or no for ${type.label}.`);
           let maxWeightKg: number | null = null;
           if (item.maxWeightKg !== undefined && item.maxWeightKg !== null) {
             const kg = Number(item.maxWeightKg);
@@ -2202,7 +2202,7 @@ export function createApp(options: AppOptions) {
           }
           return { typeId: type.id, presence: item.presence, maxWeightKg };
         });
-        if (!equipmentLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        if (!equipmentLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'You\u2019ve reached today\u2019s limit for updates. Try again tomorrow.');
 
         const at = now().toISOString();
         const insert = db.prepare(
@@ -2240,7 +2240,7 @@ export function createApp(options: AppOptions) {
     // search itself, as it does with every list.
     if (method === 'GET' && path === '/api/equipment/reported') {
       const types = [...new Set((url.searchParams.get('types') ?? '').split(',').map((type) => type.trim()).filter(Boolean))];
-      if (types.length === 0) throw new HttpError(400, 'Say which equipment to look for.');
+      if (types.length === 0) throw new HttpError(400, 'Choose equipment to look for.');
       if (types.length > 8) throw new HttpError(400, 'Pick up to 8 at once.');
       for (const type of types) {
         if (!EQUIPMENT_TYPES.some((candidate) => candidate.id === type)) throw new HttpError(400, 'That isn\u2019t equipment we track.');
@@ -2281,7 +2281,7 @@ export function createApp(options: AppOptions) {
     // move it far; reports over two years old stop counting.
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'prices' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
       // Reports are kept in the gym's country's own currency, never converted;
       // none where the exchange rate is too unsettled to check a price against.
       const country = gymCountry(db, gymId);
@@ -2320,9 +2320,9 @@ export function createApp(options: AppOptions) {
           db.prepare('delete from price_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
           return send(res, 204);
         }
-        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is a demo gym, so reports can\u2019t be added.');
         if (currency === null) {
-          throw new HttpError(400, 'GymGO doesn\u2019t keep visit prices here yet: the exchange rate moves too much to check a price against.');
+          throw new HttpError(400, 'Visit prices aren\u2019t available here because exchange rates change too often.');
         }
         const body = (await readJson(req)) as Record<string, unknown>;
         const amount = Number(body.amountMinor);
@@ -2334,10 +2334,10 @@ export function createApp(options: AppOptions) {
         const paidOn = typeof body.paidOn === 'string' ? body.paidOn : '';
         const tomorrow = new Date(now().getTime() + 86_400_000).toISOString().slice(0, 10);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(paidOn) || Number.isNaN(Date.parse(paidOn)) || paidOn > tomorrow) {
-          throw new HttpError(400, 'Say when you paid, as a date that has happened.');
+          throw new HttpError(400, 'Enter the date you paid. It can\u2019t be in the future.');
         }
-        if (paidOn < since) throw new HttpError(400, 'That was over two years ago; prices change, so it wouldn\u2019t help anyone now.');
-        if (!priceLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        if (paidOn < since) throw new HttpError(400, 'Prices from more than two years ago are too old to help others.');
+        if (!priceLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'You\u2019ve reached today\u2019s limit for updates. Try again tomorrow.');
         db.prepare(
           `insert into price_reports (gym_id, user_id, amount_minor, currency, paid_on, reported_at) values (?, ?, ?, ?, ?, ?)
            on conflict (gym_id, user_id) do update set amount_minor = excluded.amount_minor, currency = excluded.currency,
@@ -2353,7 +2353,7 @@ export function createApp(options: AppOptions) {
     // so only the last year counts.
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'access' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
       const since = new Date(now().getTime() - ACCESS_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
 
       if (method === 'GET') {
@@ -2385,19 +2385,19 @@ export function createApp(options: AppOptions) {
           db.prepare('delete from access_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
           return send(res, 204);
         }
-        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is a demo gym, so reports can\u2019t be added.');
         const body = (await readJson(req)) as Record<string, unknown>;
         const outcome = body.outcome;
         if (outcome !== 'walked_in' && outcome !== 'booked_first' && outcome !== 'turned_away') {
-          throw new HttpError(400, 'Say whether you walked in, had to book first, or were turned away.');
+          throw new HttpError(400, 'Choose whether you walked in, had to book or were turned away.');
         }
         const visitedOn = typeof body.visitedOn === 'string' ? body.visitedOn : '';
         const tomorrow = new Date(now().getTime() + 86_400_000).toISOString().slice(0, 10);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(visitedOn) || Number.isNaN(Date.parse(visitedOn)) || visitedOn > tomorrow) {
-          throw new HttpError(400, 'Say when you went, as a date that has happened.');
+          throw new HttpError(400, 'Enter the date you went. It can\u2019t be in the future.');
         }
-        if (visitedOn < since) throw new HttpError(400, 'That was over a year ago; door rules change, so it wouldn\u2019t help anyone now.');
-        if (!accessLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        if (visitedOn < since) throw new HttpError(400, 'Visits from more than a year ago are too old to help others.');
+        if (!accessLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'You\u2019ve reached today\u2019s limit for updates. Try again tomorrow.');
         db.prepare(
           `insert into access_reports (gym_id, user_id, outcome, visited_on, reported_at) values (?, ?, ?, ?, ?)
            on conflict (gym_id, user_id) do update set outcome = excluded.outcome, visited_on = excluded.visited_on, reported_at = excluded.reported_at`,
@@ -2412,7 +2412,7 @@ export function createApp(options: AppOptions) {
     // theirs. Six months of reports count.
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'passes' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
       return send(res, 200, { passes: perks.passesAt(gymId), available: billing.enabled });
     }
 
@@ -2420,7 +2420,7 @@ export function createApp(options: AppOptions) {
     if (parts[0] === 'api' && parts[1] === 'gyms' && (parts[3] === 'owner' || parts[3] === 'claim' || parts[3] === 'owner-updates') && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
       const record = gymRecord(db, gymId);
-      if (!record) throw new HttpError(404, 'No gym with that id.');
+      if (!record) throw new HttpError(404, 'Couldn’t find that gym.');
       try {
         if (parts[3] === 'owner' && method === 'GET') {
           const { account, user } = caller(req);
@@ -2437,7 +2437,7 @@ export function createApp(options: AppOptions) {
         if (parts[3] === 'claim' && method === 'POST') {
           const { account, user } = requireAccount(req);
           requirePermission(user, 'claim.create', gymId);
-          if (record.location.isDemoData) throw new HttpError(400, 'This is an invented demo gym; there’s no one to claim it.');
+          if (record.location.isDemoData) throw new HttpError(400, 'This is a demo gym, so it can’t be claimed.');
           return send(res, 201, owners.claim(account.id, gymId, (await readJson(req)) as Record<string, unknown>));
         }
         if (parts[3] === 'owner-updates' && method === 'POST') {
@@ -2498,7 +2498,7 @@ export function createApp(options: AppOptions) {
     // app asks for it only from someone its location check puts at the gym.
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'busy' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
       if (method === 'GET') {
         const { account } = caller(req);
         forgetOldBusy(now());
@@ -2526,10 +2526,10 @@ export function createApp(options: AppOptions) {
           db.prepare('delete from busy_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
           return send(res, 204);
         }
-        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is a demo gym, so reports can\u2019t be added.');
         const level = ((await readJson(req)) as Record<string, unknown>).level;
-        if (!isBusyLevel(level)) throw new HttpError(400, 'Say how busy it is: quiet, steady, busy or packed.');
-        if (!busyLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        if (!isBusyLevel(level)) throw new HttpError(400, 'Choose how busy it is.');
+        if (!busyLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'You\u2019ve reached today\u2019s limit for updates. Try again tomorrow.');
         db.prepare(
           `insert into busy_reports (gym_id, user_id, level, reported_at) values (?, ?, ?, ?)
            on conflict (gym_id, user_id) do update set level = excluded.level, reported_at = excluded.reported_at`,
@@ -2540,7 +2540,7 @@ export function createApp(options: AppOptions) {
 
     if (parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'status' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
-      if (!gymExists(db, gymId)) throw new HttpError(404, 'No gym with that id.');
+      if (!gymExists(db, gymId)) throw new HttpError(404, 'Couldn’t find that gym.');
       const since = new Date(now().getTime() - STATUS_REPORT_DAYS * 86_400_000).toISOString().slice(0, 10);
 
       if (method === 'GET') {
@@ -2571,17 +2571,17 @@ export function createApp(options: AppOptions) {
           db.prepare('delete from status_reports where gym_id = ? and user_id = ?').run(gymId, account.id);
           return send(res, 204);
         }
-        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is an invented demo gym, so there\u2019s nothing real to report.');
+        if (gymIsDemo(db, gymId)) throw new HttpError(400, 'This is a demo gym, so reports can\u2019t be added.');
         const body = (await readJson(req)) as Record<string, unknown>;
         const status = body.status;
-        if (status !== 'closed' && status !== 'open') throw new HttpError(400, 'Say whether it has closed or is still open.');
+        if (status !== 'closed' && status !== 'open') throw new HttpError(400, 'Choose whether it has closed or is still open.');
         const seenOn = typeof body.seenOn === 'string' ? body.seenOn : '';
         const tomorrow = new Date(now().getTime() + 86_400_000).toISOString().slice(0, 10);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(seenOn) || Number.isNaN(Date.parse(seenOn)) || seenOn > tomorrow) {
-          throw new HttpError(400, 'Say when you saw it, as a date that has happened.');
+          throw new HttpError(400, 'Enter the date you saw it. It can\u2019t be in the future.');
         }
-        if (seenOn < since) throw new HttpError(400, 'That was over six months ago; say what you saw more recently.');
-        if (!statusLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'That\u2019s a lot of updates for one day. Try again tomorrow.');
+        if (seenOn < since) throw new HttpError(400, 'Reports from more than six months ago are too old. Share something more recent.');
+        if (!statusLimiter.allow(account.id, now().getTime())) throw new HttpError(429, 'You\u2019ve reached today\u2019s limit for updates. Try again tomorrow.');
         db.prepare(
           `insert into status_reports (gym_id, user_id, status, seen_on, reported_at) values (?, ?, ?, ?, ?)
            on conflict (gym_id, user_id) do update set status = excluded.status, seen_on = excluded.seen_on, reported_at = excluded.reported_at`,
@@ -2594,7 +2594,7 @@ export function createApp(options: AppOptions) {
     // /icon is the picture; /icon-colour its own colour, for the gym's collection card.
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && (parts[3] === 'icon' || parts[3] === 'icon-colour') && parts.length === 4) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
-      if (!record) throw new HttpError(404, 'No gym with that id.');
+      if (!record) throw new HttpError(404, 'Couldn’t find that gym.');
       chainSite ??= chainWebsites(allGyms(db));
       // Its own site, else its chain's: named by other branches, or a chain GymGO knows.
       const website = record.location.website ?? chainSite(record) ?? chainSiteFor(record.location);
@@ -2643,7 +2643,7 @@ export function createApp(options: AppOptions) {
       ((parts[3] === 'photo' && (parts.length === 4 || (parts.length === 5 && /^\d$/.test(parts[4]!)))) || (parts[3] === 'site-photos' && parts.length === 4))
     ) {
       const record = gymRecord(db, decodeURIComponent(parts[2]!));
-      if (!record) throw new HttpError(404, 'No gym with that id.');
+      if (!record) throw new HttpError(404, 'Couldn’t find that gym.');
       if (options.siteIcons?.enabled === false) throw new HttpError(404, 'Website pictures are switched off.', 'off');
       // Photos checked by eye on the gym's own pages come first, and stand in for what its page shares.
       const chosen = (options.siteIcons?.chosen ?? MELBOURNE_PHOTOS)[record.location.id];
@@ -2679,7 +2679,7 @@ export function createApp(options: AppOptions) {
     if (method === 'GET' && parts[0] === 'api' && parts[1] === 'gyms' && parts[3] === 'google' && parts.length === 4) {
       const gymId = decodeURIComponent(parts[2]!);
       const record = gymRecord(db, gymId);
-      if (!record) throw new HttpError(404, 'No gym with that id.');
+      if (!record) throw new HttpError(404, 'Couldn’t find that gym.');
       try {
         return send(res, 200, await google.lookup(record));
       } catch (error) {
@@ -2701,7 +2701,7 @@ export function createApp(options: AppOptions) {
       requirePermission(user, 'review.moderate');
       const body = (await readJson(req)) as Record<string, unknown>;
       const decision = body.decision;
-      if (decision !== 'publish' && decision !== 'reject') throw new HttpError(400, 'Decide publish or reject.');
+      if (decision !== 'publish' && decision !== 'reject') throw new HttpError(400, 'Choose publish or reject.');
       const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 300) : null;
       if (decision === 'reject' && !reason) throw new HttpError(400, 'Give a reason when rejecting.');
       const result = db
@@ -2718,7 +2718,7 @@ export function createApp(options: AppOptions) {
     if (method === 'POST' && path === '/api/bug-reports') {
       const { account } = caller(req);
       const key = account ? `account:${account.id}` : `address:${clientAddress(req)}`;
-      if (!bugLimiter.allow(key, now().getTime())) throw new HttpError(429, 'That’s a lot of reports at once. Try again in an hour.');
+      if (!bugLimiter.allow(key, now().getTime())) throw new HttpError(429, 'Too many reports. Try again in an hour.');
       let report;
       try {
         report = cleanBugReport(await readJson(req));
@@ -2740,7 +2740,7 @@ export function createApp(options: AppOptions) {
       try {
         const { south, west } = parseBlock(url.searchParams);
         if (weather.on && weather.needsFetch(south, west) && !weatherLimiter.allow(account.id, now().getTime())) {
-          throw new HttpError(429, 'That’s a lot of weather. Try again in a little while.', 'rate_limited');
+          throw new HttpError(429, 'Too many weather requests. Try again in a few minutes.', 'rate_limited');
         }
         return send(res, 200, { weather: await weather.forBlock(south, west) });
       } catch (error) {
@@ -2762,12 +2762,12 @@ export function createApp(options: AppOptions) {
     if (method === 'POST' && (path === '/api/gympal/workout' || path === '/api/gympal/note')) {
       const { account } = requireAccount(req);
       const building = path === '/api/gympal/workout';
-      if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
+      if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t available on this server yet.', 'gympal_off');
       if (!billing.isMax(account.id)) throw new HttpError(403, `${building ? 'Workouts built by GymPal are' : 'GymPal’s coach’s notes are'} part of GymGO Max.`, 'max_required');
       const at = now().getTime();
       const limits = gymPalLimiters.max;
-      if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions at once. Give GymPal a minute.');
-      if (!limits.day.allow(account.id, at)) throw new HttpError(429, `That’s ${GYMPAL_PLANS.max.perDay} questions today, the most there is. Try again tomorrow.`);
+      if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'Too many questions at once. Wait a minute and try again.');
+      if (!limits.day.allow(account.id, at)) throw new HttpError(429, `You’ve used all ${GYMPAL_PLANS.max.perDay} questions for today. Try again tomorrow.`);
       const names = () => new Map(own.exercises(account.id).map((exercise) => [exercise.id, exercise.name]));
       const recent = (except: string | null) =>
         (db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where user_id = ? order by finished_at desc limit 13`).all(account.id) as TrainingRow[])
@@ -2783,7 +2783,7 @@ export function createApp(options: AppOptions) {
           const log = body?.useLog === true ? trainingSummary(recent(null), now(), names()) : null;
           const answer = await gymPal.ask([{ role: 'user', content: request }], { log, task: workoutTask(catalogue), replyTokens: 900 });
           const workout = readWorkout(answer, catalogue);
-          if (!workout) throw new HttpError(502, 'GymPal’s workout didn’t come out right. Try asking again, a little differently.', 'gympal_unreadable');
+          if (!workout) throw new HttpError(502, 'GymPal couldn’t build that workout. Try rewording your request.', 'gympal_unreadable');
           return send(res, 200, { workout });
         }
         const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '';
@@ -2807,7 +2807,7 @@ export function createApp(options: AppOptions) {
     if (method === 'POST' && path === '/api/gympal') {
       const { account } = requireAccount(req);
       // Off, nothing is counted against anyone.
-      if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
+      if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t available on this server yet.', 'gympal_off');
       const pro = billing.isPro(account.id);
       const tier = pro && billing.isMax(account.id) ? 'max' : pro ? 'pro' : 'free';
       const plan = GYMPAL_PLANS[tier];
@@ -2817,16 +2817,16 @@ export function createApp(options: AppOptions) {
         const messages = cleanChat(body, plan);
         const context = cleanContext(body);
         const useLog = body?.useLog === true;
-        if (useLog && !pro) throw new HttpError(403, 'Answers that know your training are part of GymGO Pro.', 'pro_required');
+        if (useLog && !pro) throw new HttpError(403, 'Answers based on your training are part of GymGO Pro.', 'pro_required');
         const at = now().getTime();
         const limits = gymPalLimiters[tier];
-        if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions at once. Give GymPal a minute.');
+        if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'Too many questions at once. Wait a minute and try again.');
         if (!limits.day.allow(account.id, at)) {
           throw tier === 'max'
-            ? new HttpError(429, `That’s ${plan.perDay} questions today, the most there is. Try again tomorrow.`)
+            ? new HttpError(429, `You’ve used all ${plan.perDay} questions for today. Try again tomorrow.`)
             : tier === 'pro'
-              ? new HttpError(429, `That’s your ${plan.perDay} questions for today. GymGO Max has ${GYMPAL_PLANS.max.perDay} a day.`, 'gympal_limit')
-              : new HttpError(429, `That’s your ${plan.perDay} questions for today. GymGO Pro has ${GYMPAL_PLANS.pro.perDay} a day.`, 'gympal_limit');
+              ? new HttpError(429, `You’ve used all ${plan.perDay} questions for today. Max includes ${GYMPAL_PLANS.max.perDay} a day.`, 'gympal_limit')
+              : new HttpError(429, `You’ve used all ${plan.perDay} questions for today. Pro includes ${GYMPAL_PLANS.pro.perDay} a day.`, 'gympal_limit');
         }
         // Their latest sessions, only when they've said GymPal may see them.
         const log = useLog
@@ -2939,7 +2939,7 @@ export function createApp(options: AppOptions) {
       requirePermission(user, 'review.moderate');
       const body = (await readJson(req)) as Record<string, unknown>;
       const decision = body.decision;
-      if (decision !== 'publish' && decision !== 'reject') throw new HttpError(400, 'Decide publish or reject.');
+      if (decision !== 'publish' && decision !== 'reject') throw new HttpError(400, 'Choose publish or reject.');
       const reason = typeof body.reason === 'string' ? body.reason.trim().slice(0, 300) : null;
       if (decision === 'reject' && !reason) throw new HttpError(400, 'Give a reason when rejecting.');
       const photoId = decodeURIComponent(parts[3]!);

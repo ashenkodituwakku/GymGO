@@ -230,7 +230,7 @@ export function GymPal() {
         setProblem(
           error instanceof ApiError && error.status === 401
             ? { text: 'Sign in to chat with GymPal.' }
-            : { text: problemText(error, 'GymPal couldn’t answer. Try again?'), toPro: error instanceof ApiError && (error.code === 'gympal_limit' || error.code === 'pro_required') },
+            : { text: problemText(error, 'GymPal couldn’t answer. Try again.'), toPro: error instanceof ApiError && (error.code === 'gympal_limit' || error.code === 'pro_required') },
         );
       }
     },

@@ -16,7 +16,7 @@ const CATALOGUE: CatalogueEntry[] = [
 describe('reading what the app sends', () => {
   it('keeps a request to one plain paragraph, and needs one', () => {
     expect(cleanRequest('  45 minutes,\n upper body <b>please</b>  ')).toBe('45 minutes, upper body b please /b');
-    expect(() => cleanRequest('  ')).toThrow(/Say what you’d like/);
+    expect(() => cleanRequest('  ')).toThrow(/Describe the workout you want/);
     expect(cleanRequest('x'.repeat(900))).toHaveLength(500);
   });
 

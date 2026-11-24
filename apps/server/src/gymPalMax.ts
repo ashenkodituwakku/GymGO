@@ -49,13 +49,13 @@ const plainLine = (value: string, most: number) =>
 /** The request, as typed: a sensible length, one paragraph. */
 export function cleanRequest(input: unknown): string {
   const text = typeof input === 'string' ? plainLine(input, MAX_REQUEST_CHARS) : '';
-  if (text.length < 3) throw new GymPalError(400, 'Say what you’d like: how long, which muscles, what kit.');
+  if (text.length < 3) throw new GymPalError(400, 'Describe the workout you want, like how long and which muscles.');
   return text;
 }
 
 /** The exercises the app offers: ids and names it knows, each once, at most MAX_CATALOGUE. */
 export function cleanCatalogue(input: unknown): CatalogueEntry[] {
-  if (!Array.isArray(input)) throw new GymPalError(400, 'The app didn’t say which exercises you can do.');
+  if (!Array.isArray(input)) throw new GymPalError(400, 'No exercises were sent. Try again.');
   const seen = new Set<string>();
   const list: CatalogueEntry[] = [];
   for (const item of input.slice(0, MAX_CATALOGUE)) {
@@ -67,7 +67,7 @@ export function cleanCatalogue(input: unknown): CatalogueEntry[] {
     seen.add(id);
     list.push({ id, name: plainLine(name, 80), measure: measure === 'time' || measure === 'distance' ? measure : 'reps' });
   }
-  if (list.length === 0) throw new GymPalError(400, 'The app didn’t say which exercises you can do.');
+  if (list.length === 0) throw new GymPalError(400, 'No exercises were sent. Try again.');
   return list;
 }
 

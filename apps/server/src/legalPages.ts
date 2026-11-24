@@ -104,14 +104,14 @@ export function resetPasswordPage(state: { token: string | null; problem?: strin
   if (state.done) {
     return shell(
       'Password changed',
-      `<h1>Password changed</h1><section><p>Your new password is set, and every device that was signed in to your account has been signed out. Open GymGO and sign in with it.</p></section>`,
+      `<h1>Password changed</h1><section><p>Your new password is set. You’ve been signed out on all your devices, so open GymGO and sign in again.</p></section>`,
       null,
     );
   }
   if (!state.token) {
     const problem = state.problem
       ? `<p class="problem">${escape(state.problem)}</p>`
-      : '<p>Links to choose a new password work once, for 30 minutes. Ask for a new one in GymGO: on Sign in, tap <strong>Forgot your password?</strong></p>';
+      : '<p>Password reset links work once and expire after 30 minutes. To get a new one, open GymGO, go to Sign in and tap <strong>Forgot your password?</strong></p>';
     return shell('Link stopped working', `<h1>This link has stopped working</h1><section>${problem}</section>`, null);
   }
   return shell(
@@ -121,7 +121,7 @@ export function resetPasswordPage(state: { token: string | null; problem?: strin
 <input type="hidden" name="token" value="${escape(state.token)}">
 <label>New password<input type="password" name="password" autocomplete="new-password" minlength="8" maxlength="200" required autofocus aria-describedby="password-rule"></label>
 <label>Type it again<input type="password" name="confirm" autocomplete="new-password" minlength="8" maxlength="200" required></label>
-<p class="hint" id="password-rule">At least 8 characters, and not one of the commonest passwords. Every device signed in to your account will be signed out.</p>
+<p class="hint" id="password-rule">Use at least 8 characters and avoid common passwords. You’ll be signed out on all your devices.</p>
 <button type="submit">Set new password</button>
 </form></section>`,
     null,
@@ -133,11 +133,11 @@ export function resetEmail(name: string, link: string, minutes: number): string 
   return [
     `Hello ${name},`,
     '',
-    `Someone (we hope you) asked to reset the password for your GymGO account. Choose a new one here, within ${minutes} minutes:`,
+    `We got a request to reset the password for your GymGO account. Use this link within ${minutes} minutes to choose a new one:`,
     '',
     link,
     '',
-    'If it wasn’t you, ignore this email: your password stays as it is.',
+    'If you didn’t ask for this, you can ignore this email. Your password won’t change.',
     '',
     'GymGO',
   ].join('\n');

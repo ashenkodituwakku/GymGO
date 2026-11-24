@@ -9,9 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 272 · Plainer words, part 6: error messages and the password email
+
+*24 Nov 2026 · the commit "Plainer words: error messages and the password email"*
+
+The sixth part of the rewrite (docs/COPY.md) covers the messages the server sends back to the app, the password reset email and pages, and the app's own connection errors. For example:
+
+- Limits say what happened: "You’ve reached today’s limit for photos. Try again tomorrow." (it read "That’s a lot of photos for one day.") and "Too many searches. Try again in a few minutes." The repeated "That’s a lot of…" is gone.
+- GymPal's limits: "You’ve used all 100 questions for today. Max includes 300 a day." (it read "That’s your 100 questions for today. GymGO Max has 300 a day.")
+- "This is a demo gym, so reports can’t be added." (it read "This is an invented demo gym, so there’s nothing real to report.")
+- "Prices from more than two years ago are too old to help others." (it read "That was over two years ago; prices change, so it wouldn’t help anyone now.")
+- "Enter your birth month and year to create your account." (it read "Before GymGO makes your account: which month and year were you born?")
+- "Couldn’t connect to GymGO. Check your connection and try again." when the server can't be reached, and "Couldn’t save. Try again." as the fallback.
+- The reset email: "We got a request to reset the password for your GymGO account. Use this link within 30 minutes to choose a new one." and "If you didn’t ask for this, you can ignore this email. Your password won’t change." (it read "Someone (we hope you) asked…").
+- "Free accounts can save up to 10 gyms. Pro has no limit." The facts and codes behind every message are unchanged.
+- Checked: server 370, app 665 and domain 205 tests; app and server typecheck.
+
 ## Update 271 · Plainer words, part 5: profile, collection, friends and gym owners
 
-*24 Nov 2026 · the commit "Plainer words: profile, collection, friends and gym owners"*
+*24 Nov 2026 · `59959b3`*
 
 The fifth part of the rewrite (docs/COPY.md) covers Profile, Account, Appearance, the collection and card pages, Friends and the feed, reports, filters, Google's listing, gym owners and moderation, weather, notes, photos, reminders and the member reports on a gym's page. For example:
 

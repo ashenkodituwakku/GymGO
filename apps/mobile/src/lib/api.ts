@@ -68,8 +68,8 @@ export interface FoundPlace {
 
 
 /** What to tell someone when a request to the GymGO server failed. */
-export function problemText(error: unknown, fallback = 'That didn’t save. Try again?'): string {
-  if (error instanceof OfflineError) return 'Can’t reach the GymGO server right now.';
+export function problemText(error: unknown, fallback = 'Couldn’t save. Try again.'): string {
+  if (error instanceof OfflineError) return 'Couldn’t connect to GymGO. Check your connection and try again.';
   if (error instanceof ApiError) return error.message;
   return fallback;
 }
@@ -118,7 +118,7 @@ async function request<T>(method: string, path: string, options: { token?: strin
   } catch {
     // On the website, maybe its server has just gone off (lib/website.ts).
     serverMissed();
-    throw new OfflineError('Couldn’t reach the GymGO server.');
+    throw new OfflineError('Couldn’t connect to GymGO.');
   } finally {
     clearTimeout(timer);
   }

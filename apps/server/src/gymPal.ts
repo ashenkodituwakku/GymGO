@@ -308,7 +308,7 @@ export class GymPal {
    * the whole answer thinking), the next is asked.
    */
   async ask(messages: ChatMessage[], extra: { context?: string | null; log?: string | null; replyTokens?: number; task?: string | null } = {}): Promise<string> {
-    if (!this.on) throw new GymPalError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
+    if (!this.on) throw new GymPalError(503, 'GymPal isn’t available on this server yet.', 'gympal_off');
     // One message of instructions: not every model takes more than one.
     const conversation = [{ role: 'system', content: instructions(extra.context ?? null, extra.log ?? null, extra.task ?? null) }, ...messages];
     const replyTokens = extra.replyTokens ?? GYMPAL_PLANS.free.replyTokens;
@@ -358,7 +358,7 @@ export class GymPal {
       return { error: new GymPalError(502, 'GymPal couldn’t be reached. Try again in a moment.'), next: true };
     }
     if (!response.ok) this.log(`[gympal] Groq said ${response.status} for ${model}: ${await reasonOf(response)}`);
-    if (response.status === 429) return { error: new GymPalError(429, 'GymPal’s had a lot of questions. Try again a bit later.', 'gympal_busy'), next: true };
+    if (response.status === 429) return { error: new GymPalError(429, 'GymPal is busy right now. Try again in a few minutes.', 'gympal_busy'), next: true };
     if (response.status === 401 || response.status === 403) {
       this.log('[gympal] Groq turned the key down. Check GROQ_API_KEY (console.groq.com, API Keys).');
       return { error: new GymPalError(502, 'GymPal isn’t working right now. Try again later.'), next: false };
@@ -407,7 +407,7 @@ export class GymPal {
       throw new GymPalError(502, 'GymPal couldn’t be reached. Try again in a moment.');
     }
     if (!response.ok) this.log(`[gympal] OpenRouter said ${response.status}: ${await reasonOf(response)}`);
-    if (response.status === 429) throw new GymPalError(429, 'GymPal’s had a lot of questions. Try again a bit later.', 'gympal_busy');
+    if (response.status === 429) throw new GymPalError(429, 'GymPal is busy right now. Try again in a few minutes.', 'gympal_busy');
     if (!response.ok) {
       // The owner's to fix (a wrong key, an account owing money): said in the server's log, never the key itself.
       if (response.status === 401 || response.status === 402 || response.status === 403) {

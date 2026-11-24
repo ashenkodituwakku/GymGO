@@ -102,7 +102,8 @@ export default function WorkoutScreen() {
   // Kept on the device, and the same on the recovery map and an exercise's page.
   const gender = useBodyGender();
   const setGender = setBodyGender;
-  const [goal, setGoal] = useState<Goal>('muscle');
+  // Where you said you train for on the welcome tour, else building muscle.
+  const [goal, setGoal] = useState<Goal>(() => prefs.goal ?? 'muscle');
   const [length, setLength] = useState<Length>(6);
   const [seed, setSeed] = useState(1);
   const [built, setBuilt] = useState(false);

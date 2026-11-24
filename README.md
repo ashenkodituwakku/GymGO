@@ -1101,8 +1101,12 @@ account there's a **welcome tour**, one page you scroll, as a product page
 plays as you scroll: find a gym that lets you in (pins drop, one opens),
 know what to do there (sets tick off, a record, the rest), collect it
 (cards fan out). Each part holds still while your scrolling plays it.
-**Next** plays the next part, Skip leaves any time, and with Reduce Motion
-every part is simply shown. Then on to where you were going. The sign-up
+**Next** plays the next part, and with Reduce Motion every part is simply
+shown. Then a few quick questions, each skippable, which GymGO uses: your
+country, what you train for (where the workout builder and programmes
+start), days a week (your weekly goal) and, while location is on, whether
+to find gyms near you. Then on to where you were going. Behind the tour and
+the sign-in page are slow pools of soft colour (still with Reduce Motion). The sign-up
 page has a brand panel beside the form on a wide screen, and a password
 strength meter (advice only; 8 characters is the rule).
 

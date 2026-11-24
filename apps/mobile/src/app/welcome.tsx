@@ -10,9 +10,11 @@
  *   - Collect every gym you visit: three cards fan out, the rarest one
  *     catches the light, and the visit tiers follow.
  *
- * Then on to wherever you were going (a link opened before signing up), or
- * Home. Next scrolls on to the end of the next part (so it plays); Skip
- * leaves at any time.
+ * Then a few quick questions (components/WelcomeSetup.tsx: your country,
+ * what you train for, days a week, location), each skippable, and on to
+ * wherever you were going (a link opened before signing up), or Home. Next
+ * scrolls on to the end of the next part (so it plays); Skip goes straight
+ * to the questions. Behind it all, pools of soft colour (components/Aurora.tsx).
  *
  * Nothing drawn here stands in for a real gym: no names, no prices, no
  * photos, only the shapes of what the app shows. With Reduce Motion (the
@@ -30,6 +32,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   Extrapolation,
+  FadeIn,
   FadeInDown,
   ReduceMotion,
   interpolate,
@@ -47,6 +50,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
+import { Aurora } from '@/components/Aurora';
 import { AppBadge, Wordmark } from '@/components/BrandMark';
 import { ExerciseGlyph } from '@/components/ExerciseGlyph';
 import { TIER_METAL } from '@/components/GemCard';
@@ -55,6 +59,7 @@ import { EASE_OUT, Pressable, useCalm } from '@/components/motion';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { SAMPLE_CARDS, SampleCard } from '@/components/SampleCard';
 import { ScreenOptions } from '@/components/ScreenOptions';
+import { WelcomeSetup } from '@/components/WelcomeSetup';
 import { PrimaryButton, TIER_COLOUR, Txt } from '@/components/ui';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -125,6 +130,12 @@ export default function WelcomeScreen() {
   const parts = useRef<Array<{ top: number; height: number }>>([]);
   const [atEnd, setAtEnd] = useState(false);
   const endShared = useSharedValue(false);
+  // The story, then the questions (components/WelcomeSetup.tsx), then away.
+  const [phase, setPhase] = useState<'story' | 'setup'>('story');
+  const toSetup = () => {
+    haptic.select();
+    setPhase('setup');
+  };
 
   const finish = () => {
     haptic.success();
@@ -155,14 +166,22 @@ export default function WelcomeScreen() {
 
   return (
     <View style={[styles.page, { paddingTop: insets.top, paddingBottom: insets.bottom + space[3] }]}>
+      {/* Pools of soft colour behind it all, sliding a little as the story scrolls. */}
+      <Aurora scroll={phase === 'story' ? scrollY : undefined} span={screen * (PARTS.length * SCENE + 0.9)} />
       <ScreenOptions options={{ headerShown: false }} />
       <Txt variant="body" accessibilityRole="header" level={1} style={styles.unseen}>
         Welcome to GymGO
       </Txt>
+      {phase === 'setup' ? (
+        <Animated.View entering={FadeIn.duration(280).reduceMotion(ReduceMotion.System)} style={styles.scroller}>
+          <WelcomeSetup onDone={finish} />
+        </Animated.View>
+      ) : (
+      <>
       <View style={styles.top}>
         <Wordmark height={22} />
         {!atEnd && (
-          <Pressable onPress={finish} accessibilityRole="button" accessibilityLabel="Skip the tour" hitSlop={10} style={({ pressed }) => [styles.skip, pressed && { opacity: 0.6 }]}>
+          <Pressable onPress={toSetup} accessibilityRole="button" accessibilityLabel="Skip the tour, on to a few quick questions" hitSlop={10} style={({ pressed }) => [styles.skip, pressed && { opacity: 0.6 }]}>
             <Txt variant="body" color={color.brand} style={face('semibold')}>
               Skip
             </Txt>
@@ -211,8 +230,10 @@ export default function WelcomeScreen() {
       </Animated.ScrollView>
 
       <View style={styles.actions}>
-        <PrimaryButton label={atEnd ? 'Get started' : 'Next'} icon={atEnd ? 'check' : undefined} onPress={() => (atEnd ? finish() : goNext())} />
+        <PrimaryButton label={atEnd ? 'Set up GymGO' : 'Next'} onPress={() => (atEnd ? toSetup() : goNext())} />
       </View>
+      </>
+      )}
     </View>
   );
 }
@@ -607,17 +628,17 @@ function Finale({ screen, scrollY, calm }: { screen: number; scrollY: SharedValu
   const icons: IconName[] = ['door', 'workout', 'cards'];
   return (
     <View onLayout={(event) => (top.value = event.nativeEvent.layout.y)} style={[styles.finaleWrap, { minHeight: calm ? undefined : screen * 0.9 }]}>
-      <Animated.View style={[styles.finale, style]} accessible accessibilityLabel="You’re all set. Find a gym near you, plan a workout, or just look around.">
+      <Animated.View style={[styles.finale, style]} accessible accessibilityLabel="Let’s set you up. A few quick questions, so GymGO opens where you train and plans for what you want. Skip any you like.">
         <View style={styles.trio} aria-hidden>
           {icons.map((icon, index) => (
             <FinaleIcon key={icon} icon={icon} index={index} enter={enter} />
           ))}
         </View>
         <Txt variant="largeTitle" fluid style={styles.center}>
-          You’re all set
+          Let’s set you up
         </Txt>
         <Txt variant="body" color={color.labelSecondary} style={[styles.center, styles.line]}>
-          Find a gym near you, plan a workout, or just look around.
+          A few quick questions, so GymGO opens where you train and plans for what you want. Skip any you like.
         </Txt>
       </Animated.View>
     </View>

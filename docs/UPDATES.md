@@ -9,6 +9,47 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 263 · The welcome tour asks what it needs to, on a background of soft colour
+
+*24 Nov 2026 · the commit "Welcome tour: quick questions, a background of soft colour; sign-in on frosted glass"*
+
+You asked to keep making the onboarding nicer, to ask the necessary questions during it, to give it a nice background, and to make the login and sign-up page look better.
+
+- **A few quick questions, after the story.** **Set up GymGO** at the end of the tour (or Skip, from anywhere in it) leads to them. Each has its own screen, and each can be skipped. GymGO only asks what it uses:
+  1. **Where do you train?**
+     - Your country, with the one your phone or browser is set to suggested first. There's a search for any other.
+     - It's saved as your country, so Home doesn't ask for it again.
+  2. **What do you train for?**
+     - Get stronger, Build muscle or Endurance, each saying how its sets and rests are planned.
+     - **New:** the workout builder and programmes now start on your answer (you can still pick another). An Endurance answer starts programmes on Fitness, and your days a week sets a programme's days, kept to 2 to 4.
+  3. **How many days a week?**
+     - 1 to 7, with a week drawn under it of the days it might fall on (3 is Monday, Wednesday and Friday) and a word on it.
+     - It sets the weekly goal Home and Progress count towards.
+  4. **Find gyms near you?**
+     - Asks for your location there and then, saying why, and that your exact location stays on your device and is never saved or sent to GymGO (as lib/location.ts does).
+     - Only while location is on in Settings.
+  
+  Then "You're all set", with your answers as chips, and **Get started**. A bar at the top shows which question you're on, Back goes to the last one, and Skip leaves an answer as it was.
+- **A background of soft colour** (components/Aurora.tsx), behind the tour, its questions and the sign-in page:
+  - four wide pools of colour (GymGO's violet, sky blue, rose and mint) drifting slowly;
+  - pale in light mode, deep in dark;
+  - on the tour they slide a little as you scroll, for depth;
+  - still with Reduce Motion;
+  - no pictures or photos, only colour.
+- **Sign in and sign up:** the form sits on frosted glass over the colour, on a phone and beside the panel on a wide screen.
+- **The tour's end** now reads "Let's set you up" and leads to the questions.
+
+- Checked: every package's tests, lint and typecheck pass (app 665, with 2 new for the week drawing; server 360; domain 205). In a browser against the local server, at 390 light and 1280 dark:
+  - a new test account made, the tour skipped to the questions;
+  - Australia suggested (an Australian locale), New Zealand searched for, then Australia picked;
+  - Get stronger, 4 days, then location allowed (a stand-in location in Sydney), which showed "Found you";
+  - the summary, then Get started to Home with no country question;
+  - the saved settings read back (`AU`, `strength`, `4`);
+  - the tour and sign-up in dark mode.
+
+  The test caught the week drawing putting 3 days on Monday, Wednesday and Saturday; it now uses the usual patterns.
+- Not checked: on a phone (the location prompt there is the phone's own).
+
 ## Update 262 · Your server can keep itself up to date
 
 *24 Nov 2026 · the commit "deploy/autoupdate.sh: the server updates itself, hourly, once GitHub's checks pass"*

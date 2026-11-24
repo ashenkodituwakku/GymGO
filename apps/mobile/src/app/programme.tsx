@@ -82,8 +82,9 @@ export default function ProgrammeScreen() {
 
 function Chooser() {
   const { prefs } = useApp();
-  const [goal, setGoal] = useState<ProgrammeGoal>('muscle');
-  const [days, setDays] = useState<ProgrammeDays>(3);
+  // From the welcome tour's answers, where given: your goal (endurance is a programme's fitness) and days a week, kept to 2 to 4.
+  const [goal, setGoal] = useState<ProgrammeGoal>(() => (prefs.goal === 'endurance' ? 'fitness' : (prefs.goal ?? 'muscle')));
+  const [days, setDays] = useState<ProgrammeDays>(() => (prefs.weeklyGoal ? (Math.min(4, Math.max(2, prefs.weeklyGoal)) as ProgrammeDays) : 3));
   const [weeks, setWeeks] = useState<ProgrammeWeeks>(8);
   const [shown, setShown] = useState(0);
   // Which way the last day picked lay, so its plan slides in from that side (the days run in order).

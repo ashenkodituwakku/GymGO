@@ -305,6 +305,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Tour questions, soft background** (24 Nov, Update 263).
+  components/WelcomeSetup.tsx (steps country → goal → days → location
+  (only while `prefs.location`) → done; `chooseCountry`, `setPref('goal')`,
+  `setPref('weeklyGoal')`, `locate(true)`); app/welcome.tsx's `phase`
+  ('story' | 'setup'), Skip and the end's Set up GymGO go to it. New
+  `Prefs.goal` (strength | muscle | endurance | null, cleaned on load):
+  workout/[id].tsx and programme.tsx start from it (endurance → fitness;
+  weeklyGoal → programme days 2 to 4). lib/onboarding.ts (`spreadDays`,
+  `daysLine`). components/Aurora.tsx: four RadialGradient pools, drifting
+  with Reanimated, optional `scroll`/`span` parallax, calm-aware; behind
+  the tour and sign-in (whose form is now a frosted `panel`).
 - **Self-updating server** (24 Nov, Update 262). deploy/autoupdate.sh:
   `--install` adds an hourly cron line marked `# gymgo-autoupdate`
   (`--remove` takes it out; other lines kept). A run fetches, exits if

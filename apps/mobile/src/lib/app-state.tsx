@@ -30,6 +30,7 @@ import { useCountryPack } from './useCountryPack';
 import { useCollectionSync } from './useCollection';
 import { useOwnTrainingSync } from './ownTraining';
 import { cleanPlates, type WeightUnit } from './training';
+import { GOALS, type Goal } from './workout';
 import { cleanTimers, type IntervalPlan } from './intervals';
 import { LIMITED } from './limited';
 
@@ -84,6 +85,11 @@ export interface Prefs {
   country: string | null;
   /** Workouts a week you're aiming for (1 to 7), kept on this device; null until you pick one. */
   weeklyGoal: number | null;
+  /**
+   * What you train for, asked on the welcome tour: where the workout builder
+   * and programmes start (you can still pick another there). Null until said.
+   */
+  goal: Goal | null;
   /** The plates your gym has, per unit (Pro); missing means the standard set. */
   plates: Partial<Record<WeightUnit, number[]>>;
   /** Interval timers of your own (Pro), kept on this device. */
@@ -209,7 +215,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, location: true, gymPal: true, demo: false, country: null, weeklyGoal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK, rpe: false });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, location: true, gymPal: true, demo: false, country: null, weeklyGoal: null, goal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK, rpe: false });
   const [prefsReady, setPrefsReady] = useState(false);
   // Arcade with Pro, Marimba without: a lapsed Pro hears Marimba again, the pick kept for when it's back.
   useEffect(() => setSoundPack(soundPackFor(prefs.soundPack, billing.isPro)), [prefs.soundPack, billing.isPro]);
@@ -232,11 +238,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     void loadJson<Partial<Prefs>>(PREFS_KEY, {}).then((value) => {
       const country = typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country) ? value.country : null;
       const goal = typeof value.weeklyGoal === 'number' && Number.isInteger(value.weeklyGoal) && value.weeklyGoal >= 1 && value.weeklyGoal <= 7 ? value.weeklyGoal : null;
+      const trainingGoal = GOALS.some((item) => item.id === value.goal) ? (value.goal as Goal) : null;
       const kgPlates = cleanPlates(value.plates?.kg, 'kg');
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
       // The limited website shows real gyms only, whatever was kept (lib/limited.ts).
-      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, location: value.location !== false, gymPal: value.gymPal !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack), rpe: value.rpe === true };
+      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, location: value.location !== false, gymPal: value.gymPal !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, goal: trainingGoal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack), rpe: value.rpe === true };
       setHapticsEnabled(next.haptics);
       setSoundsEnabled(next.sounds);
       setLocationAllowed(next.location);

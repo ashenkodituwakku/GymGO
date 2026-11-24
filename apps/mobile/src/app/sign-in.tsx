@@ -12,6 +12,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { serverOfflineLine } from '@/lib/copy';
 import Animated, { FadeInDown, ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { AuthPerks, AuthShowcase } from '@/components/AuthShowcase';
+import { Aurora } from '@/components/Aurora';
 import { EASE_OUT, FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { passwordStrength } from '@/lib/passwordStrength';
 import { AppBadge } from '@/components/BrandMark';
@@ -22,7 +23,7 @@ import { ApiError, OfflineError, api, serverHosted } from '@/lib/api';
 import { accountCreationLocked, formatBirthMonthInput, lockAccountCreation, parseBirthMonth, takePendingSignIn, type PendingSignIn } from '@/lib/ageGate';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { FIELD_FRAME, NO_WEB_OUTLINE, color, dropShadow, face, radius, space, themed } from '@/lib/theme';
+import { FIELD_FRAME, NO_WEB_OUTLINE, color, currentTheme, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { usePageTitle } from '@/lib/pageTitle';
 import { PageScroll } from '@/components/PageScroll';
 import { LegalText } from '@/components/LegalText';
@@ -217,9 +218,15 @@ export default function SignInScreen() {
     setResetSentTo(null);
   };
 
+  // The form's frosted panel: the page's colour, part clear, over the pools of colour behind.
+  const dark = currentTheme().scheme === 'dark';
+  const frosted = { backgroundColor: dark ? 'rgba(28, 28, 30, 0.62)' : 'rgba(255, 255, 255, 0.58)', ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(24px) saturate(160%)' } as object) : null) };
+
   return (
+    <View style={styles.page}>
+    <Aurora />
     <PageScroll
-      style={styles.page}
+      style={styles.scroll}
       contentContainerStyle={[styles.content, wide && styles.contentWide]}
     >
       <ScreenOptions options={{ title: '' }} />
@@ -247,6 +254,7 @@ export default function SignInScreen() {
         {mode === 'create' && !wide && <AuthPerks />}
       </Animated.View>
 
+      <View style={[styles.panel, frosted]}>
       <Segmented
         options={[
           { value: 'sign_in', label: 'Sign in' },
@@ -396,6 +404,7 @@ export default function SignInScreen() {
         ))}
       </>
       )}
+      </View>
 
       <PrivacyNote />
       {account.gate !== 'in' && (
@@ -407,6 +416,7 @@ export default function SignInScreen() {
       )}
       </View>
     </PageScroll>
+    </View>
   );
 }
 
@@ -555,6 +565,17 @@ function AuthField({
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
+    scroll: { flex: 1, backgroundColor: 'transparent' },
+    // The form, on frosted glass over the pools of colour.
+    panel: {
+      gap: space[4],
+      padding: space[4],
+      borderRadius: radius.xl,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.separator,
+      ...dropShadow(0.08, 24, 8, 4),
+    },
     content: { padding: space[4], paddingBottom: space[8], width: '100%', maxWidth: 460, alignSelf: 'center' },
     // Wide: the panel and the form side by side, the form its usual width.
     contentWide: { maxWidth: 1120, flexDirection: 'row', alignItems: 'stretch', gap: space[8], padding: space[6] },

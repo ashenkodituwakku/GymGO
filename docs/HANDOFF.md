@@ -118,6 +118,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Announcements on the web** (24 Nov, Update 259). React Native Web's
+  `AccessibilityInfo.announceForAccessibility` is a no-op: never call it
+  for something a browser's screen reader should hear. Use `useAnnouncer`
+  (components/ui.tsx): `say(text)` (stable, safe in callbacks) and render
+  its `region` inside whatever a screen reader can reach while it speaks
+  (inside a Modal's panel, not outside it). A live region that shows an
+  error keeps its wrapper mounted and swaps only what's in it. A button
+  that removes itself calls `focusNextWhenGone(event.currentTarget)`
+  first (the plank stopwatch's Stop). Times are said with `spokenClock`.
 - **Motion and type rules** (22 Nov, Update 236). components/motion.tsx:
   every press sinks to `PRESS_SCALE` (0.97; don't pass `scaleTo`), every
   entrance starts at `ENTER_SCALE` (0.97) and transparent, never scale 0

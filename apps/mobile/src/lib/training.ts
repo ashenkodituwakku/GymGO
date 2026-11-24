@@ -569,6 +569,18 @@ export function restLabel(seconds: number): string {
   return clockLabel(seconds);
 }
 
+/** A time as a screen reader should say it: "42 seconds", "1 minute 5 seconds", "1 hour 2 minutes". */
+export function spokenClock(seconds: number): string {
+  const whole = Math.max(0, Math.round(seconds));
+  const parts: Array<[number, string]> = [
+    [Math.floor(whole / 3600), 'hour'],
+    [Math.floor((whole % 3600) / 60), 'minute'],
+    [whole % 60, 'second'],
+  ];
+  const said = parts.filter(([count]) => count > 0).map(([count, unit]) => `${count} ${unit}${count === 1 ? '' : 's'}`);
+  return said.length ? said.join(' ') : '0 seconds';
+}
+
 /** "1:30"; past an hour, "1:05:30". */
 export function clockLabel(seconds: number): string {
   const whole = Math.max(0, Math.ceil(seconds));

@@ -9,9 +9,26 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 259 · The stopwatch, records and GymPal's answers are read out on the website too
+
+*24 Nov 2026 · the commit "The stopwatch, records and GymPal’s answers are read out on the website too"*
+
+On the website, React Native's way of telling a screen reader something (`AccessibilityInfo.announceForAccessibility`) does nothing at all, so a few things a screen reader should have said never were. They now go through `useAnnouncer` (components/ui.tsx; Update 257), which speaks on phones as before and uses a hidden polite live region in a browser.
+
+- **The workout**: a new record ("Heaviest yet on Bench press"), and warm-up sets added, are read out in a browser too.
+- **The stopwatch on a plank or hold**:
+  - starting it says "Stopwatch started: Plank, set 1";
+  - stopping it says how long the set was ("Plank, set 1 done: 42 seconds"), with any record ("… Longest yet on Plank"). The same goes for ticking the set while its stopwatch runs.
+  - While running it's a **timer** to a screen reader, labelled with the time so far in words ("stopwatch running, 42 seconds"), not "zero forty-two". It doesn't speak every second.
+  - **Stop no longer drops focus.** The button goes once the set is ticked, and focus went with it, to the page itself. Now it moves on to what's next, the set's done box (lib/focusNext.ts, as elsewhere).
+- **GymPal**: his answers, and the "waiting to be set up" apology, are read out in a browser too, from inside his panel; the wording is unchanged. His problem line ("GymPal couldn’t answer. Try again?") sits in a live region that's always there, as one that arrives with its words often isn't read.
+- `spokenClock` (lib/training.ts): "42 seconds", "1 minute 5 seconds", "1 hour 2 minutes 5 seconds", tested.
+- Checked in a browser: a plank by keyboard at 1280 (light) and 390 (dark). Each announcement was read from the live regions, focus landed on the done box after Stop, and axe was clean with the stopwatch running and with GymPal open. App tests 660; the iPhone and Android bundles build.
+- Not checked: VoiceOver and TalkBack on a real phone.
+
 ## Update 258 · Checked: the new screens from Updates 248 to 256
 
-*24 Nov 2026 · the commit "Checked the new screens; a curly apostrophe in the feed's report email"*
+*24 Nov 2026 · `f8ae3cc`*
 
 The other session's recent work (the friends' feed, tagging the gym, sharing a workout as a picture, the Pro page's new ways to pay, the roomier Home and Progress's weekly bars) was put through the same checks as the rest of the app:
 

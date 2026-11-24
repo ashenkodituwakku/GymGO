@@ -3,7 +3,7 @@
  */
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { createContext, forwardRef, useContext, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
+import { createContext, forwardRef, useCallback, useContext, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { AccessibilityInfo, ActivityIndicator, Platform, type StyleProp, StyleSheet, Text, TextInput, type TextInputProps, type TextStyle, View, type ViewStyle, type TextInputInstance, type ViewInstance } from 'react-native';
 import type { ResultTier } from '@gymgo/domain';
@@ -225,11 +225,12 @@ export function FileName({ name, variant = 'footnote', color: tint = color.label
  */
 export function useAnnouncer(): { say: (text: string) => void; region: ReactNode } {
   const [said, setSaid] = useState('');
-  const say = (text: string) => {
+  // The same from one draw to the next, so a callback that says something needn't change with it.
+  const say = useCallback((text: string) => {
     if (Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(text);
     // The same words twice in a row still count as news: a space makes them differ.
     else setSaid((before) => (before === text ? `${text}\u00a0` : text));
-  };
+  }, []);
   const region =
     Platform.OS === 'web' ? (
       <View style={styles.unseenLive} aria-live="polite">

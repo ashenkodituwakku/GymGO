@@ -44,9 +44,8 @@
  */
 
 import { usePathname } from 'expo-router';
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  AccessibilityInfo,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -94,7 +93,7 @@ import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
 import { ARRIVE_CURVE, POP_IN, Pressable, useCalm, usePressScale } from './motion';
 import { Toggle } from './Toggle';
-import { CloseButton, Txt } from './ui';
+import { CloseButton, Txt, useAnnouncer } from './ui';
 
 export const GREETING = 'Hi! I’m GymPal your personal assistant, ask me anything!';
 
@@ -161,6 +160,8 @@ export function GymPal() {
   const [service, setService] = useState('OpenRouter');
   const [topic, setTopic] = useState<Topic | null>(null);
   const [useLog, setUseLog] = useState(false);
+  // His answers, read out by a screen reader as they arrive (on the web too, where React Native's own can't).
+  const { say, region } = useAnnouncer();
   // Pro ended: the log stays home.
   useEffect(() => {
     if (!pro) setUseLog(false);
@@ -192,9 +193,9 @@ export function GymPal() {
         { id: nextId++, role: 'assistant' as const, content: WAITING, waited: true },
       ]);
       setPending(false);
-      AccessibilityInfo.announceForAccessibility(`GymPal: ${WAITING}`);
+      say(`GymPal: ${WAITING}`);
     }, 700);
-  }, []);
+  }, [say]);
 
   // Asked each time it opens until it's known to be on: a key set since, or the server back.
   useEffect(() => {
@@ -214,7 +215,7 @@ export function GymPal() {
         );
         setLines((now) => [...now, { id: nextId++, role: 'assistant', content: reply }]);
         setPending(false);
-        AccessibilityInfo.announceForAccessibility(`GymPal: ${plain(reply)}`);
+        say(`GymPal: ${plain(reply)}`);
       } catch (error) {
         // The key was taken away since: back to waiting.
         if (error instanceof ApiError && error.code === 'gympal_off') {
@@ -232,7 +233,7 @@ export function GymPal() {
         );
       }
     },
-    [pro, waitingFor],
+    [pro, say, waitingFor],
   );
 
   /** Asks `text`, with what a screen told GymPal (this question's, or the conversation's). */
@@ -380,6 +381,7 @@ export function GymPal() {
             openPro('gympal');
           }}
           onClose={close}
+          announcer={region}
         />
       </Modal>
     </>
@@ -571,6 +573,7 @@ function Chat({
   onStartOver,
   onPro,
   onClose,
+  announcer,
 }: {
   wide: boolean;
   lines: Line[];
@@ -592,6 +595,8 @@ function Chat({
   onStartOver: () => void;
   onPro: () => void;
   onClose: () => void;
+  /** Where his answers are read out from (useAnnouncer): inside the panel, which is all a screen reader hears while it's open. */
+  announcer: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
   const dialogName = useDialogName('GymPal');
@@ -695,28 +700,32 @@ function Chat({
               <Bubble key={line.id} line={line} />
             ))}
             {pending && <Typing />}
-            {!!problem && (
-              <View style={styles.problem} aria-live="polite">
-                <Txt variant="footnote" color={color.dangerInk} style={styles.flex}>
-                  {problem.text}
-                </Txt>
-                {problem.toPro ? (
-                  <Pressable onPress={onPro} accessibilityRole="button" style={styles.textButton} hitSlop={8}>
-                    <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-                      See Pro
-                    </Txt>
-                  </Pressable>
-                ) : (
-                  state !== 'off' && (
-                    <Pressable onPress={onRetry} accessibilityRole="button" style={styles.textButton} hitSlop={8}>
+            {/* Always there, so a problem put in it is read out (a live region that arrives with its words often isn't). */}
+            <View aria-live="polite">
+              {!!problem && (
+                <View style={styles.problem}>
+                  <Txt variant="footnote" color={color.dangerInk} style={styles.flex}>
+                    {problem.text}
+                  </Txt>
+                  {problem.toPro ? (
+                    <Pressable onPress={onPro} accessibilityRole="button" style={styles.textButton} hitSlop={8}>
                       <Txt variant="footnote" color={color.brand} style={face('semibold')}>
-                        Try again
+                        See Pro
                       </Txt>
                     </Pressable>
-                  )
-                )}
-              </View>
-            )}
+                  ) : (
+                    state !== 'off' && (
+                      <Pressable onPress={onRetry} accessibilityRole="button" style={styles.textButton} hitSlop={8}>
+                        <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                          Try again
+                        </Txt>
+                      </Pressable>
+                    )
+                  )}
+                </View>
+              )}
+            </View>
+            {announcer}
           </ScrollView>
 
           {/* Pro: let GymPal see your training. Free: what Pro would add, a tap from the Pro screen. */}

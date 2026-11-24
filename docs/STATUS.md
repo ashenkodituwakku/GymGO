@@ -528,6 +528,7 @@ service, which is your decision to make. Nothing has been provisioned.
 | Customise Home announces moves ("moved to 2 of 11") and removals to screen readers (22 Nov) | ✅ | ✅ in the browser: live region text after each move, focus kept; app 626 tests | ❌ not with VoiceOver or TalkBack on a phone | n/a | ⚠️ the website gets it with the next publish | n/a |
 | The workout editor announces moves and removals to screen readers (24 Nov); one shared announcer for it and Customise Home | ✅ | ✅ typecheck, hooks rules, app 660 and server 360 tests; in the browser, moves announced ("moved to 2 of 6") with focus kept | ❌ not with VoiceOver or TalkBack | n/a | ⚠️ the website gets it with the next publish | n/a |
 | Checked (24 Nov): the new screens from Updates 248–256 (feed, gym tag, share, Pro's ways to pay, Home, Progress); one apostrophe curled in the feed's report email | ✅ | ✅ axe × light/dark × 390/1280, headings, labels, text spacing, target size, console, quotes; server 360 tests | n/a | n/a | n/a | ❌ feed with content and timed sets in progress not covered |
+| Read out on the website too (24 Nov): records, warm-ups, the plank stopwatch (start, stop with its time, a timer labelled in words), GymPal's answers; Stop moves focus on | ✅ | ✅ keyboard at 1280 light and 390 dark: live-region text, focus after Stop, axe running and with GymPal open; 660 app tests; native bundles build | ❌ VoiceOver/TalkBack on a phone | n/a | n/a | ❌ real-phone screen readers |
 
 **What "tested locally" means for the phone app, exactly:**
 

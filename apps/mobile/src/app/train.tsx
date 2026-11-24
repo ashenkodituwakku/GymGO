@@ -5,13 +5,13 @@
  * any records you broke.
  */
 
-import { FOCUS_FROM_CODE, useFocusOnArrival } from '@/lib/focusNext';
+import { FOCUS_FROM_CODE, focusNextWhenGone, useFocusOnArrival } from '@/lib/focusNext';
 import { programmeProgress, programmeTarget, programmeTitle } from '@/lib/programmes';
 import { useProgramme } from '@/lib/programmeStore';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useKeepAwake } from 'expo-keep-awake';
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
+import { StyleSheet, View, useWindowDimensions, type ViewInstance } from 'react-native';
 import Animated, { FadeInDown, FadeOutDown, ReduceMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { ARRIVE_CURVE, EASE_OUT, FADE_IN, LEAVE_CURVE, POP_IN, Pressable, Pressy, useFillBar, usePop } from '@/components/motion';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,7 +20,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
-import { Chip, Input, PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
+import { Chip, Input, PrimaryButton, Segmented, Txt, LiveLine, useAnnouncer } from '@/components/ui';
 import { ChoiceSheet } from '@/components/ChoiceSheet';
 import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpePicker, askSetKindNatively, RpeCell, RpeHead } from '@/components/SetKinds';
 import { ExerciseNote } from '@/components/ExerciseNote';
@@ -50,6 +50,7 @@ import {
   PLATES,
   bestSoFar,
   clockLabel,
+  spokenClock,
   finishedAtFor,
   draftToLogged,
   durationLabel,
@@ -756,6 +757,8 @@ const ExerciseLog = memo(function ExerciseLog({
   };
   // A stopwatch on one set of a hold: when it started.
   const [watch, setWatch] = useState<{ at: number; since: number } | null>(null);
+  // What a screen reader hears as it happens: a record, warm-ups added, the stopwatch (on the web too).
+  const { say, region } = useAnnouncer();
 
   const setAt = (at: number, patch: Partial<ActiveItem['sets'][number]>) => onChange(index, item.sets.map((set, i) => (i === at ? { ...set, ...patch } : set)));
 
@@ -796,7 +799,7 @@ const ExerciseLog = memo(function ExerciseLog({
     setRating(null);
     haptic.select();
     onChange(index, withWarmUps(item.sets, ramp));
-    AccessibilityInfo.announceForAccessibility(`${ramp.length} warm-up sets added to ${name}`);
+    say(`${ramp.length} warm-up sets added to ${name}`);
   };
 
   const tick = (at: number, timedAs?: string) => {
@@ -813,8 +816,11 @@ const ExerciseLog = memo(function ExerciseLog({
       // Ticked while its stopwatch runs: the stopwatch stops, and its time goes in.
       const watched = !timedAs && watch?.at === at ? clockLabel(Math.max(1, Math.floor((Date.now() - watch.since) / 1000))) : undefined;
       if (watch?.at === at) setWatch(null);
+      // Timed by the stopwatch: how long it was is said, as the box it was in has gone.
+      const clocked = timedAs ?? watched;
+      const heard = clocked ? `${name}, ${tags[at]!.spoken} done: ${spokenClock(parseTime(clocked) ?? 0)}` : null;
       if (measure === 'time') {
-        const time = timedAs ?? watched ?? (tidyTime(set.time ?? '').trim() || timedFor(at, 'time'));
+        const time = clocked ?? (tidyTime(set.time ?? '').trim() || timedFor(at, 'time'));
         if (parseTime(time) === undefined) return setHint('Type how long it took (1:30, or 90 for 90 seconds), or use the stopwatch.');
         patch.time = time;
       } else {
@@ -828,8 +834,9 @@ const ExerciseLog = memo(function ExerciseLog({
       if (best) {
         haptic.success();
         playSound('record');
-        AccessibilityInfo.announceForAccessibility(`${RECORD_WORD[best]} on ${name}`);
       } else haptic.tap();
+      const record = best ? `${RECORD_WORD[best]} on ${name}` : null;
+      if (heard || record) say([heard, record].filter(Boolean).join('. '));
       onChange(index, sets);
       onRest(index, at);
       return;
@@ -846,7 +853,7 @@ const ExerciseLog = memo(function ExerciseLog({
     if (best) {
       haptic.success();
       playSound('record');
-      AccessibilityInfo.announceForAccessibility(`${RECORD_WORD[best]} on ${name}`);
+      say(`${RECORD_WORD[best]} on ${name}`);
     } else haptic.tap();
     onChange(index, sets);
     // Rest after every set but the exercise's last; in a superset or circuit, once the round is done.
@@ -860,6 +867,7 @@ const ExerciseLog = memo(function ExerciseLog({
     haptic.select();
     setHint(null);
     setWatch({ at, since: Date.now() });
+    say(`Stopwatch started: ${name}, ${tags[at]!.spoken}`);
   };
   const stopWatch = () => {
     if (!watch) return;
@@ -870,6 +878,7 @@ const ExerciseLog = memo(function ExerciseLog({
 
   return (
     <View style={styles.card}>
+      {region}
       <View style={styles.cardHead}>
         {/* Turns green once every set is ticked; a tap opens how to do it. */}
         <Pressable
@@ -1106,7 +1115,12 @@ const ExerciseLog = memo(function ExerciseLog({
                   <View style={styles.watchCol} />
                 ) : (
                   <Pressable
-                    onPress={() => (watch?.at === at ? stopWatch() : startWatch(at))}
+                    onPress={(event) => {
+                      if (watch?.at !== at) return startWatch(at);
+                      // The button goes once the set's ticked: focus goes on to what's next, not with it (lib/focusNext.ts).
+                      focusNextWhenGone((event as unknown as { currentTarget?: unknown }).currentTarget);
+                      stopWatch();
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel={watch?.at === at ? `Stop the stopwatch: ${name}, ${tags[at]!.spoken} done` : `Start a stopwatch: ${name}, ${tags[at]!.spoken}`}
                     hitSlop={6}
@@ -1333,10 +1347,12 @@ function Elapsed({ since }: { since: string }) {
 /** A hold's stopwatch, in its time box's place: counting up, by itself, so the card doesn't redraw. */
 function Stopwatch({ since, label }: { since: number; label: string }) {
   const now = useNow(true, 250);
+  const seconds = Math.floor((now - since) / 1000);
+  // A timer, read with how long so far ("42 seconds"), not "zero forty-two"; it doesn't speak each second.
   return (
-    <View style={[styles.input, styles.watching]} accessible accessibilityLabel={label}>
-      <Txt variant="body" color={color.brand} style={[face('semibold'), styles.watchText]}>
-        {clockLabel(Math.floor((now - since) / 1000))}
+    <View style={[styles.input, styles.watching]} accessible role="timer" accessibilityLabel={`${label}, ${spokenClock(seconds)}`}>
+      <Txt variant="body" color={color.brand} style={[face('semibold'), styles.watchText]} aria-hidden>
+        {clockLabel(seconds)}
       </Txt>
     </View>
   );

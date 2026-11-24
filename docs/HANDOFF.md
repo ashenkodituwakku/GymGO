@@ -296,6 +296,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `data-gympal-launcher`) once the Modal has left. Scratchpad `popups.cjs`
   runs open → Tab → Escape for any opener.
 
+- **Self-updating server** (24 Nov, Update 262). deploy/autoupdate.sh:
+  `--install` adds an hourly cron line marked `# gymgo-autoupdate`
+  (`--remove` takes it out; other lines kept). A run fetches, exits if
+  current, refuses a non-fast-forward, asks
+  api.github.com/repos/…/commits/<sha>/check-runs (public, no key) and
+  waits on any not completed, skips on any failed, then runs update.sh.
+  `GYMGO_DRY_RUN=1` stops before update.sh. Logs to
+  ~/gymgo-autoupdate.log. The owner installs it; I can't reach the server.
 - **Scroll tour and sign-up page** (24 Nov, Update 261). app/welcome.tsx:
   one Animated.ScrollView; `Hero`, three `Scene`s (`SCENE` = 2.1 screens
   each: a stage `screen` tall that holds while `progress` runs 0 to 1) and

@@ -2290,6 +2290,14 @@ Then, as you need them:
 - **Make yourself a moderator:**
   `sudo docker compose exec app node --import tsx src/cli.ts moderator you@example.com`.
 - **Update** to the latest GymGO, keeping all data: `bash update.sh`.
+- **Or let it update itself:** `bash autoupdate.sh --install` (once, in
+  `deploy`). Every hour, at 23 minutes past, it looks for a newer commit
+  on the branch. It updates only once GitHub's checks on that commit have
+  finished with none failed, and only as a fast-forward (a server with
+  changes of its own is left alone). What it did is in
+  `~/gymgo-autoupdate.log`; `bash autoupdate.sh --remove` stops it. It puts
+  each new commit live within the hour, so if you'd rather choose when,
+  keep running `bash update.sh` yourself.
 - **Logs:** `sudo docker compose logs -f app`.
 - **Backups off the server.** The daily copies sit on the same disk, so
   copy the whole data folder somewhere else now and then (photos included).

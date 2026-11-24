@@ -9,6 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 262 · Your server can keep itself up to date
+
+*24 Nov 2026 · the commit "deploy/autoupdate.sh: the server updates itself, hourly, once GitHub's checks pass"*
+
+You asked whether app.gymgo.site updates by itself (it doesn't: gymgo.site does, from GitHub; your Oracle server runs what it last built), and then whether I could do it automatically. I can't reach your server from here, so it can now do it itself:
+
+- **`bash autoupdate.sh --install`**, run once on the server in `~/GymGO/deploy`, sets an hourly check (at 23 minutes past). A check:
+  - does nothing unless the branch has a newer commit;
+  - waits until GitHub's checks on that commit have finished, and goes ahead only if none failed;
+  - only fast-forwards, so a server with changes of its own is left alone;
+  - then runs `update.sh` (the new code, rebuilt, data kept).
+- What it did goes to `~/gymgo-autoupdate.log`. `--remove` stops it, and installing twice doesn't add it twice. Your own cron entries are left as they are.
+- It reads GitHub's public API for the checks, so it needs no key (the repository is public).
+
+- Checked, here: dry runs in a scratch copy of the repository, one behind (it would update), up to date (silent) and with a commit of its own (left alone); install twice and remove with a stand-in `crontab`, the server's other entry kept; GitHub's checks API answering for the latest commit.
+- Not checked: on your server, where `cron`, Docker and `sudo` are real.
+
 ## Update 261 · A welcome tour you scroll, and a better sign-up page
 
 *24 Nov 2026 · the commit "Welcome tour you scroll, as a product page; sign-up page with a brand panel and a password meter"*

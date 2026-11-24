@@ -11,13 +11,13 @@ next number here as part of the update itself.
 
 ## Update 257 · The workout editor tells a screen reader where an exercise moved
 
-*24 Nov 2026 · the commit "The workout editor tells a screen reader where an exercise moved, or that it went"*
+*24 Nov 2026 · `2e4a2f6` (code) and `6b3b320` (docs)*
 
 Following Update 247 (Customise Home) to the other place things are put in order: the editor for your own workouts and splits.
 
 - **Moving an exercise up or down now says where to**: "Bench press moved to 2 of 5". Before, the list changed in silence while focus stayed on the button. Removing one says so too ("Bench press removed from Push day").
 - The announcing is one shared piece now (`useAnnouncer` in components/ui.tsx), used by Customise Home and the workout editor alike: the screen reader's own announcement on a phone, a polite live region that isn't seen and takes no room in a browser.
-- Checked: typecheck, hooks rules, app tests (660, with Updates 248 to 256 merged in) and server tests (360). **Not yet tried in a browser**: that check was stopped part-way, and the workout editor's announcements still need trying with a screen reader.
+- Checked: typecheck, hooks rules, app tests (660, with Updates 248 to 256 merged in) and server tests (360); and afterwards in the browser, on a saved workout of six exercises (not saved): Move down on the first said "Incline dumbbell press moved to 2 of 6", with focus staying on its button, and Move up said "moved to 1 of 6"; no page errors. Still to try with a phone's screen reader.
 
 ## Update 256 · Planks, holds, cardio and carries are logged, with a stopwatch
 

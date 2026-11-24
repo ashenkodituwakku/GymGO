@@ -118,10 +118,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
-- **CLAIMED (24 Nov, session_01T19nwfpA683gnbhSJ8YpPV): GymGO Max round 2,
-  its AI features.** Round 1 is done (Update 264, below). Please leave
-  GymPal (server gymPal.ts, the app's GymPal.tsx), `MAX_FEATURES` and the
-  Pro page to this session until this line says done.
+- **Max's AI features** (24 Nov, Update 266; the claim is done). Server:
+  apps/server/src/gymPalMax.ts (`cleanRequest`, `cleanCatalogue`,
+  `workoutTask`, `readWorkout`, `NOTE_TASK`, `cleanNote`) and the routes
+  POST /api/gympal/workout and /api/gympal/note in app.ts (Max only,
+  `max_required` otherwise; each counts on the Max limiter). `GymPal.ask`
+  takes a `task`, added to the instructions after the guide. App:
+  app/ai-workout.tsx (sends EXERCISES and your own, with `setMeasure`;
+  Start uses `startSession`), components/CoachNote.tsx on the workout
+  summary, a "Build with GymPal" row under Start another way, ProReason
+  `max` (opens the Pro page with Max chosen). A new Max feature: add it to
+  `MAX_FEATURES` once built, and to GymPal's guide.
 - **GymGO Max** (24 Nov, Update 264). The owner's tiers: Free, Pro
   (unchanged) and Max (Pro plus AI features and badges); no Duo or family.
   `MAX_PRICES`, `MAX_PRODUCT`, `isMaxLookupKey` and `MAX_FEATURES` (only

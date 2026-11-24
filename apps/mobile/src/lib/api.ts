@@ -848,7 +848,19 @@ export const api = {
    */
   askGymPal: (messages: ChatTurn[], extra: { context?: string | null; useLog?: boolean } = {}) =>
     request<{ reply: string }>('POST', '/api/gympal', { body: { messages, ...(extra.context ? { context: extra.context } : {}), ...(extra.useLog ? { useLog: true } : {}) } }),
+  /** GymGO Max: a workout GymPal builds from your request, from the exercises sent (the server keeps only those). */
+  gymPalWorkout: (body: { request: string; exercises: Array<{ id: string; name: string; measure: 'reps' | 'time' | 'distance' }>; useLog?: boolean }) =>
+    request<{ workout: BuiltWorkout }>('POST', '/api/gympal/workout', { body }),
+  /** GymGO Max: GymPal's coach's note on a workout you logged, beside your recent ones. */
+  gymPalNote: (sessionId: string) => request<{ note: string }>('POST', '/api/gympal/note', { body: { sessionId } }),
 };
+
+/** A workout GymPal built (GymGO Max). */
+export interface BuiltWorkout {
+  name: string;
+  note: string | null;
+  items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number }>;
+}
 
 /** One message in a chat with GymPal. */
 export interface ChatTurn {

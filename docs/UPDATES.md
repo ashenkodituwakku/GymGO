@@ -9,6 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 266 · GymGO Max: workouts GymPal builds for you, and a coach's note after each one
+
+*24 Nov 2026 · the commit "Max: Build with GymPal, and his coach's note after a workout"*
+
+The second round of GymGO Max (Update 264 made the plan): two AI features, on the same models as the GymPal chat, each run only when you ask.
+
+- **Build with GymPal** (Workout → Start another way, or the new page `/ai-workout`):
+  - Say what you'd like ("45 minutes, upper body, dumbbells only"), or tap one of four ideas. GymPal builds the workout from GymGO's exercises and your own: names, sets × reps (a time for a plank, a distance for a carry) and rest, with a sentence on why it's built that way. **Start this workout** opens it as a workout in progress, where you can swap, add or take out exercises as with any other.
+  - **Use my training log** lets him build on your latest workouts (exercises, sets and weights; never your gyms or notes). It's off unless you switch it on, as in the chat.
+  - What comes back is read strictly (apps/server/src/gymPalMax.ts). Only exercises the app offered, each once and at most 10, 1 to 6 sets, reps that read as reps, a time or a distance, and rest from 0 to 300 seconds. Anything else is left out, and an answer with nothing usable asks you to try again.
+- **Coach's note** (on the summary when you finish a workout): **Ask GymPal for a note**, and he looks at that workout beside your recent ones and says, in two to four sentences, one thing that went well and one to aim for next time, in your own numbers. He's told never to invent a number or make health claims, and he's never sent the gym or your note. Without Max, a quiet line says what it is and leads to Max.
+- Each one counts as one of the day's 300 GymPal questions. The Pro page's Max card lists both (`MAX_FEATURES`), and GymPal's guide knows about them. Free and Pro get "part of GymGO Max", and nothing is asked of the models.
+- Checked:
+  - Server tests 370: 10 new, for reading requests and answers strictly, Max only, the exercise list and the log only when allowed, and a note on your own workout only, without its gym or note. App 665.
+  - In a browser, with GymPal's answers stood in for (this server has no GymPal key): Build with GymPal (light at phone width, dark at desktop width) through to the workout started, the summary's coach's note, the screen as Free sees it, and the row under Start another way. axe was clean on all of them; the test workout was deleted after.
+- Not checked: the real models' answers. Before selling Max widely, ask a few through `pnpm gympal:check` or the app with your key.
+
 ## Update 265 · A welcome tour you fly through
 
 *24 Nov 2026 · the commit "Welcome tour rebuilt as a film you scroll: fly-through, lit words, 3D map, a pack opened, a shelf, real numbers"*
@@ -51,7 +68,7 @@ You asked to make the onboarding look "way better" and its scroll animations "re
 
 ## Update 264 · GymGO Max: Pro, with more from GymPal and a badge; Duo taken out
 
-*24 Nov 2026 · the commit "GymGO Max: Pro with more from GymPal and a badge; Duo taken out"*
+*24 Nov 2026 · `a71b9ef`*
 
 You asked for a Max subscription at about A$10 a month, with no Duo or family plan. Pro stays everything it is, and Max adds AI features and badges. This is the first of two rounds: the plan itself is here, and the AI features come next.
 

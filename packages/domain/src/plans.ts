@@ -165,6 +165,8 @@ export const isMaxLookupKey = (key: string | null | undefined): boolean => MAX_P
 
 /** What Max adds over Pro, for the Pro screen: only what's built. */
 export const MAX_FEATURES: Array<{ title: string; pro: string; max: string }> = [
+  { title: 'Workouts built for you', pro: 'Not included', max: 'Say what you’d like (“45 minutes, dumbbells only”) and GymPal builds it, ready to start' },
+  { title: 'Coach’s notes', pro: 'Not included', max: 'After a workout, GymPal says what went well and what to aim for next' },
   { title: 'GymPal', pro: '100 questions a day', max: '300 a day, and he remembers twice as much of the chat' },
   { title: 'Max badge', pro: 'Not included', max: 'By your name in the feed, in comments and on your profile' },
 ];

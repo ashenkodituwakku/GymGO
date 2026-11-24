@@ -2051,10 +2051,12 @@ in Pro and more.
 | Monthly | A$3.99 | US$2.99 | A$9.99 | US$6.99 |
 | Yearly | A$29.99 (save 37%) | US$19.99 (save 44%) | A$79.99 (save 33%) | US$54.99 (save 34%) |
 
-**GymGO Max** (Update 264) adds, so far: GymPal at 300 questions a day with
-twice Pro's memory of a chat, and a **Max badge** by your name where friends
-see it (the feed, comments, friends and challenges). More AI features for Max
-are on the way. A Pro subscriber switches to Max (or back) on Stripe's page
+**GymGO Max** (Updates 264 and 266) adds **Build with GymPal** (say what you'd
+like, "45 minutes, dumbbells only", and GymPal builds the workout from GymGO's
+exercises, ready to start), a **coach's note** from GymPal after each workout,
+GymPal at 300 questions a day with twice Pro's memory of a chat, and a **Max
+badge** by your name where friends see it (the feed, comments, friends and
+challenges). A Pro subscriber switches to Max (or back) on Stripe's page
 for their subscription, Profile → Manage subscription, paying or being
 credited the difference for the days left; never a second subscription.
 There's no Duo or family plan (the owner's call, 24 Nov 2026).

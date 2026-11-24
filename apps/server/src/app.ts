@@ -135,6 +135,8 @@
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   GET    /api/weather?south=&west=      { weather }: MET Norway's forecast for the middle of that block's own map square (weather.ts), the next 12 hours
+ *   POST   /api/gympal/workout            Max: { request, exercises: [{ id, name, measure }], useLog? } -> { workout: { name, note, items } }, built by GymPal from those exercises only
+ *   POST   /api/gympal/note               Max: { sessionId } -> { note }: GymPal's coach's note on a workout you logged, beside your recent ones
  *   GET    /api/gympal                    { on, pro, max, perDay, service }: whether GymPal, the chat, can answer on this server, your plan's questions a day, and the AI service chats go to
  *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through Groq or OpenRouter
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
@@ -229,6 +231,7 @@ import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIde
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
 import { serveWeb } from './web';
 import { GYMPAL_PLANS, GymPal, GymPalError, cleanChat, cleanContext, trainingSummary, type LoggedSession } from './gymPal';
+import { NOTE_TASK, cleanCatalogue, cleanNote, cleanRequest, readWorkout, workoutTask } from './gymPalMax';
 import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
 import { PerkError, Perks } from './perks';
@@ -2753,6 +2756,52 @@ export function createApp(options: AppOptions) {
       const pro = billing.isPro(account.id);
       const max = pro && billing.isMax(account.id);
       return send(res, 200, { on: gymPal.on, pro, max, perDay: GYMPAL_PLANS[max ? 'max' : pro ? 'pro' : 'free'].perDay, service: gymPal.service });
+    }
+
+    // GymPal's Max features (gymPalMax.ts): each asked for, each one of the day's questions.
+    if (method === 'POST' && (path === '/api/gympal/workout' || path === '/api/gympal/note')) {
+      const { account } = requireAccount(req);
+      const building = path === '/api/gympal/workout';
+      if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t switched on for this server yet.', 'gympal_off');
+      if (!billing.isMax(account.id)) throw new HttpError(403, `${building ? 'Workouts built by GymPal are' : 'GymPal’s coach’s notes are'} part of GymGO Max.`, 'max_required');
+      const at = now().getTime();
+      const limits = gymPalLimiters.max;
+      if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'That’s a lot of questions at once. Give GymPal a minute.');
+      if (!limits.day.allow(account.id, at)) throw new HttpError(429, `That’s ${GYMPAL_PLANS.max.perDay} questions today, the most there is. Try again tomorrow.`);
+      const names = () => new Map(own.exercises(account.id).map((exercise) => [exercise.id, exercise.name]));
+      const recent = (except: string | null) =>
+        (db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where user_id = ? order by finished_at desc limit 13`).all(account.id) as TrainingRow[])
+          .filter((row) => row.id !== except)
+          .slice(0, 12)
+          .map((row) => trainingView(row) as LoggedSession);
+      try {
+        const body = (await readJson(req, 64 * 1024)) as Record<string, unknown> | null;
+        if (building) {
+          const request = cleanRequest(body?.request);
+          const catalogue = cleanCatalogue(body?.exercises);
+          // Their log only when they've said GymPal may see it, as in the chat.
+          const log = body?.useLog === true ? trainingSummary(recent(null), now(), names()) : null;
+          const answer = await gymPal.ask([{ role: 'user', content: request }], { log, task: workoutTask(catalogue), replyTokens: 900 });
+          const workout = readWorkout(answer, catalogue);
+          if (!workout) throw new HttpError(502, 'GymPal’s workout didn’t come out right. Try asking again, a little differently.', 'gympal_unreadable');
+          return send(res, 200, { workout });
+        }
+        const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '';
+        const row = db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where id = ? and user_id = ?`).get(sessionId, account.id) as TrainingRow | undefined;
+        if (!row) throw new HttpError(404, 'No logged workout with that id.');
+        // The workout itself, then the ones before it: asked for by the person, about their own training.
+        const just = trainingSummary([trainingView(row) as LoggedSession], new Date(Date.parse(row.finished_at) + 60_000), names());
+        const answer = await gymPal.ask([{ role: 'user', content: 'Write my coach’s note on the workout I just finished.' }], {
+          context: `The workout they just finished:\n${just}`,
+          log: trainingSummary(recent(row.id), now(), names()),
+          task: NOTE_TASK,
+          replyTokens: 500,
+        });
+        return send(res, 200, { note: cleanNote(answer) });
+      } catch (error) {
+        if (error instanceof GymPalError) throw new HttpError(error.status, error.message, error.code);
+        throw error;
+      }
     }
 
     if (method === 'POST' && path === '/api/gympal') {

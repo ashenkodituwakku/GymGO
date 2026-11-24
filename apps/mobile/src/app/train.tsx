@@ -30,7 +30,9 @@ import { endSession, startSession, updateSession, useActiveSession, type ActiveI
 import { againPlan } from '@/lib/again';
 import { addedPlan, agoLabel, daysAgo } from '@/lib/exerciseLibrary';
 import { AddExercise } from '@/components/AddExercise';
-import { ApiError, api, type SavedWorkout } from '@/lib/api';
+import { ApiError, api, apiBase, type SavedWorkout } from '@/lib/api';
+import { CoachNote } from '@/components/CoachNote';
+import { MaxBadge } from '@/components/MaxBadge';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { playSound } from '@/lib/sounds';
@@ -314,6 +316,8 @@ function NoWorkout({ token }: { token: string | null }) {
             // In place of this page, as the builder is: starting it comes back here with the workout.
             { icon: 'plus' as IconName, title: 'Make your own', go: () => router.replace('/workout-edit') },
             { icon: 'list' as IconName, title: 'From a template', go: () => router.push('/templates') },
+            // GymGO Max: GymPal builds it from what you say (app/ai-workout.tsx). It needs the server.
+            ...(apiBase() !== null ? [{ icon: 'sparkle' as IconName, title: 'Build with GymPal', max: true, go: () => router.push('/ai-workout') }] : []),
           ].map((row, index) => (
             <Pressable
               key={row.title}
@@ -322,9 +326,14 @@ function NoWorkout({ token }: { token: string | null }) {
               style={({ pressed }) => [styles.savedRow, index > 0 && styles.savedLine, pressed && { backgroundColor: color.fill }]}
             >
               <Icon name={row.icon} size={20} color={color.brand} />
-              <Txt variant="body" style={styles.flex}>
+              <Txt variant="body" style={'max' in row ? undefined : styles.flex}>
                 {row.title}
               </Txt>
+              {'max' in row && (
+                <View style={styles.flex}>
+                  <MaxBadge />
+                </View>
+              )}
               <Icon name="chevron" size={13} color={color.labelTertiary} />
             </Pressable>
           ))}
@@ -1592,6 +1601,8 @@ function Summary({
       <View style={styles.noteCard}>
         <SessionNote session={session} />
       </View>
+      {/* GymGO Max: GymPal's take on this workout, when asked (components/CoachNote.tsx). */}
+      <CoachNote sessionId={session.id} />
       <View style={styles.finish}>
         {/* The other things to do from here, as a list; Done is the one button. */}
         <View style={styles.savedCard}>

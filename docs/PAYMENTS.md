@@ -210,11 +210,11 @@ The owner's tiers: **Free**, **Pro** (everything Pro had) and **Max**
 - **Max's prices** (`MAX_PRICES`, packages/domain/src/plans.ts): A$9.99 a
   month or A$79.99 a year; US$6.99 or US$54.99. Its own Stripe product,
   "GymGO Max" (metadata `gymgo: max`), prices `gymgo_max_*`.
-- **What Max adds, so far** (`MAX_FEATURES`, only what's built): GymPal at
-  300 questions a day (Pro 100, Free 20) with twice Pro's memory of a chat,
-  and a Max badge by your name in the feed, comments, friends and
-  challenges. The AI features come next, each added to that list as it's
-  built.
+- **What Max adds** (`MAX_FEATURES`, only what's built): **Build with
+  GymPal** (a workout from what you say, ready to start), a **coach's note**
+  after each workout, GymPal at 300 questions a day (Pro 100, Free 20) with
+  twice Pro's memory of a chat, and a Max badge by your name in the feed,
+  comments, friends and challenges (Updates 264 and 266).
 - **Switching.** A Pro subscriber switches to Max (or back, or monthly to
   yearly) on Stripe's page for their subscription (Profile → Manage
   subscription), which charges or credits the difference for the days left.

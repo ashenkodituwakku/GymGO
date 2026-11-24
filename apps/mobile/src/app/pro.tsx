@@ -74,6 +74,8 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Arcade sounds': 'sound',
   GymPal: 'send',
   'Max badge': 'trophy',
+  'Workouts built for you': 'workout',
+  'Coach’s notes': 'sparkle',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -96,6 +98,7 @@ const REASON: Record<ProReason, string> = {
   lifetime: 'Your log and records are free. Pro adds your lifetime in numbers: every kilo, rep and hour, your favourites, and what all that weight compares to, as a picture to share too.',
   sounds: 'Sounds are free. Pro adds Arcade: the workout and check-in sounds as chip tunes, like an old games console.',
   headToHead: 'Friends and their workouts are free. Pro puts your best lifts beside a friend’s, exercise by exercise: heaviest, strongest set and most reps.',
+  max: 'Workouts GymPal builds for you, and his coach’s note after each workout, are part of GymGO Max.',
   gympal: 'GymPal is free, 20 questions a day. Pro gives you 100 a day, longer chats, and answers that know your training: what to train today, how you’re going. Max gives you 300, and twice the memory.',
 };
 
@@ -106,7 +109,7 @@ export default function ProScreen() {
   const router = useRouter();
   const { account, billing, filters, prefs } = useApp();
   // Pro, or Max: Pro with more from GymPal and a badge.
-  const [plan, setPlan] = useState<'pro' | 'max'>('pro');
+  const [plan, setPlan] = useState<'pro' | 'max'>(params.reason === 'max' ? 'max' : 'pro');
   // A new account's free trial of monthly Pro (the server decides who gets one).
   const trialOffer = !billing.isPro && plan === 'pro' ? billing.trial : null;
   // Yearly unless there's a trial to start, until you pick.

@@ -51,6 +51,8 @@ export default function FeedWorkoutScreen() {
   const [draft, setDraft] = useState('');
   const [posting, setPosting] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  // Kept as one of yours (Pro: My workouts), as it was done. Declared with the others, before the early return for a workout that's gone.
+  const [kept, setKept] = useState<'idle' | 'saving' | 'saved'>('idle');
   const box = useRef<TextInputInstance>(null);
   usePageTitle(item ? item.name : 'Workout');
 
@@ -161,8 +163,6 @@ export default function FeedWorkoutScreen() {
   const split = item ? muscleSplit(item.exercises) : [];
   // A friend's workout, to do yourself: the same exercises, sets and reps (theirs that they made themselves left out); your weights come from your own log.
   const plan = item && !item.you ? againPlan({ ...item, workoutId: null, gymId: null, exercises: item.exercises.filter((exercise) => !exercise.exerciseId.startsWith('mine-')) }) : null;
-  // Kept as one of yours (Pro: My workouts), as it was done.
-  const [kept, setKept] = useState<'idle' | 'saving' | 'saved'>('idle');
   const keep = async () => {
     if (!item || !token) return;
     if (!billing.isPro) {

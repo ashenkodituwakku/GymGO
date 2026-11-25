@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 280 · A friend's deleted workout no longer shows the crash screen
+
+*25 Nov 2026 · the commit "A friend's workout that's gone shows its message, not the crash screen"*
+
+The hooks check (HANDOFF, 20 Nov) found one hook placed after an early return, in a friend's workout page (app/feed/[id].tsx): the "Save to my workouts" state was declared below the return for a workout that's gone. So opening a workout that was deleted, hidden or no longer shared (an old link, or a notification) showed the crash screen ("Rendered fewer hooks than expected") in place of "This workout isn’t shared with you".
+
+- The state is declared with the others at the top, before that return.
+- Checked: the hooks check over every app file is clean; reproduced in the browser at /feed/no-such-workout: the crash screen with the old code, the message with the fix; app 682 tests and a typecheck.
+
 ## Update 279 · The sidebar is the default on the desktop website; four decisions settled
 
-*25 Nov 2026 · the commit "The sidebar by default on the desktop website"*
+*25 Nov 2026 · `d902c1f`*
 
 You asked for the sidebar to be the default on the website on a computer.
 

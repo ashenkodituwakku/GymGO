@@ -32,7 +32,8 @@ export function AppBadge({ size }: { size: number }) {
 }
 
 /** The app icon and "GymGO", `height` points tall. */
-export function Wordmark({ height }: { height: number }) {
+/** `onDark`: on a dark surface whatever the mode (Minimal's sidebar), so the letters are light. */
+export function Wordmark({ height, onDark = false }: { height: number; onDark?: boolean }) {
   const w = WORDMARK;
   // The badge is centred on the capitals; the letters' tails may reach below it.
   const baseline = (w.badge + w.cap) / 2;
@@ -42,8 +43,8 @@ export function Wordmark({ height }: { height: number }) {
     <View aria-label="GymGO" role="img" accessible accessibilityLabel="GymGO" style={styles.row}>
       <AppBadge size={w.badge * scale} />
       <Svg width={w.width * scale} height={height} viewBox={`0 ${-baseline} ${w.width} ${tall}`} style={{ marginLeft: w.gap * scale }}>
-        <Path d={w.gym} fill={color.label} />
-        <Path d={w.go} fill={logoViolet()} />
+        <Path d={w.gym} fill={onDark ? '#FFFFFF' : color.label} />
+        <Path d={w.go} fill={onDark ? LOGO_VIOLET.dark : logoViolet()} />
       </Svg>
     </View>
   );

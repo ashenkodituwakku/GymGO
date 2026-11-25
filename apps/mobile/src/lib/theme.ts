@@ -25,7 +25,7 @@ import { Platform, StyleSheet, type TextStyle, type ViewStyle } from 'react-nati
 import { NEEDS_BUNDLED_FACES, SF_DRAWS } from './typeface';
 import { FREE_LOOK, LOOKS, STANDARD_RADIUS, alpha, contrast, hexToOklch, mix, oklchToHex, over, readable, type LookId, type LookSpec, type Radii } from './looks';
 
-export { FREE_LOOK, LOOK_IDS, LOOKS, type LookId } from './looks';
+export { FREE_LOOK, FREE_LOOKS, LOOK_IDS, LOOKS, isFreeLook, type LookId } from './looks';
 
 export type Scheme = 'light' | 'dark';
 /** What you picked: follow the phone, or always one. */

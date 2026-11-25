@@ -19,6 +19,7 @@ import { backLabel } from '@/lib/backLabel';
 import { setGlassLevel } from '@/components/liquidGlass';
 import { installSpaceKey } from '@/lib/spaceKey';
 import { installIconHover } from '@/lib/iconHover';
+import { ProNudge } from '@/components/ProNudge';
 import { RouteFocus } from '@/components/RouteFocus';
 import { AppProvider, useApp } from '@/lib/app-state';
 import {
@@ -26,6 +27,7 @@ import {
   FREE_ACCENT,
   FREE_LOOK,
   NEEDS_BUNDLED_FACES,
+  isFreeLook,
   applyTheme,
   paletteFor,
   color,
@@ -212,7 +214,7 @@ function useWantedTheme(): { scheme: Scheme; accent: AccentId; look: LookId; gla
   const phone = useSystemScheme(choice.appearance === 'system');
   // A lapsed Pro goes back to Indigo, but only once the server has said so.
   const accent = choice.accent === FREE_ACCENT || billing.isPro || !billing.planKnown ? choice.accent : FREE_ACCENT;
-  const look = choice.look === FREE_LOOK || billing.isPro || !billing.planKnown ? choice.look : FREE_LOOK;
+  const look = isFreeLook(choice.look) || billing.isPro || !billing.planKnown ? choice.look : FREE_LOOK;
   return { scheme: schemeFor(choice.appearance, phone, look), accent, look, glass: choice.glass, dark: choice.dark };
 }
 
@@ -439,6 +441,8 @@ function ThemedStack() {
       </SidebarFrame>
       {/* GymPal, the AI assistant, in the corner of every signed-in screen, and the website's (which waits to be set up). */}
       {signedIn && prefs.gymPal && <GymPal />}
+      {/* A free account's occasional reminder about Pro, on Home (components/ProNudge.tsx). */}
+      {signedIn && <ProNudge />}
       {!!veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}
     </ThemeProvider>
   );

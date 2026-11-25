@@ -40,6 +40,7 @@ import {
   FREE_ACCENT,
   FREE_LOOK,
   GLASS_DEFAULT,
+  isFreeLook,
   GLASS_STEP,
   LOOKS,
   LOOK_IDS,
@@ -130,7 +131,7 @@ export default function AppearanceScreen() {
     setThemeChoice({ dark });
   };
   const pickLook = (look: LookId) => {
-    if (look !== FREE_LOOK && !billing.isPro) {
+    if (!isFreeLook(look) && !billing.isPro) {
       haptic.tap();
       openPro('themes');
       return;
@@ -144,8 +145,8 @@ export default function AppearanceScreen() {
   useEffect(() => {
     void loadAllLookFonts().then(() => setFontsReady(true));
   }, []);
-  const lookInUse = billing.isPro || choice.look === FREE_LOOK ? choice.look : FREE_LOOK;
-  // Eleven looks: rows of five where there's room for them, else threes, the last row centred.
+  const lookInUse = billing.isPro || isFreeLook(choice.look) ? choice.look : FREE_LOOK;
+  // Twelve looks: rows of four where there's room for them, else threes.
   const [looksWide, setLooksWide] = useState(false);
   // The mode previews draw dark the way it'll look: Dim's grey where it applies.
   const darkTone = dimApplies('dark', lookInUse, choice.dark) ? 'dim' : 'dark';
@@ -513,19 +514,12 @@ export default function AppearanceScreen() {
           <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
             Look
           </Txt>
-          {!billing.isPro && (
-            <View style={styles.proTag}>
-              <Icon name="crown" size={11} color={color.brandOnTint} />
-              <Txt variant="caption" color={color.brandOnTint} style={face('semibold')}>
-                PRO
-              </Txt>
-            </View>
-          )}
+          {/* Standard and Minimal are everyone's; each Pro look carries its own crown. */}
         </View>
         <View style={styles.looks} accessibilityRole="radiogroup" onLayout={(event) => setLooksWide(event.nativeEvent.layout.width >= LOOKS_FIVE_ACROSS)}>
           {LOOK_IDS.map((id) => {
             const on = lookInUse === id;
-            const locked = id !== FREE_LOOK && !billing.isPro;
+            const locked = !isFreeLook(id) && !billing.isPro;
             return (
               <Pressable
                 key={id}
@@ -1182,7 +1176,7 @@ const PINS: Array<{ left: `${number}%`; top: number; tone: 'good' | 'maybe' | 'b
 ];
 
 /** How wide the looks' grid is before five go across (each tile then about 100 points, as wide as a preview gets). */
-const LOOKS_FIVE_ACROSS = 500;
+const LOOKS_FIVE_ACROSS = 440;
 
 /** A tiny screen drawn in a look: its page, a card, a title in its type and a button. */
 function LookPreview({ look, accent, dark, on }: { look: LookId; accent: AccentId; dark: DarkStyle; on: boolean }) {
@@ -1299,7 +1293,7 @@ const styles = themed(() =>
     swatch: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
     looks: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
     lookTile: { width: '33.33%', alignItems: 'center', gap: space[1], paddingVertical: space[2], paddingHorizontal: space[1] },
-    lookTileFive: { width: '20%' },
+    lookTileFive: { width: '25%' },
     lookFrame: { width: '100%', maxWidth: 104, aspectRatio: 0.9, padding: 3, borderRadius: 14, borderWidth: 2, borderColor: 'transparent' },
     lookPage: { flex: 1, borderRadius: concentric(14, 5), overflow: 'hidden', padding: 8, gap: 8, justifyContent: 'space-between' },
     lookCard: { padding: 6, gap: 5 },

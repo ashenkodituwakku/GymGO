@@ -362,8 +362,11 @@ your accent glows behind them.
   Midnight, Lagoon, Grape, Fuchsia, Rose, Slate and Graphite, plus
   **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
   filled buttons, selected chips, the tab bar and the Build a workout card,
-  picked from a grid of swatches. Pro also has ten **looks** that redraw
-  the whole app, not just its colour:
+  picked from a grid of swatches. Everyone has two looks: Standard and
+  **Minimal** (flat white cards with a fine edge and no shadows on a pale
+  grey page, small corners, and a dark sidebar on a wide screen; near-black
+  in dark). Pro also has ten more **looks** that redraw the whole app, not
+  just its colour:
   - **Frost**: frosted glass (glassmorphism) on a blue-and-white page,
     deep navy in dark. Cards are see-through with a fine white edge, and
     the page's blues show through them; how see-through follows your
@@ -423,7 +426,8 @@ your accent glows behind them.
     apps; **Use automatic** goes back to that. **Tab bar**: the four tabs
     float at the foot of the screen. **Sidebar**: a menu down the left with the
     tabs, then Training (Workout, Progress, My workouts, Programme) and You
-    (Collection, Friends, Appearance). From 960 points wide it stays open,
+    (Collection, Friends, Appearance), and for a free account where Pro can
+    be bought a small **GymGO Pro** card at its foot (Go Pro). From 960 points wide it stays open,
     hovering over the left of every page (Progress and the rest too, not
     only the tabs): the page's header and background run on underneath it,
     Explore's map too, and the page's content keeps clear of it. On the
@@ -1134,6 +1138,10 @@ strength meter (advice only; 8 characters is the rule). Each field keeps
 its name in view (it rises above what you type), a slip in a common email
 provider is offered as a fix ("Did you mean sam@gmail.com?"), and Caps Lock
 is pointed out under the password on a computer.
+On a free account, Home now and then shows a small reminder about GymGO
+Pro (at most once every three days, never on your first day, after a short
+wait; it goes away by itself, or with Not now).
+
 Signing in again opens **Welcome back**: what's up next on your programme
 or plan (Start begins it), a short recap of this week against your goal
 (how many to go), your weeks in a row, your last workout and your
@@ -2058,7 +2066,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo; light, dark or Dim; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, ten looks (Frost, Liquid, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
+| Colour themes | Indigo; light, dark or Dim; the Standard and Minimal looks; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, ten looks (Frost, Liquid, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |

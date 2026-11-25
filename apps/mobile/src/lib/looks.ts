@@ -1,5 +1,6 @@
 /**
- * Looks: how the whole app is drawn, beyond its colours (Pro).
+ * Looks: how the whole app is drawn, beyond its colours (Pro, apart from
+ * Standard and Minimal, which everyone has).
  *
  * A look sets the corners, the typefaces, what surfaces are made of (glass,
  * or solid plates), their shadows and the colours of the page and cards.
@@ -9,6 +10,9 @@
  * (see `readable` below), so no look trades legibility for style.
  *
  * - Standard: GymGO's own iPhone look (everyone).
+ * - Minimal: flat and quiet (everyone). Solid white cards with a hairline
+ *   edge and no shadow on a pale grey page, small corners, and a dark
+ *   sidebar on a wide screen (components/Sidebar.tsx).
  * - Frost: frosted glass on a blue-and-white page (glassmorphism): see-through
  *   cards with a white edge, over a page of pale blues that stays put as it
  *   scrolls, so each card shows a little of what's behind it. How see-through
@@ -36,9 +40,13 @@
 
 import type { ViewStyle } from 'react-native';
 
-export type LookId = 'standard' | 'frost' | 'liquid' | 'pixel' | 'classic' | 'material' | 'neon' | 'soft' | 'paper' | 'terminal' | 'comic';
-export const LOOK_IDS: LookId[] = ['standard', 'frost', 'liquid', 'soft', 'paper', 'material', 'neon', 'terminal', 'pixel', 'classic', 'comic'];
+export type LookId = 'standard' | 'minimal' | 'frost' | 'liquid' | 'pixel' | 'classic' | 'material' | 'neon' | 'soft' | 'paper' | 'terminal' | 'comic';
+export const LOOK_IDS: LookId[] = ['standard', 'minimal', 'frost', 'liquid', 'soft', 'paper', 'material', 'neon', 'terminal', 'pixel', 'classic', 'comic'];
+/** The look you get unless you choose another. */
 export const FREE_LOOK: LookId = 'standard';
+/** The looks everyone has; the rest are Pro. */
+export const FREE_LOOKS: readonly LookId[] = ['standard', 'minimal'];
+export const isFreeLook = (look: LookId) => FREE_LOOKS.includes(look);
 
 type Scheme = 'light' | 'dark';
 type Weight = 'regular' | 'medium' | 'semibold' | 'bold';
@@ -381,6 +389,30 @@ export const LOOKS: Record<LookId, LookSpec> = {
     radius: STANDARD_RADIUS,
     solid: false,
     fonts: null,
+  },
+  minimal: {
+    name: 'Minimal',
+    blurb: 'Flat and quiet, with a dark sidebar',
+    radius: { sm: 6, md: 8, lg: 10, xl: 12, sheet: 20, pill: 999 },
+    solid: true,
+    fonts: null,
+    surfaces: (scheme) =>
+      scheme === 'dark'
+        ? { groupedBackground: '#0E0E12', background: '#141419', card: '#1A1A21', cardRaised: '#22222A', cardGlass: '#1A1A21', separator: 'rgba(235, 235, 245, 0.1)', fill: 'rgba(235, 235, 245, 0.07)' }
+        : { groupedBackground: '#F4F4F7', background: '#FFFFFF', card: '#FFFFFF', cardRaised: '#FFFFFF', cardGlass: '#FFFFFF', separator: 'rgba(22, 20, 50, 0.1)', fill: 'rgba(22, 20, 50, 0.05)' },
+    // No shadows: a hairline edge round each card, and only floating things (sheets, menus) lift off the page.
+    shadows: (scheme) =>
+      scheme === 'dark'
+        ? {
+            plate: { boxShadow: '0px 0px 0px 1px rgba(235, 235, 245, 0.08)' },
+            card: { boxShadow: '0px 0px 0px 1px rgba(235, 235, 245, 0.07)' },
+            float: { boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.5), 0px 0px 0px 1px rgba(235, 235, 245, 0.1)' },
+          }
+        : {
+            plate: { boxShadow: '0px 0px 0px 1px rgba(22, 20, 50, 0.08)' },
+            card: { boxShadow: '0px 0px 0px 1px rgba(22, 20, 50, 0.07)' },
+            float: { boxShadow: '0px 6px 20px rgba(22, 20, 50, 0.1), 0px 0px 0px 1px rgba(22, 20, 50, 0.07)' },
+          },
   },
   frost: {
     name: 'Frost',

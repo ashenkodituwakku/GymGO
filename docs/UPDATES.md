@@ -9,6 +9,32 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 292 · A Minimal look for everyone, and Pro offered gently
+
+*25 Nov 2026 · the commit "Minimal look for everyone, a Pro card in the sidebar, and a gentle Pro reminder"*
+
+You asked for a minimalist appearance for free and Pro accounts like your screenshot, a small upgrade card in the sidebar, and an occasional Pro reminder for free accounts that doesn't get in the way.
+
+- **Minimal look** (Profile → Appearance → Look), for **everyone**, free and Pro.
+  - Flat white cards with a fine edge and no shadows, on a pale grey page, with small corners. In dark it's the same on near-black.
+  - On a wide screen the **sidebar is dark** in light mode too, as in your screenshot: light words, the place you're on as a solid accent pill, and the GymGO wordmark in white.
+  - Floating things (sheets, menus) are solid plates, as in the other solid looks.
+  - Its text passes the same contrast checks (WCAG AA) as every other look, in every mode and accent.
+  - Standard and Minimal are now everyone's. The other ten looks are still Pro, so Pro's list doesn't change. The PRO tag on the Look heading is gone; each Pro look keeps its own crown. GymPal knows.
+  - The looks are laid out four across where there's room.
+- **GymGO Pro in the sidebar.** A small dark card at the foot of the sidebar, and of the slide-in menu on a phone: a crown, "Gyms in every country, and no limit on saved gyms." (or the free trial when there is one) and **Go Pro**, which opens the Pro page.
+  - It's pinned under the list, so a short window still shows it while the places above scroll.
+  - Only for a signed-in free account, where Pro can be bought (as the Profile card); never on the limited website.
+- **An occasional Pro reminder** for free accounts.
+  - A small card on Home: at the top on a phone, clear of the tab bar; at the foot of the page beside a docked sidebar, clear of the greeting and GymPal's button.
+  - **At most once every three days**, never on the first day this device sees the account, and only after a random 8 to 20 seconds on Home, so it never lands as you arrive.
+  - Never during a workout, never on other pages; it goes away by itself after 20 seconds, or with **Not now** or **See Pro**. It doesn't block the page.
+  - When it last showed is kept on the device.
+- Checked:
+  - domain 205, server 378 and app 699 tests (4 new for the reminder's timing), typecheck, lint and the empty-text scan;
+  - in a browser, as a new free account (the test told the app Pro was on sale, since this server has no Stripe): the sidebar card with Go Pro; the reminder after a wait on Home, closed with Not now, its time kept, and not shown again; Minimal chosen on a free account while Frost stays Pro; Minimal at 1280 light and dark and at 390.
+- Not checked: a real phone.
+
 ## Update 291 · A better sign-in page, and Up next on Welcome back
 
 *25 Nov 2026 · the commit "Sign-in fields keep their names, email slips caught, and Up next on Welcome back"*

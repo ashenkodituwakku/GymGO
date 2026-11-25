@@ -9,9 +9,18 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 284 · The limited version never asks for an account; console sweeps as a free user and on the limited website
+
+*25 Nov 2026 · the commit "The limited version never asks for an account"*
+
+- **Limited means no account needed, always.** The limited website has no server, so it can't sign anyone in. It relied on a second setting (`EXPO_PUBLIC_ACCOUNT=optional`, which netlify.toml and pages-build.sh both set) to skip the sign-in screen; a limited build without it opened on a sign-in form that couldn't work. lib/accountRule.ts now treats the limited version as account-optional by itself. The live site was set up correctly, so nothing changes there.
+- **Console sweeps**, no new faults: every main screen again as a free account at phone width (Pro locks and prompts), and the limited website at phone width, run without the account setting (19 screens, Home, Explore, a gym, Workout, Progress, Templates, Timer, Plates, 1-rep max, Collection, Pro, the Terms, Exercises, My workouts, Calendar, Machines). The only message anywhere is OpenFreeMap's own map style on Explore.
+- On a computer the limited website now opens with the sidebar (Update 279's default): Home, Explore, Saved, Profile and Appearance.
+- Checked: app 682 tests and a typecheck; the limited website opened on Home and Explore's map at 1280 and 390 without the account setting.
+
 ## Update 283 · A broken address is a 400, not a server error
 
-*25 Nov 2026 · the commit "A broken %-escape in an API address is a 400, not a server error"*
+*25 Nov 2026 · `b1d070f`*
 
 Probing every route that takes an id in its address found a second shared fault: an id with a broken %-escape (`/api/gyms/%E0%A4%A`) made the route's `decodeURIComponent` throw, so 22 routes (a gym, its reviews, photos, reports, owner, Google page, icons; a country pack; avatars and photos; the feed, head to head and a friend's cards) answered "Something went wrong on the server." (500).
 

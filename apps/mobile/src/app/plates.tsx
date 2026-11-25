@@ -60,7 +60,7 @@ export default function PlatesScreen() {
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
       <ScreenOptions options={{ title: 'Plates' }} />
       <Txt variant="subhead" color={color.labelSecondary}>
-        Type the total you want on the bar, bar included.
+        Enter the total weight, including the bar.
       </Txt>
       <View style={styles.row}>
         <Input

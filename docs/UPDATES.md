@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 282 · The server answers a malformed request with a 400, not a server error
+
+*25 Nov 2026 · the commit "A bare null or plain value as a request body is a 400, not a server error"*
+
+Sending each create and update route odd bodies on a local server found one fault shared by 24 routes: a body of `null` (valid JSON) reached handlers that read fields straight off it, so reviews, photos, members' reports, friends, comments, moderation, workouts and more answered "Something went wrong on the server." (500) where a 400 belongs. A bare string did the same on editing a workout.
+
+- apps/server/src/app.ts `readJson`: a body that's a bare null, string, number or true/false is refused with "The request body should be a JSON object." (400). Objects and lists go through as before, and an empty body is still `{}`.
+- A new server test sends null, a string, a number and true to five routes, and broken JSON to one.
+- Checked: 378 malformed requests to every create and update route (null, lists, lists of nulls, strings, numbers, objects with wrong types, not JSON), and the sign-in and sign-up routes with no account: no server errors; server 375 tests and a typecheck. The app's own requests always send objects, so people using GymGO never sent these; it closes a way to fill the server's error log.
+- The server's route list (its header) gained the monthly challenge routes; all 114 addresses the app calls are listed, and the 61 documented reads all answer on a local server.
+
 ## Update 281 · Moderating a review with no aspect ratings no longer crashes the phone apps
 
-*25 Nov 2026 · the commit "Moderating a review without aspect ratings no longer crashes the phone apps"*
+*25 Nov 2026 · `8a42cb9`*
 
 A sweep of the browser console across 37 screens found one real fault. In the moderation queue, a review that rates no aspects (equipment, cleanliness and so on) put an empty line, `''`, straight into the layout. The website only warns about that; the phone apps stop with "Text strings must be rendered within a <Text> component", so a moderator on a phone would hit the crash screen on the first such review.
 

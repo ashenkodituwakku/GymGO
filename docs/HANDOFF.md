@@ -118,6 +118,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Request bodies** (25 Nov, Update 282). `readJson` (app.ts) now refuses
+  a top-level null or plain value with a 400, so handlers can read fields
+  off what it returns. Every route takes an object (or a list).
 - **Empty text crash check** (25 Nov, Update 281). `node
   scripts/jsx-empty-text.cjs` lists any `{a && <X/>}` whose `a` is a string
   or number: '' or 0 would be rendered and the phone apps crash. Use

@@ -390,11 +390,16 @@ async function readJson(req: IncomingMessage, maxBytes = MAX_BODY_BYTES): Promis
     chunks.push(chunk as Buffer);
   }
   if (size === 0) return {};
+  let body: unknown;
   try {
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
   } catch {
     throw new HttpError(400, 'The request body isn’t valid JSON.');
   }
+  // Every route takes an object (or a list). A bare null, string, number or true/false would reach handlers that read
+  // fields straight off it, and reading a field of null throws: a 500 where a 400 belongs.
+  if (body === null || typeof body !== 'object') throw new HttpError(400, 'The request body should be a JSON object.');
+  return body;
 }
 
 async function readRaw(req: IncomingMessage, maxBytes: number): Promise<Buffer> {

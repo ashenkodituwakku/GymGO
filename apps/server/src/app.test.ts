@@ -188,6 +188,28 @@ describe('accounts', () => {
   });
 });
 
+describe('request bodies', () => {
+  it('answers a bare null, string or number with a 400, not a server error', async () => {
+    const { token } = await signUp();
+    for (const [method, path] of [
+      ['POST', '/api/gyms/dohertys-gym-city/reviews'],
+      ['PUT', '/api/gyms/dohertys-gym-city/prices'],
+      ['PUT', '/api/me/sharing'],
+      ['POST', '/api/friends'],
+      ['PUT', '/api/me/leaderboard'],
+    ] as const) {
+      for (const raw of ['null', '"x"', '7', 'true']) {
+        const response = await fetch(`${base}${path}`, { method, headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: raw });
+        expect(response.status, `${method} ${path} ${raw}`).toBe(400);
+        expect(((await response.json()) as { error: string }).error).toBe('The request body should be a JSON object.');
+      }
+    }
+    // Not JSON at all still says so.
+    const broken = await fetch(`${base}/api/friends`, { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: '{nope' });
+    expect(broken.status).toBe(400);
+  });
+});
+
 describe('saved gyms', () => {
   it('saves and unsaves per account', async () => {
     const one = await signUp();

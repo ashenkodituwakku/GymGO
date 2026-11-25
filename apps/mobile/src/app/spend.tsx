@@ -21,6 +21,7 @@ import { dateLabel } from '@/lib/copy';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { spends } from '@/lib/spendStore';
+import { isRealDay, readAmount } from '@/lib/spendInput';
 import { color, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
 import { useTrainingLog } from '@/lib/useTraining';
@@ -190,11 +191,11 @@ function AddSpend({ onDone }: { onDone: () => void }) {
   const [problem, setProblem] = useState<string | null>(null);
 
   const save = () => {
-    const value = Number(amount.replace(/[^0-9.]/g, ''));
+    const value = readAmount(amount);
     const code = (currency ?? defaultCurrency).trim().toUpperCase();
-    if (!amount.trim() || !Number.isFinite(value) || value <= 0) return setProblem('Type what you pay, as a number.');
-    if (!/^[A-Z]{3}$/.test(code)) return setProblem('Type the currency as three letters: AUD, USD, EUR, GBP…');
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(startedOn) || Number.isNaN(Date.parse(startedOn))) return setProblem('Type the date as year-month-day, like 2026-10-01.');
+    if (value === null) return setProblem('Enter what you pay as a number, like 19.99.');
+    if (!/^[A-Z]{3}$/.test(code)) return setProblem('Enter the currency as three letters, like AUD, USD, EUR or GBP.');
+    if (!isRealDay(startedOn)) return setProblem('Enter a real date as year-month-day, like 2026-10-01.');
     haptic.success();
     spends.update((now) => [
       ...now,

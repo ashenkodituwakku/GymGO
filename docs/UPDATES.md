@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 287 · What you pay reads amounts and dates properly
+
+*25 Nov 2026 · the commit "What you pay: amounts and dates read properly"*
+
+Typing odd values into the app's forms found that **What you pay** (app/spend.tsx) guessed instead of asking. It dropped everything but digits and points, so "1e6" was saved as 16 and "-5" as 5, and a decimal comma ("19,99") became 1999. Its date check let impossible days through: "2026-02-31" was kept, and a browser reads it as 3 March.
+
+- lib/spendInput.ts, new: `readAmount` takes "19.99", "$19.99", "A$20", "1,200", "1 200" and "19,99" (19.99), and turns down signs, letters, exponents, 0, more than two decimals and more than 100,000; `isRealDay` takes only real days written year-month-day.
+- The form's messages: "Enter what you pay as a number, like 19.99.", "Enter the currency as three letters, like AUD, USD, EUR or GBP." and "Enter a real date as year-month-day, like 2026-10-01."
+- The plate and 1-rep max calculators were tried with the same odd values (letters, negatives, 0, tiny, huge, an exponent, a doubled point, Arabic digits, a decimal comma): no NaN, nothing scrolling sideways, no errors.
+- Checked: 3 new app tests, app 685 and a typecheck; in the browser, "1e6" and 31 February turned down with their messages, and "19,99" saved as A$19.99.
+
 ## Update 286 · The phone's Menu button says "Menu" off the tabs, not "Menu. On Menu"
 
-*25 Nov 2026 · the commit "The sidebar's Menu button: 'Menu' off the tabs, not 'Menu. On Menu'"*
+*25 Nov 2026 · `b106872`*
 
 With the sidebar chosen on a phone, the Menu button at the foot reads out the tab you're on ("Menu. On Home"). On a page over the tabs (Appearance, a gym, Progress) it read "Menu. On Menu". It now says just "Menu" there; the words beside the icon are unchanged (the tab's name, or "Menu").
 

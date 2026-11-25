@@ -1,9 +1,9 @@
 /**
  * Welcome back: straight after signing in again (a new account has the
  * welcome tour instead). Your name, when you last trained, and where you
- * are: this week against your goal, your weeks in a row, your last workout
- * and the gyms you've collected (lib/welcomeBack.ts), each card arriving in
- * turn. Then on to wherever you were going (a link opened before signing
+ * are: what's up next on your programme or plan (one tap to start it), this
+ * week against your goal, your weeks in a row, your last workout and the
+ * gyms you've collected (lib/welcomeBack.ts), each card arriving in turn. Then on to wherever you were going (a link opened before signing
  * in), or Home; or straight to a workout.
  *
  * On the tour's background of soft colour (components/Aurora.tsx). With
@@ -24,12 +24,18 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { PrimaryButton, Txt } from '@/components/ui';
+import { startSession, useActiveSessionGlance } from '@/lib/activeSession';
 import { useApp } from '@/lib/app-state';
 import { collectionStats } from '@/lib/collection';
 import { haptic } from '@/lib/haptics';
 import { usePageTitle } from '@/lib/pageTitle';
 import { color, dropShadow, face, radius, space, themed } from '@/lib/theme';
 import { useCollection } from '@/lib/useCollection';
+import { dayPlan, nextProgrammeDay, programmeDayName, programmeDays, programmeProgress, programmeTitle } from '@/lib/programmes';
+import { useProgramme } from '@/lib/programmeStore';
+import { templateDayName, upNext, workoutTitle, type TemplateItem } from '@/lib/templates';
+import { unitFor } from '@/lib/training';
+import { exercisePreview } from '@/lib/workout';
 import { useTrainingLog } from '@/lib/useTraining';
 import { recapOf } from '@/lib/welcomeBack';
 
@@ -52,6 +58,21 @@ export default function WelcomeBackScreen() {
     () => recapOf({ name: me?.displayName ?? null, sessions: log.sessions, weeklyGoal: prefs.weeklyGoal, gyms: collectionStats(collection.gyms).gyms }),
     [me?.displayName, log.sessions, prefs.weeklyGoal, collection.gyms],
   );
+  // Up next: your training programme's next day first, else the next day of the plan you follow (as Home works it out).
+  const programme = useProgramme();
+  const active = useActiveSessionGlance();
+  const upcoming = useMemo((): { caption: string; title: string; name: string; items: TemplateItem[] } | null => {
+    if (active) return null;
+    const progress = programme ? programmeProgress(programme, log.sessions, new Date()) : null;
+    if (programme && progress && !progress.finished) {
+      const index = nextProgrammeDay(programme, log.sessions);
+      const day = programmeDays(programme.goal, programme.days)[index];
+      if (day) return { caption: `Week ${progress.week} of ${programme.weeks} · ${programmeTitle(programme.goal)}`, title: day.name, name: programmeDayName(programme, day), items: dayPlan(programme, index, progress.easier) };
+    }
+    const plan = upNext(log.sessions);
+    const day = plan ? plan.template.days[plan.day] : undefined;
+    return plan && day ? { caption: plan.template.name, title: day.name, name: templateDayName(plan.template, day), items: day.items } : null;
+  }, [active, programme, log.sessions]);
   const words = recap.greeting.split(' ');
   const titleSize = width >= 700 ? 56 : width >= 380 ? 38 : 32;
 
@@ -84,6 +105,34 @@ export default function WelcomeBackScreen() {
         </Animated.View>
 
         <View style={styles.grid}>
+          {upcoming && (
+            <Card
+              delay={640}
+              label={`Up next, ${upcoming.title}, ${upcoming.caption}. Start it`}
+              onPress={() => {
+                startSession({ name: upcoming.name, workoutId: null, gymId: null, gymName: null, unit: unitFor(prefs.country), items: upcoming.items });
+                router.replace('/train');
+              }}
+            >
+              <Badge icon="play" tint={color.brandFill} ink={color.onBrand} />
+              <View style={styles.flex}>
+                <Txt variant="footnote" color={color.brand} style={face('semibold')} numberOfLines={1}>
+                  {`Up next · ${upcoming.caption}`}
+                </Txt>
+                <Txt variant="headline" numberOfLines={1}>
+                  {upcoming.title}
+                </Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+                  {exercisePreview(upcoming.items.map((item) => item.exerciseId))}
+                </Txt>
+              </View>
+              <View style={styles.startPill}>
+                <Txt variant="footnote" color={color.onBrand} style={face('semibold')}>
+                  Start
+                </Txt>
+              </View>
+            </Card>
+          )}
           <Card delay={700} half label={recap.week.goal ? `This week: ${recap.week.done} of ${recap.week.goal} workouts` : `This week: ${recap.week.done} workouts`}>
             <ProgressRing size={54} stroke={6} progress={recap.week.goal ? Math.min(1, recap.week.done / recap.week.goal) : recap.week.done > 0 ? 1 : 0} track={color.fill} tint={color.brand}>
               <Icon name="calendar" size={18} color={color.brand} />
@@ -98,9 +147,15 @@ export default function WelcomeBackScreen() {
                   {recap.week.goal ? `of ${recap.week.goal}` : recap.week.done === 1 ? 'workout' : 'workouts'}
                 </Txt>
               </View>
+              {/* How far to the goal, or that it's met. */}
+              {recap.week.goal !== null && ready && (
+                <Txt variant="caption" color={recap.week.done >= recap.week.goal ? color.goodInk : color.labelSecondary} style={face('semibold')}>
+                  {recap.week.done >= recap.week.goal ? 'Goal met' : `${recap.week.goal - recap.week.done} to go`}
+                </Txt>
+              )}
             </View>
           </Card>
-          <Card delay={800} half label={`${recap.streak} ${recap.streak === 1 ? 'week' : 'weeks'} in a row`}>
+          <Card delay={780} half label={`${recap.streak} ${recap.streak === 1 ? 'week' : 'weeks'} in a row`}>
             <Badge icon="flame" tint={color.maybeTint} ink={color.maybeInk} />
             <View style={styles.flex}>
               <Txt variant="footnote" color={color.labelSecondary}>
@@ -121,11 +176,12 @@ export default function WelcomeBackScreen() {
                 <Txt variant="footnote" color={color.labelSecondary}>
                   {`Last workout · ${recap.last.when}`}
                 </Txt>
+                {/* A plan's day reads as the day, with the plan beside the details. */}
                 <Txt variant="headline" numberOfLines={1}>
-                  {recap.last.name}
+                  {workoutTitle(recap.last.name).title}
                 </Txt>
-                <Txt variant="footnote" color={color.labelSecondary}>
-                  {recap.last.detail}
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={2}>
+                  {workoutTitle(recap.last.name).plan ? `${workoutTitle(recap.last.name).plan} · ${recap.last.detail}` : recap.last.detail}
                 </Txt>
               </View>
               <Icon name="chevron" size={13} color={color.labelTertiary} />
@@ -233,6 +289,7 @@ const styles = themed(() =>
     cardBody: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4] },
     badge: { width: 48, height: 48, borderRadius: 16, borderCurve: 'continuous', alignItems: 'center', justifyContent: 'center' },
     figureRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+    startPill: { paddingHorizontal: space[3], paddingVertical: 7, borderRadius: 999, backgroundColor: color.brandFill },
     actions: { gap: space[2], paddingHorizontal: space[4], paddingTop: space[2], width: '100%', maxWidth: 480, alignSelf: 'center' },
   }),
 );

@@ -1130,10 +1130,14 @@ start), days a week (your weekly goal) and, while location is on, whether
 to find gyms near you. Then on to where you were going. Behind the tour and
 the sign-in page are slow pools of soft colour (still with Reduce Motion). The sign-up
 page has a brand panel beside the form on a wide screen, and a password
-strength meter (advice only; 8 characters is the rule).
-Signing in again opens **Welcome back**: a short recap of this week against
-your goal, your weeks in a row, your last workout and your collection, then
-Continue (on to where you were going) or Start workout.
+strength meter (advice only; 8 characters is the rule). Each field keeps
+its name in view (it rises above what you type), a slip in a common email
+provider is offered as a fix ("Did you mean sam@gmail.com?"), and Caps Lock
+is pointed out under the password on a computer.
+Signing in again opens **Welcome back**: what's up next on your programme
+or plan (Start begins it), a short recap of this week against your goal
+(how many to go), your weeks in a row, your last workout and your
+collection, then Continue (on to where you were going) or Start workout.
 
 Your saved gyms follow you between your PC and your phone, and you can
 write reviews. Accounts live in the GymGO server's database:

@@ -148,7 +148,12 @@ export default function WorkoutScreen() {
   // Saving to the account's library is Pro. A new plan can be saved again,
   // but one already in the library shows as saved rather than saving a copy.
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | string>('idle');
-  useEffect(() => setSaveState('idle'), [workout]);
+  // The workout just kept, so it can go straight into a folder (app/workout-folder.tsx).
+  const [keptId, setKeptId] = useState<string | null>(null);
+  useEffect(() => {
+    setSaveState('idle');
+    setKeptId(null);
+  }, [workout]);
   const [library, setLibrary] = useState<Set<string>>(() => new Set());
   const libraryToken = billing.isPro ? account.token : null;
   useEffect(() => {
@@ -172,7 +177,7 @@ export default function WorkoutScreen() {
     setSaveState('saving');
     const name = [muscles.map(muscleLabel).slice(0, 3).join(', '), gymName].filter(Boolean).join(' · ').slice(0, 80) || 'Workout';
     try {
-      await api.saveWorkout(account.token, {
+      const { workout: kept } = await api.saveWorkout(account.token, {
         name,
         gymId: record?.location.id ?? null,
         plan: {
@@ -192,6 +197,7 @@ export default function WorkoutScreen() {
         },
       });
       haptic.success();
+      setKeptId(kept.id);
       setLibrary((current) => new Set(current).add(signature));
       setSaveState('saved');
     } catch (error) {
@@ -397,6 +403,9 @@ export default function WorkoutScreen() {
                   disabled={saveState === 'saving' || isSaved}
                   onPress={() => void saveWorkout()}
                 />
+              )}
+              {keptId && isSaved && (
+                <ActionPill label="Add to folder" icon="folder" onPress={() => router.push({ pathname: '/workout-folder', params: { id: keptId } })} />
               )}
               {workout.items.length > 0 && (
                 <ActionPill

@@ -204,10 +204,10 @@ export default function CalendarScreen() {
               month={month}
               size={size}
               selected={open?.key ?? null}
-              canPick={(day) => day.sessions.length > 0}
+              canPick={(day) => day.sessions.length > 0 || day.today}
               onPick={(day) => setPicked((now) => (now?.key === day.key ? null : day))}
             />
-            {open && <DayList day={open} onOpen={(session) => router.push({ pathname: '/feed/[id]', params: { id: session.id } })} />}
+            {open && <DayList day={open} onOpen={(session) => router.push({ pathname: '/feed/[id]', params: { id: session.id } })} onStart={() => router.push('/train')} />}
             {index === 0 && none && (
               <View style={styles.empty}>
                 <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
@@ -310,12 +310,21 @@ function MiniMonth({ month, columns, onOpen }: { month: CalendarMonth; columns: 
 }
 
 /** The workouts on the day you tapped, each opening in full. */
-function DayList({ day, onOpen }: { day: CalendarDay; onOpen: (session: TrainingSession) => void }) {
+function DayList({ day, onOpen, onStart }: { day: CalendarDay; onOpen: (session: TrainingSession) => void; onStart: () => void }) {
   return (
     <Animated.View entering={FADE_IN} style={styles.dayList}>
       <Txt variant="footnote" color={color.labelSecondary} style={face('semibold')} accessibilityRole="header">
-        {dayWords(new Date(day.date))}
+        {day.today ? `Today, ${dayWords(new Date(day.date))}` : dayWords(new Date(day.date))}
       </Txt>
+      {/* Today with nothing logged yet: one tap to start. */}
+      {day.sessions.length === 0 && (
+        <View style={styles.todayEmpty}>
+          <Txt variant="subhead" color={color.labelSecondary} style={styles.flex}>
+            No workout yet today.
+          </Txt>
+          <PrimaryButton label="Start workout" icon="play" onPress={onStart} />
+        </View>
+      )}
       {day.sessions.map((session) => {
         const sets = setCount(session);
         const line = `${clockText(new Date(session.startedAt))} · ${durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt))} · ${sets} ${sets === 1 ? 'set' : 'sets'}`;
@@ -363,6 +372,7 @@ const styles = themed(() =>
     dayList: { gap: space[2], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     session: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2] },
     empty: { gap: space[3], alignItems: 'stretch', paddingTop: space[2] },
+    todayEmpty: { gap: space[3] },
     yearBar: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
     yearStep: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: color.plate, ...shadow.plate },
     off: { opacity: 0.35 },

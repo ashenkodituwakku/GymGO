@@ -9,6 +9,30 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 291 · A better sign-in page, and Up next on Welcome back
+
+*25 Nov 2026 · the commit "Sign-in fields keep their names, email slips caught, and Up next on Welcome back"*
+
+You asked to upgrade the sign-in and create-account page, and to brainstorm and make current features better.
+
+- **Sign in and create account:**
+  - Each field's name stays in view. It rests in the box like a hint and rises small above what you type once you tap in or there's text, so you can always tell which field is which. A browser's saved details lift it too.
+  - A slip in a common email provider is caught: "Did you mean sam@gmail.com?" Tap it to use it. It knows the usual providers (Gmail, Outlook, Hotmail, iCloud, Yahoo, BigPond and more) and leaves real addresses alone, like mail.com or a work address.
+  - "Caps Lock is on" shows under the password while it is, on a computer.
+  - After signing in or making an account, the button shows a tick ("Signed in" or "Account created") for a moment before the next screen. With Reduce Motion it goes straight on.
+  - Plainer words (docs/COPY.md): "It’s free. Find gyms that let you in, save them on every device and log your training." The birth-month note is now "Asked to check GymGO suits your age. It isn’t kept." The too-young message is "Sorry, GymGO accounts are for people 13 and over."
+- **Welcome back:**
+  - **Up next.** The next day of your training programme, or of the template plan you follow, with **Start** to begin it straight away. It's left out while a workout is in progress.
+  - This week shows how far you are from your goal ("2 to go") or "Goal met".
+  - A plan's workout reads as its day ("Full body A"), with the plan's name beside the details.
+- **Calendar:** tap today when you haven't trained yet for **Start workout**.
+- **Saving a workout in the builder:** once it's saved, **Add to folder** puts it straight into one.
+- Checked:
+  - domain 205, server 378 and app 695 tests (4 new for the email slips), typecheck, lint and the empty-text scan;
+  - in a browser: the create form's names rising, "gmial.com" offered as gmail.com and fixed with a tap, Caps Lock shown and cleared, "Signed in" then Welcome back (390 light and 1280 dark);
+  - in a browser: Up next offering Full body B after Full body A, and Start opening it; today on the calendar offering Start workout; Add to folder after Save in the builder, opening the folder page.
+- Not checked: a real phone. A real Caps Lock key either: headless Chrome doesn't report it, so a key event carrying Caps Lock was used.
+
 ## Update 290 · Folders for your saved workouts, and a year on the calendar
 
 *25 Nov 2026 · the commit "Folders for My workouts, and a year view on the calendar"*

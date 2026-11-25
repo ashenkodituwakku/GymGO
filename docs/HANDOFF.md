@@ -384,6 +384,20 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Sign-in upgrade, Up next** (25 Nov, Update 291). sign-in.tsx:
+  `AuthField` floats its `label` (Reanimated `lift`, transformOrigin left)
+  and shows `placeholder` only once floated; on the web it also floats for
+  `:-webkit-autofill` (looked for at 0.2 to 3 s). lib/emailTypos.ts
+  `emailSuggestion` (Damerau distance to POPULAR, REAL never corrected;
+  tested) under the email. Caps Lock read from document key events while
+  the password has focus. `succeeded` shows the tick and holds `done(true)`
+  450 ms (0 with Reduce Motion); the signed-in effect waits on it. Test
+  scripts find fields by label now ("Email", "Password"), not placeholder.
+  welcome-back.tsx `upcoming`: programme first (programmeProgress,
+  nextProgrammeDay, dayPlan), else templates' `upNext`; hidden while a
+  workout is active. calendar.tsx: today is pickable, DayList offers Start
+  workout. workout/[id].tsx keeps `keptId` from saveWorkout for Add to
+  folder (cleared when the plan changes).
 - **Workout folders, the calendar's year** (25 Nov, Update 290). Server:
   `workouts.folder` (migrate() adds it), `cleanFolder` (1 to 40
   characters, blank is none), GET/POST and the export carry it; PATCH

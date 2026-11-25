@@ -10,11 +10,12 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } fr
 import { Platform, StyleSheet, TextInput, View, useWindowDimensions, type TextInputProps, type TextInputInstance } from 'react-native';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { serverOfflineLine } from '@/lib/copy';
-import Animated, { FadeInDown, ReduceMotion, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInDown, ReduceMotion, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { AuthPerks, AuthShowcase } from '@/components/AuthShowcase';
 import { Aurora } from '@/components/Aurora';
 import { EASE_OUT, FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
 import { passwordStrength } from '@/lib/passwordStrength';
+import { emailSuggestion } from '@/lib/emailTypos';
 import { AppBadge } from '@/components/BrandMark';
 import { Icon, type IconName } from '@/components/Icon';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
@@ -36,7 +37,7 @@ type Mode = 'sign_in' | 'create';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** What someone too young for an account is told, once, and on this device for a day after. */
-const TOO_YOUNG = 'Sorry, you can’t make a GymGO account: accounts are for people 13 and over, and GymGO needs one.';
+const TOO_YOUNG = 'Sorry, GymGO accounts are for people 13 and over.';
 
 const tooYoung = (error: unknown) => error instanceof ApiError && error.code === 'too_young';
 
@@ -78,6 +79,22 @@ export default function SignInScreen() {
   // "Forgot your password?": the address a reset link went to, once asked.
   const [resetSentTo, setResetSentTo] = useState<string | null>(null);
   const [resetBusy, setResetBusy] = useState(false);
+  // Signed in or made just now: the button shows a tick for a moment before the next screen.
+  const [succeeded, setSucceeded] = useState<'in' | 'made' | null>(null);
+  const calm = useReducedMotion();
+  // Caps Lock, on a keyboard, while the password has focus.
+  const [capsOn, setCapsOn] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined' || !passwordFocused) return;
+    const read = (event: KeyboardEvent) => setCapsOn(Boolean(event.getModifierState?.('CapsLock')));
+    document.addEventListener('keydown', read);
+    document.addEventListener('keyup', read);
+    return () => {
+      document.removeEventListener('keydown', read);
+      document.removeEventListener('keyup', read);
+    };
+  }, [passwordFocused]);
 
   const forgot = async () => {
     if (resetBusy) return;
@@ -121,8 +138,8 @@ export default function SignInScreen() {
 
   // Signed in (here, or by a Google popup finishing): nothing more to do on this screen.
   useEffect(() => {
-    if (account.state === 'signed_in' && !busy) done();
-  }, [account.state, busy, done]);
+    if (account.state === 'signed_in' && !busy && !succeeded) done();
+  }, [account.state, busy, done, succeeded]);
 
   const fail = useCallback(
     (message: string) => {
@@ -143,6 +160,7 @@ export default function SignInScreen() {
   );
 
   const emailOk = EMAIL.test(email.trim());
+  const suggestion = emailSuggestion(email);
   const passwordOk = password.length >= (mode === 'create' ? 8 : 1);
   const nameOk = mode === 'sign_in' || name.trim().length > 0;
   const bornOk = mode === 'sign_in' || birthMonth !== null;
@@ -165,7 +183,8 @@ export default function SignInScreen() {
         noteNewAccount();
         await account.signUp(name.trim(), email.trim(), password, birthMonth ?? '');
       } else await account.signIn(email.trim(), password);
-      done(true);
+      setSucceeded(mode === 'create' ? 'made' : 'in');
+      setTimeout(() => done(true), calm ? 0 : 450);
     } catch (caught) {
       noteNewAccount(false);
       if (tooYoung(caught)) refuseYoung();
@@ -248,10 +267,8 @@ export default function SignInScreen() {
           {mode === 'create'
             ? ACCOUNT_OPTIONAL
               ? 'Make a free account to save gyms on every device, write reviews and keep your training log.'
-              : 'GymGO needs a free account. Make one to find gyms that will let you in, save them on every device, and log your training.'
-            : ACCOUNT_OPTIONAL
-              ? 'Sign in to pick up your saved gyms, workouts and training log.'
-              : 'Sign in to find gyms, and pick up your saved gyms, workouts and training log.'}
+              : 'It’s free. Find gyms that let you in, save them on every device and log your training.'
+            : 'Pick up your saved gyms, workouts and training log.'}
         </Txt>
         {mode === 'create' && !wide && <AuthPerks />}
       </Animated.View>
@@ -273,7 +290,7 @@ export default function SignInScreen() {
 
       {pendingSocial ? (
         <Animated.View entering={FADE_IN} style={[styles.form, styles.pending, shakeStyle]}>
-          <Txt variant="headline">One more thing before GymGO makes your account</Txt>
+          <Txt variant="headline">One more step</Txt>
           <BornField value={born} onChange={setBorn} onSubmit={() => void finishSocial()} autoFocus />
           <TermsBox agreed={agreed} onChange={setAgreed} />
           <PrimaryButton label="Continue" busy={busy} disabled={!birthMonth || !agreed} onPress={() => void finishSocial()} />
@@ -293,10 +310,10 @@ export default function SignInScreen() {
           <Animated.View entering={FADE_IN} exiting={FADE_OUT}>
             <AuthField
               icon="person"
-              label="Your name"
+              label="Name"
               value={name}
               onChangeText={setName}
-              placeholder="Name shown on reviews"
+              placeholder="Shown on your reviews"
               autoComplete="name"
               textContentType="name"
               maxLength={40}
@@ -326,8 +343,30 @@ export default function SignInScreen() {
           textContentType={mode === 'create' ? 'username' : 'emailAddress'}
           returnKeyType="next"
           onSubmitEditing={() => passwordRef.current?.focus()}
-          problem={email.trim().length > 4 && !emailOk ? 'That email doesn’t look right yet.' : null}
+          problem={suggestion ? null : email.trim().length > 4 && !emailOk ? 'That email doesn’t look right yet.' : null}
         />
+        {/* A slip in a provider's name ("gmial.com"): offered, never changed without a tap. */}
+        {suggestion && (
+          <Animated.View entering={FADE_IN} accessibilityLiveRegion="polite">
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                setEmail(suggestion);
+                setError(null);
+                setMismatch(false);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Did you mean ${suggestion}? Use it`}
+              hitSlop={6}
+              style={({ pressed }) => [styles.suggest, pressed && { opacity: 0.7 }]}
+            >
+              <Icon name="info" size={14} color={color.brand} />
+              <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+                Did you mean <Txt variant="footnote" color={color.brand} style={face('semibold')}>{suggestion}</Txt>?
+              </Txt>
+            </Pressable>
+          </Animated.View>
+        )}
         <AuthField
           ref={passwordRef}
           icon="lock"
@@ -340,8 +379,12 @@ export default function SignInScreen() {
           }}
           wrong={mismatch}
           // The rule is the live check under it ("8 characters or more"), not said twice.
-          placeholder={mode === 'create' ? 'A new password' : 'Your password'}
           secureTextEntry={!showPassword}
+          onFocus={() => setPasswordFocused(true)}
+          onBlur={() => {
+            setPasswordFocused(false);
+            setCapsOn(false);
+          }}
           autoCapitalize="none"
           autoCorrect={false}
           autoComplete={mode === 'create' ? 'new-password' : 'current-password'}
@@ -362,6 +405,14 @@ export default function SignInScreen() {
             </Pressable>
           }
         />
+        {capsOn && passwordFocused && (
+          <Animated.View entering={FADE_IN} style={styles.rule} accessibilityLiveRegion="polite">
+            <Icon name="info" size={15} color={color.maybeInk} />
+            <Txt variant="footnote" color={color.maybeInk}>
+              Caps Lock is on
+            </Txt>
+          </Animated.View>
+        )}
         {mode === 'create' && (
           <Animated.View entering={FADE_IN} style={styles.rule}>
             <Icon name={password.length >= 8 ? 'done' : 'todo'} size={15} color={password.length >= 8 ? color.goodInk : color.labelSecondary} />
@@ -385,7 +436,13 @@ export default function SignInScreen() {
       )}
 
       <Animated.View layout={GLIDE}>
-        <PrimaryButton label={mode === 'create' ? 'Create account' : 'Sign in'} busy={busy} disabled={!ready} onPress={() => void submit()} />
+        <PrimaryButton
+          label={succeeded === 'made' ? 'Account created' : succeeded === 'in' ? 'Signed in' : mode === 'create' ? 'Create account' : 'Sign in'}
+          icon={succeeded ? 'check' : undefined}
+          busy={busy && !succeeded}
+          disabled={!ready && !succeeded}
+          onPress={() => void submit()}
+        />
       </Animated.View>
 
       {mode === 'sign_in' &&
@@ -513,12 +570,18 @@ function BornField({ value, onChange, onSubmit, autoFocus }: { value: string; on
         problem={complete && !parseBirthMonth(value) ? 'That isn’t a month and year yet.' : null}
       />
       <Txt variant="caption" color={color.labelSecondary}>
-        The month and year you were born: asked before any account is made, to check GymGO suits your age. It isn’t kept.
+        Asked to check GymGO suits your age. It isn’t kept.
       </Txt>
     </View>
   );
 }
 
+/**
+ * A field whose name stays in view: it rests in the box like a hint, and
+ * rises small above what you type once you tap in or there's text. The
+ * hint (`placeholder`) shows only then, under the name. Screen readers
+ * hear the same name.
+ */
 function AuthField({
   ref,
   icon,
@@ -526,19 +589,60 @@ function AuthField({
   accessory,
   problem = null,
   wrong = false,
+  placeholder,
   ...props
 }: TextInputProps & { ref?: Ref<TextInputInstance>; icon: IconName; label: string; accessory?: ReactNode; problem?: string | null; wrong?: boolean }) {
   const [focused, setFocused] = useState(false);
+  // A browser's saved details show before the page can read them: the name rises for those too.
+  const [autofilled, setAutofilled] = useState(false);
+  const own = useRef<TextInputInstance | null>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const look = () => {
+      const node = own.current as unknown as { matches?: (selector: string) => boolean } | null;
+      try {
+        setAutofilled(Boolean(node?.matches?.(':-webkit-autofill') || node?.matches?.(':autofill')));
+      } catch {
+        // A browser without either selector: nothing to look for.
+      }
+    };
+    const timers = [200, 700, 1500, 3000].map((ms) => setTimeout(look, ms));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  const floated = focused || autofilled || (typeof props.value === 'string' && props.value.length > 0);
+  const lift = useSharedValue(floated ? 1 : 0);
+  useEffect(() => {
+    lift.value = withTiming(floated ? 1 : 0, { duration: 180, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
+  }, [floated, lift]);
+  const labelMotion = useAnimatedStyle(() => ({
+    transform: [{ translateY: interpolate(lift.value, [0, 1], [0, -11]) }, { scale: interpolate(lift.value, [0, 1], [1, 0.74]) }],
+  }));
   return (
     <View style={styles.field}>
       {/* `wrong`: the server turned this down (the email and password don't match): red, and its icon too. */}
       <View {...FIELD_FRAME} style={[styles.fieldBox, focused && styles.fieldFocused, problem && styles.fieldProblem, wrong && styles.fieldWrong]}>
         <Icon name={icon} size={17} color={wrong ? color.dangerInk : focused ? color.brand : color.labelTertiary} />
-        <TextInput
-          ref={ref}
-          placeholderTextColor={color.labelSecondaryOnFill}
+        <View style={styles.fieldStack}>
+          <Animated.Text
+            numberOfLines={1}
+            aria-hidden
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            pointerEvents="none"
+            style={[styles.fieldLabel, { color: wrong ? color.dangerInk : focused ? color.brand : color.labelSecondaryOnFill }, labelMotion]}
+          >
+            {label}
+          </Animated.Text>
+          <TextInput
+          ref={(node: TextInputInstance | null) => {
+            own.current = node;
+            if (typeof ref === 'function') ref(node);
+            else if (ref) (ref as { current: TextInputInstance | null }).current = node;
+          }}
+          placeholderTextColor={color.labelTertiary}
           accessibilityLabel={label}
           aria-invalid={problem || wrong ? true : undefined}
+          placeholder={floated ? placeholder : undefined}
           {...props}
           onFocus={(event) => {
             setFocused(true);
@@ -549,7 +653,8 @@ function AuthField({
             props.onBlur?.(event);
           }}
           style={styles.fieldInput}
-        />
+          />
+        </View>
         {accessory}
       </View>
       {/* Read out when it appears, as the line under the form's own errors is: it's why the button below won't press. */}
@@ -594,7 +699,7 @@ const styles = themed(() =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: space[3],
-      height: 52,
+      height: 58,
       paddingHorizontal: space[4],
       borderRadius: radius.md,
       borderCurve: 'continuous',
@@ -607,7 +712,11 @@ const styles = themed(() =>
     fieldWrong: { borderColor: color.danger },
     // The box's border shows focus, in the accent, instead of the browser's own ring.
     // minWidth 0: a browser text field won't otherwise shrink below its own width, and ran past a narrow phone's edge.
-    fieldInput: { flex: 1, minWidth: 0, height: '100%', fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
+    fieldStack: { flex: 1, minWidth: 0, height: '100%', justifyContent: 'center' },
+    // Resting, the name sits where the text goes; risen, it's small above it (transformOrigin keeps its left edge put).
+    fieldLabel: { position: 'absolute', left: 0, right: 0, top: 19, fontSize: 17, lineHeight: 20, transformOrigin: 'left center', ...face('regular') },
+    fieldInput: { flex: 1, minWidth: 0, height: '100%', paddingTop: 18, fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
+    suggest: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[1], minHeight: 28 },
     fieldHint: { marginLeft: space[4] },
     pending: { gap: space[3] },
     bornWrap: { gap: space[1] },

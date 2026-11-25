@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 289 · The tests pass in every time zone, Melbourne included
+
+*25 Nov 2026 · the commit "The exercise chart test passes in every time zone"*
+
+The tests had only ever run here, where the clock is UTC. Run as if the computer were in Melbourne, one app test failed: the exercise chart's test logged a morning and an evening workout at 07:00 and 19:00 UTC and expected one point for the day, but in Melbourne (UTC+11 in October) those are 6 pm on the 1st and 6 am on the 2nd. The app was right to chart two days (a workout belongs to the day it was where you are); the test wasn't. It now logs 7 am and 7 pm local time.
+
+- Checked: the app tests (685) in UTC, Melbourne, Los Angeles, Kiritimati (UTC+14) and Pago Pago (UTC−11); the server tests (375) in Melbourne, Kiritimati and Pago Pago; the shared rules (205) in Melbourne. All pass. A computer set to Melbourne time, as yours probably is, now runs the whole suite clean.
+
 ## Update 288 · A gym owner's casual price is read properly too
 
-*25 Nov 2026 · the commit "A gym owner's price is read as members' prices are"*
+*25 Nov 2026 · `a858c58`*
 
 The same flaw as Update 287 was in the form a verified gym owner uses to send their casual price (lib/ownerForm.ts `parsePrice`): it kept only digits, points and commas, so "1e6" went to the moderator as A$16 and "-5" as A$5. It now reads a price exactly as members' prices are read (`parseAmount`, moved to its own lib/amount.ts so the owner form doesn't pull in the city lists), which turns those down and still takes "25", "A$12.50", "¥1,500" and "24,50".
 

@@ -118,6 +118,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Time zones** (25 Nov, Update 289). This container's clock is UTC, so
+  run date-sensitive tests with `TZ=Australia/Melbourne` (and an extreme like
+  `Pacific/Kiritimati`) too; build test times from local clock times
+  (`new Date(2026, 9, 1, 7)`) when a test needs two to share a day.
 - **Broken addresses** (25 Nov, Update 283). `route` refuses an /api/
   address with a part that doesn't decode (400) before any handler, so
   `decodeURIComponent(parts[n])` in a route can't throw.

@@ -471,9 +471,12 @@ describe('more records, and charts of them', () => {
   });
 
   it('charts each metric a point a day: the best for bests, the sum for totals', () => {
-    const morning = at('2026-10-01T07:00:00Z', [{ weight: 100, reps: 5 }, { weight: 90, reps: 8 }]);
-    const evening = at('2026-10-01T19:00:00Z', [{ weight: 110, reps: 1 }]);
-    const later = at('2026-10-05T07:00:00Z', [{ weight: 100, reps: 6 }, { weight: 60, reps: 10, kind: 'warmup' }]);
+    // 7 am and 7 pm on the same day where the tests run: as fixed UTC times (07:00Z, 19:00Z) they fell on two days
+    // in Melbourne, and the test failed there.
+    const local = (day: number, hour: number) => new Date(2026, 9, day, hour).toISOString();
+    const morning = at(local(1, 7), [{ weight: 100, reps: 5 }, { weight: 90, reps: 8 }]);
+    const evening = at(local(1, 19), [{ weight: 110, reps: 1 }]);
+    const later = at(local(5, 7), [{ weight: 100, reps: 6 }, { weight: 60, reps: 10, kind: 'warmup' }]);
     const log = [later, evening, morning];
     expect(exerciseSeries(log, 'bench-press', 'heaviest').map((point) => point.kg)).toEqual([110, 100]);
     expect(exerciseSeries(log, 'bench-press', 'setVolume').map((point) => point.kg)).toEqual([720, 600]);

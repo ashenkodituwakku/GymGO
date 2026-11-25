@@ -20,6 +20,8 @@ const BY_SCREEN: Array<[RegExp, string[]]> = [
   [/^\/strength/, ['What is a 1-rep max?', 'How heavy should I go for 8 reps?']],
   [/^\/plates/, ['How do I load plates on a bar?', 'How much does a barbell weigh?']],
   [/^\/collection/, ['How do card rarities work?', 'How do I finish a suburb set?', 'How do I check in at a gym?']],
+  [/^\/calendar/, ['How do I move a workout to another day?', 'What counts as a week in a row?']],
+  [/^\/feed/, ['Who can see my workouts?', 'What is Head to head?']],
   [/^\/(friends|leaderboard)/, ['How do I add a friend?', 'How does the leaderboard work?']],
   [/^\/trips/, ['How do Trips work?', 'Can I find gyms when I travel?']],
   [/^\/machines/, ['How does Find a machine work?', 'Where do the machine lists come from?']],

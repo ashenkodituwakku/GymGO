@@ -384,13 +384,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
-- **Minimal look, sidebar Pro card, Pro reminder** (25 Nov, Update 292).
+- **Minimal look, sidebar Pro card, Pro reminder** (25 Nov, Updates 292 and 293).
   lib/looks.ts `minimal` (solid, hairline boxShadows, radius 6 to 12),
   `FREE_LOOKS` and `isFreeLook` (re-exported from theme.ts) used in
-  _layout's useWantedTheme and appearance.tsx. Sidebar.tsx `darkSide()`
-  (Minimal only) paints the pane, words, pill and buttons; Wordmark has
-  `onDark`. components/SidebarPro.tsx (`PRO_WARM`, `sidebarProLine`) is
-  pinned under each ScrollView (docked and drawer). lib/proNudge.ts
+  _layout's useWantedTheme and appearance.tsx. Sidebar.tsx `plainSide()`
+  (Minimal only, Update 293): the card's white with a hairline and no
+  shadow, a `color.fill` pill, the current icon in `color.brand`.
+  components/SidebarPro.tsx (`sidebarProLine`) is pinned under each
+  ScrollView (docked and drawer); it and ProNudge are filled with
+  BrandFill (the accent, Rainbow and Camo too), white words, a white
+  button in `color.brandFill`. lib/proNudge.ts
   (`nudgeStore` 'gymgo.proNudge.v1', `nudgeDue`, `nudgeWait`; tested) and
   components/ProNudge.tsx, mounted beside GymPal in _layout for signed-in
   accounts: free, plan known, `CAN_BUY_HERE && billing.sale === 'on'`, not

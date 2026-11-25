@@ -23,16 +23,19 @@ import { navMode, sidebarInset } from '@/lib/navLayout';
 import { nudgeDue, nudgeStore, nudgeWait } from '@/lib/proNudge';
 import { CAN_BUY_HERE } from '@/lib/purchase';
 import { useThemeChoice } from '@/lib/themePrefs';
-import { face, radius, shadow, space, themed } from '@/lib/theme';
+import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
 import { EASE_OUT, Pressable } from './motion';
-import { PRO_WARM, PRO_WARM_INK } from './SidebarPro';
+import { useThemeVersion } from './Redrawn';
 import { Txt } from './ui';
 
 /** How long it stays if left alone. */
 const SHOWN_FOR = 20_000;
 
 export function ProNudge() {
+  // Your accent: drawn again when it changes.
+  useThemeVersion();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -96,14 +99,15 @@ export function ProNudge() {
         role="region"
         accessibilityLabel="GymGO Pro"
       >
+        <BrandFill round={radius.lg} />
         <View style={styles.mark}>
-          <Icon name="crown" size={18} color={PRO_WARM} />
+          <Icon name="crown" size={18} color={color.onBrand} />
         </View>
         <View style={styles.flex}>
-          <Txt variant="headline" color="#FFFFFF" style={face('bold')}>
+          <Txt variant="headline" color={color.onBrand} style={face('bold')}>
             GymGO Pro
           </Txt>
-          <Txt variant="footnote" color="rgba(255, 255, 255, 0.8)">
+          <Txt variant="footnote" color={color.onBrandSoft}>
             {line}
           </Txt>
           <View style={styles.actions}>
@@ -116,7 +120,7 @@ export function ProNudge() {
               accessibilityRole="button"
               style={({ pressed }) => [styles.primary, pressed && { opacity: 0.85 }]}
             >
-              <Txt variant="subhead" color={PRO_WARM_INK} style={face('bold')}>
+              <Txt variant="subhead" color={color.brandFill} style={face('bold')}>
                 See Pro
               </Txt>
             </Pressable>
@@ -129,7 +133,7 @@ export function ProNudge() {
               hitSlop={6}
               style={({ pressed }) => [styles.quiet, pressed && { opacity: 0.7 }]}
             >
-              <Txt variant="subhead" color="rgba(255, 255, 255, 0.86)" style={face('semibold')}>
+              <Txt variant="subhead" color={color.onBrand} style={face('semibold')}>
                 Not now
               </Txt>
             </Pressable>
@@ -152,15 +156,13 @@ const styles = themed(() =>
       padding: space[4],
       borderRadius: radius.lg,
       borderCurve: 'continuous',
-      backgroundColor: '#1D1A3A',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: 'rgba(255, 255, 255, 0.12)',
+      backgroundColor: color.brandFill,
       ...shadow.float,
     },
-    mark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 107, 74, 0.16)' },
+    mark: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.2)' },
     flex: { flex: 1, minWidth: 0, gap: 2 },
     actions: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginTop: space[2] },
-    primary: { minHeight: 36, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radius.pill, backgroundColor: PRO_WARM },
+    primary: { minHeight: 36, justifyContent: 'center', paddingHorizontal: space[4], borderRadius: radius.pill, backgroundColor: color.onBrand },
     quiet: { minHeight: 36, justifyContent: 'center', paddingHorizontal: space[2], borderRadius: radius.pill },
   }),
 );

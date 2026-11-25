@@ -5,8 +5,9 @@
  * Pro can be bought (a store build that can't sell it shows nothing, as the
  * Profile card does). Never on the limited website.
  *
- * A dark card in every look and mode, with a warm button, so it reads as
- * one thing apart from the places above it.
+ * Filled with your accent (its gradient or pattern too: Rainbow, Camo),
+ * white words and a white Go Pro in the accent, so it stands out from the
+ * places above it in every look, as Profile's Pro card does.
  */
 
 import { StyleSheet, View } from 'react-native';
@@ -14,14 +15,12 @@ import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
 import { LIMITED } from '@/lib/limited';
 import { CAN_BUY_HERE } from '@/lib/purchase';
-import { face, radius, space, themed } from '@/lib/theme';
+import { color, dropShadow, face, radius, space, themed } from '@/lib/theme';
+import { BrandFill } from './BrandFill';
 import { Icon } from './Icon';
 import { Pressable } from './motion';
+import { useThemeVersion } from './Redrawn';
 import { Txt } from './ui';
-
-/** Pro's warm colour here, and the ink on it (6.6 to 1). */
-export const PRO_WARM = '#FF6B4A';
-export const PRO_WARM_INK = '#1E110B';
 
 /** The line on the card: the free trial when there is one, else what Pro adds. */
 export function sidebarProLine(trialDays: number | null): string {
@@ -29,6 +28,8 @@ export function sidebarProLine(trialDays: number | null): string {
 }
 
 export function SidebarPro({ onGo }: { onGo?: () => void }) {
+  // Drawn again when the accent changes.
+  useThemeVersion();
   const { account, billing, openPro } = useApp();
   const canBuy = CAN_BUY_HERE && billing.sale === 'on';
   if (LIMITED || !account.token || !billing.planKnown || billing.isPro || !canBuy) return null;
@@ -36,13 +37,14 @@ export function SidebarPro({ onGo }: { onGo?: () => void }) {
   return (
     <View style={styles.wrap}>
       <View style={styles.card}>
+        <BrandFill round={radius.lg} />
         <View style={styles.head}>
-          <Icon name="crown" size={17} color={PRO_WARM} />
-          <Txt variant="headline" color="#FFFFFF" style={face('bold')}>
+          <Icon name="crown" size={17} color={color.onBrand} />
+          <Txt variant="headline" color={color.onBrand} style={face('bold')}>
             GymGO Pro
           </Txt>
         </View>
-        <Txt variant="footnote" color="rgba(255, 255, 255, 0.78)">
+        <Txt variant="footnote" color={color.onBrandSoft}>
           {line}
         </Txt>
         <Pressable
@@ -55,7 +57,7 @@ export function SidebarPro({ onGo }: { onGo?: () => void }) {
           accessibilityLabel={`Go Pro. ${line}`}
           style={({ pressed, hovered }) => [styles.button, hovered && styles.buttonHover, pressed && { opacity: 0.85 }]}
         >
-          <Txt variant="subhead" color={PRO_WARM_INK} style={face('bold')}>
+          <Txt variant="subhead" color={color.brandFill} style={face('bold')}>
             Go Pro
           </Txt>
         </Pressable>
@@ -73,12 +75,12 @@ const styles = themed(() =>
       padding: space[3] + 2,
       borderRadius: radius.lg,
       borderCurve: 'continuous',
-      backgroundColor: '#1D1A3A',
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: 'rgba(255, 255, 255, 0.1)',
+      backgroundColor: color.brandFill,
+      // A soft lift, so the accent card sits forward of the sidebar.
+      ...dropShadow(0.16, 14, 6, 4),
     },
     head: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-    button: { alignItems: 'center', justifyContent: 'center', minHeight: 38, marginTop: space[1], borderRadius: radius.pill, backgroundColor: PRO_WARM },
-    buttonHover: { backgroundColor: '#FF7D60' },
+    button: { alignItems: 'center', justifyContent: 'center', minHeight: 38, marginTop: space[1], borderRadius: radius.pill, backgroundColor: color.onBrand },
+    buttonHover: { opacity: 0.92 },
   }),
 );

@@ -9,6 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 293 · Pro's cards in your accent, and Minimal made plainer
+
+*25 Nov 2026 · the commit "Pro cards in your accent; Minimal plainer, with a plain sidebar"*
+
+You asked for the Pro card and reminder in your own accent colour rather than navy and orange, while still standing out, and for Minimal to be more minimal, without the dark sidebar.
+
+- **The sidebar's Pro card and the Pro reminder** are now filled with your accent (its gradient or pattern too, for Rainbow and Camo), with white words and a white button in the accent, as Profile's Pro card is. The sidebar card has a soft lift so it sits forward. Free accounts have Indigo, so that's what they'll see.
+- **Minimal, plainer:**
+  - **No dark sidebar.** It's white, with a fine line and no shadow. The place you're on is a light grey mark, with only its icon in your accent.
+  - A page closer to white (#F8F8F9), fainter lines round the cards, smaller corners (4 to 10 points), and floating things that barely lift.
+  - In dark it's the same, on near-black.
+  - Its text still passes WCAG AA in every mode and accent.
+- Checked:
+  - domain 205, server 378 and app 699 tests, typecheck and lint;
+  - in a browser as a free account: the accent card in the sidebar and the accent reminder (1280 light and dark, 390), and Minimal's plain sidebar and cards.
+- Not checked: a real phone.
+
 ## Update 292 · A Minimal look for everyone, and Pro offered gently
 
 *25 Nov 2026 · the commit "Minimal look for everyone, a Pro card in the sidebar, and a gentle Pro reminder"*

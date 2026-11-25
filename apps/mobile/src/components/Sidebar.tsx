@@ -20,8 +20,9 @@
  * its rim), or the look's plain plate in a solid look or at 0% Liquid Glass.
  * The place you're on is a pill of the accent, lit like the glass it sits in.
  *
- * In the Minimal look the pane is dark whatever the mode, as a desktop
- * app's sidebar is (`darkSide`), with light words and a solid accent pill.
+ * In the Minimal look the pane is plain (`plainSide`): the card's white
+ * with a fine line and no shadow, and the place you're on a grey mark with
+ * its icon in the accent.
  * At its foot, for a free account where Pro can be bought, a small card
  * for GymGO Pro (components/SidebarPro.tsx).
  */
@@ -49,15 +50,8 @@ import { PIcon, type PhosphorName } from './PIcon';
 import { useThemeVersion } from './Redrawn';
 import { SteadyTxt, Txt } from './ui';
 
-/**
- * Minimal's sidebar: dark whatever the mode, with its own words on it. Null
- * in every other look, which draws the sidebar in its glass or plate.
- */
-function darkSide(): { pane: string; label: string; secondary: string; hover: string; button: string } | null {
-  const { look, scheme } = currentTheme();
-  if (look !== 'minimal') return null;
-  return { pane: scheme === 'dark' ? '#0C0B18' : '#17152F', label: '#EDECF7', secondary: 'rgba(237, 236, 247, 0.66)', hover: 'rgba(255, 255, 255, 0.07)', button: 'rgba(255, 255, 255, 0.1)' };
-}
+/** Minimal's sidebar: plain, as its cards are. False in every other look, which draws it in its glass or plate. */
+const plainSide = () => currentTheme().look === 'minimal';
 
 /** Every place's icon, from the tab bar's set: outline, filled for the place you're on. */
 const ICON: Record<string, PhosphorName> = {
@@ -143,7 +137,7 @@ function SidebarList({ onGo }: { onGo?: () => void }) {
     else router.push(item.href as Href);
     onGo?.();
   };
-  const side = darkSide();
+  const plain = plainSide();
   return (
     <View role="navigation" accessibilityLabel="GymGO">
       <Animated.View {...glassMark('pill')} style={[NO_TOUCH, styles.pill, styles.pillGlide, pill]} />
@@ -157,7 +151,7 @@ function SidebarList({ onGo }: { onGo?: () => void }) {
           }}
         >
           {section.title && (
-            <Txt variant="footnote" color={side?.secondary ?? color.labelSecondary} style={[styles.sectionTitle, face('semibold')]}>
+            <Txt variant="footnote" color={color.labelSecondary} style={[styles.sectionTitle, face('semibold')]}>
               {section.title}
             </Txt>
           )}
@@ -184,11 +178,11 @@ function SidebarList({ onGo }: { onGo?: () => void }) {
                       <Avatar account={me} size={24} variant="subhead" />
                     </View>
                   ) : (
-                    <PIcon name={ICON[item.href] ?? 'house'} weight={on ? 'fill' : 'regular'} size={22} color={on ? (side ? color.onBrand : color.brandOnTint) : (side?.label ?? color.label)} />
+                    <PIcon name={ICON[item.href] ?? 'house'} weight={on ? 'fill' : 'regular'} size={22} color={on ? (plain ? color.brand : color.brandOnTint) : color.label} />
                   )}
                 </View>
                 {/* The chosen place sits on the accent's tint (the sliding pill), so the accent made for it: plain, it was 3.3 to 1 in dark. */}
-                <SteadyTxt on={on} variant="body" color={on ? (side ? color.onBrand : color.brandOnTint) : (side?.label ?? color.label)} numberOfLines={1}>
+                <SteadyTxt on={on} variant="body" color={on ? (plain ? color.label : color.brandOnTint) : color.label} numberOfLines={1}>
                   {item.label}
                 </SteadyTxt>
               </Pressable>
@@ -446,7 +440,7 @@ function DockedSidebar({ foldable, open, opening }: { foldable: boolean; open: b
         >
           <ScrollView style={styles.scroller} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
             <View style={styles.brand}>
-              <Wordmark height={24} onDark={darkSide() !== null} />
+              <Wordmark height={24} />
               {foldable ? (
                 <Pressable
                   ref={foldButton}
@@ -461,7 +455,7 @@ function DockedSidebar({ foldable, open, opening }: { foldable: boolean; open: b
                   hitSlop={10}
                   style={({ pressed, hovered }) => [styles.close, hovered && styles.closeHover, pressed && styles.itemPressed]}
                 >
-                  <Icon name="chevronBack" size={16} color={darkSide()?.secondary ?? color.labelSecondary} />
+                  <Icon name="chevronBack" size={16} color={color.labelSecondary} />
                 </Pressable>
               ) : null}
             </View>
@@ -490,7 +484,7 @@ function DockedSidebar({ foldable, open, opening }: { foldable: boolean; open: b
               aria-expanded={false}
               style={({ pressed, hovered }) => [styles.capsuleButton, hovered && styles.itemHover, pressed && styles.itemPressed]}
             >
-              <Icon name="chevron" size={18} color={darkSide()?.label ?? color.label} />
+              <Icon name="chevron" size={18} color={color.label} />
             </Pressable>
           </Animated.View>
         ) : null}
@@ -579,7 +573,7 @@ export function SidebarDrawer({ onClose }: { onClose: () => void }) {
       >
         <Pane style={styles.fill}>
           <View style={styles.drawerHead}>
-            <Wordmark height={24} onDark={darkSide() !== null} />
+            <Wordmark height={24} />
             <Pressable
               onPress={close}
               accessibilityRole="button"
@@ -587,7 +581,7 @@ export function SidebarDrawer({ onClose }: { onClose: () => void }) {
               hitSlop={10}
               style={({ pressed }) => [styles.close, pressed && styles.itemPressed]}
             >
-              <Icon name="close" size={14} color={darkSide()?.secondary ?? color.labelSecondary} />
+              <Icon name="close" size={14} color={color.labelSecondary} />
             </Pressable>
           </View>
           <ScrollView style={styles.scroller} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
@@ -627,7 +621,7 @@ const styles = themed(() =>
     pane: { borderRadius: radius.xl + 4, borderCurve: 'continuous' },
     paneClip: { borderRadius: radius.xl + 4, borderCurve: 'continuous', overflow: 'hidden' },
     // The look's plate: its card colour and shadow (a solid look, or 0% Liquid Glass).
-    plate: { backgroundColor: darkSide()?.pane ?? color.card, ...shadow.float },
+    plate: plainSide() ? { backgroundColor: color.card, borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator } : { backgroundColor: color.card, ...shadow.float },
     // Real Liquid Glass casts a soft shadow of its own; the older phones' imitation needs a deeper one.
     paneShadow: {
       boxShadow: HAS_LIQUID_GLASS ? '0 8px 24px rgba(0, 0, 0, 0.08)' : '0 16px 40px rgba(0, 0, 0, 0.16), 0 2px 10px rgba(0, 0, 0, 0.07)',
@@ -641,10 +635,10 @@ const styles = themed(() =>
     section: { gap: 2, paddingBottom: space[3] },
     sectionTitle: { paddingHorizontal: space[3], paddingTop: space[2], paddingBottom: space[1] },
     item: { flexDirection: 'row', alignItems: 'center', gap: space[3], minHeight: ROW, paddingHorizontal: space[3], borderRadius: pillRadius(), borderCurve: 'continuous' },
-    pill: { backgroundColor: darkSide() ? color.brandFill : color.brandTint, borderRadius: pillRadius(), borderCurve: 'continuous' },
+    pill: { backgroundColor: plainSide() ? color.fill : color.brandTint, borderRadius: pillRadius(), borderCurve: 'continuous' },
     // The pill gliding under the rows, from the top of the list.
     pillGlide: { position: 'absolute', top: 0, left: 0, right: 0, height: ROW },
-    itemHover: { backgroundColor: darkSide()?.hover ?? color.fill },
+    itemHover: { backgroundColor: color.fill },
     itemPressed: { opacity: 0.7 },
     itemIcon: { width: 26, alignItems: 'center' },
     avatarRing: { width: 28, height: 28, borderRadius: Math.min(14, radius.pill), alignItems: 'center', justifyContent: 'center' },
@@ -657,7 +651,7 @@ const styles = themed(() =>
     dim: { backgroundColor: currentTheme().scheme === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.22)' },
     drawer: { position: 'absolute', left: EDGE, width: DRAWER_WIDTH, maxWidth: '84%' },
     drawerHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: space[5], paddingRight: space[3], paddingTop: space[4], paddingBottom: space[1] },
-    close: { width: 30, height: 30, borderRadius: Math.min(15, radius.pill), alignItems: 'center', justifyContent: 'center', backgroundColor: darkSide()?.button ?? color.fill },
+    close: { width: 30, height: 30, borderRadius: Math.min(15, radius.pill), alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
     closeHover: { backgroundColor: color.fillStrong },
   }),
 );

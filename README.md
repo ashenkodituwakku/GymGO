@@ -363,9 +363,9 @@ your accent glows behind them.
   **Rainbow** (a gradient) and **Camo** (a woodland pattern) that paint
   filled buttons, selected chips, the tab bar and the Build a workout card,
   picked from a grid of swatches. Everyone has two looks: Standard and
-  **Minimal** (flat white cards with a fine edge and no shadows on a pale
-  grey page, small corners, and a dark sidebar on a wide screen; near-black
-  in dark). Pro also has ten more **looks** that redraw the whole app, not
+  **Minimal** (flat white cards with the faintest edge and no shadows on a
+  near-white page, small corners, and a plain white sidebar where the place
+  you're on is a grey mark; near-black in dark). Pro also has ten more **looks** that redraw the whole app, not
   just its colour:
   - **Frost**: frosted glass (glassmorphism) on a blue-and-white page,
     deep navy in dark. Cards are see-through with a fine white edge, and
@@ -427,7 +427,7 @@ your accent glows behind them.
     float at the foot of the screen. **Sidebar**: a menu down the left with the
     tabs, then Training (Workout, Progress, My workouts, Programme) and You
     (Collection, Friends, Appearance), and for a free account where Pro can
-    be bought a small **GymGO Pro** card at its foot (Go Pro). From 960 points wide it stays open,
+    be bought a small **GymGO Pro** card in your accent at its foot (Go Pro). From 960 points wide it stays open,
     hovering over the left of every page (Progress and the rest too, not
     only the tabs): the page's header and background run on underneath it,
     Explore's map too, and the page's content keeps clear of it. On the

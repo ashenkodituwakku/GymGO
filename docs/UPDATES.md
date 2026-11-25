@@ -9,9 +9,17 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 288 · A gym owner's casual price is read properly too
+
+*25 Nov 2026 · the commit "A gym owner's price is read as members' prices are"*
+
+The same flaw as Update 287 was in the form a verified gym owner uses to send their casual price (lib/ownerForm.ts `parsePrice`): it kept only digits, points and commas, so "1e6" went to the moderator as A$16 and "-5" as A$5. It now reads a price exactly as members' prices are read (`parseAmount`, moved to its own lib/amount.ts so the owner form doesn't pull in the city lists), which turns those down and still takes "25", "A$12.50", "¥1,500" and "24,50".
+
+- Checked: the owner form's test covers "1e6", "-5", "0", "12..5" and "A$-20"; app 685 tests and a typecheck. The server checks an owner's price again before a moderator sees it.
+
 ## Update 287 · What you pay reads amounts and dates properly
 
-*25 Nov 2026 · the commit "What you pay: amounts and dates read properly"*
+*25 Nov 2026 · `7959176`*
 
 Typing odd values into the app's forms found that **What you pay** (app/spend.tsx) guessed instead of asking. It dropped everything but digits and points, so "1e6" was saved as 16 and "-5" as 5, and a decimal comma ("19,99") became 1999. Its date check let impossible days through: "2026-02-31" was kept, and a browser reads it as 3 March.
 

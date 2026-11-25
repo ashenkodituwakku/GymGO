@@ -8,6 +8,7 @@
  */
 
 import type { AccessSchedule, ClassTimetable, GymClass, OpeningWindow } from '@gymgo/domain';
+import { parseAmount } from './amount';
 
 export const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] as const;
 
@@ -55,11 +56,10 @@ export function windowsFrom(week: readonly DayHours[]): { windows: OpeningWindow
 
 /** "25", "12.50" or "1,500" as GymGO keeps prices (hundredths, in every currency: ¥1,500 is 150000), or null. */
 export function parsePrice(text: string): number | null {
-  const clean = text.trim().replace(/[^\d.,]/g, '');
-  // "1,500" groups thousands; "24,50" is a decimal comma.
-  const normal = /^\d{1,3}(,\d{3})+$/.test(clean) ? clean.replace(/,/g, '') : clean.replace(',', '.');
-  if (!/^\d+(\.\d{1,2})?$/.test(normal)) return null;
-  return Math.round(Number(normal) * 100);
+  // The same reading as members' prices (lib/present.ts): it used to drop every character but digits, points and
+  // commas, so "1e6" became 16 and "-5" became 5. A symbol or code in front is fine; anything else isn't a price.
+  const minor = parseAmount(text);
+  return minor !== null && minor > 0 ? minor : null;
 }
 
 // --- Class timetable ----------------------------------------------------------

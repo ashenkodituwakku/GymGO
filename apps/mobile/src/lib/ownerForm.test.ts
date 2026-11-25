@@ -37,6 +37,8 @@ describe('the owner’s forms', () => {
     expect(parsePrice('¥1,500')).toBe(150000);
     expect(parsePrice('24,50')).toBe(2450);
     expect(parsePrice('free')).toBeNull();
+    // Not guessed from the digits in it any more.
+    for (const typed of ['1e6', '-5', '0', '12..5', 'A$-20']) expect(parsePrice(typed), typed).toBeNull();
   });
 });
 

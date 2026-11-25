@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { BrandFill } from '@/components/BrandFill';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { loadAllLookFonts } from '@/lib/lookFonts';
@@ -66,7 +66,7 @@ import {
   type TextSize,
 } from '@/lib/theme';
 import { setThemeChoice, useThemeChoice, type GymPalButton } from '@/lib/themePrefs';
-import type { NavLayout } from '@/lib/navLayout';
+import { layoutFor, type NavLayout } from '@/lib/navLayout';
 import { FREE_MAP_STYLE, MAP_STYLES, mapStyle, mapStyleFor, type MapPalette, type MapStyleId } from '@/lib/mapStyles';
 import { useReducedMotion } from 'react-native-reanimated';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -209,10 +209,13 @@ export default function AppearanceScreen() {
     if (next !== choice.customHue) setThemeChoice({ customHue: next });
   };
 
-  const pickLayout = (layout: NavLayout) => {
-    if (layout === choice.layout) return;
+  // The layout in use: yours once chosen, else automatic (the sidebar on the website on a wide screen).
+  const { width } = useWindowDimensions();
+  const layout = layoutFor(choice.nav, width, Platform.OS === 'web');
+  const pickLayout = (next: NavLayout) => {
+    if (next === choice.nav) return;
     haptic.select();
-    setThemeChoice({ layout });
+    setThemeChoice({ nav: next });
   };
 
   // The map's style: Standard for everyone, the rest with Pro (like the looks).
@@ -319,7 +322,7 @@ export default function AppearanceScreen() {
           {lookInUse === FREE_LOOK ? 'How GymGO looks whenever it’s dark.' : `${LOOKS[lookInUse].name} draws dark its own way. Dim is for the Standard look.`}
         </Txt>
 
-        {/* How you get around: the floating tab bar (the default) or a sidebar menu (lib/navLayout.ts). */}
+        {/* How you get around: the floating tab bar or a sidebar menu, automatic until chosen (lib/navLayout.ts). */}
         <View style={styles.accentHead}>
           <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
             Layout
@@ -327,7 +330,7 @@ export default function AppearanceScreen() {
         </View>
         <View style={styles.modes} accessibilityRole="radiogroup">
           {LAYOUTS.map((item) => {
-            const on = choice.layout === item.id;
+            const on = layout === item.id;
             return (
               <Pressable
                 key={item.id}
@@ -353,7 +356,7 @@ export default function AppearanceScreen() {
             );
           })}
         </View>
-        {choice.layout === 'sidebar' && (
+        {layout === 'sidebar' && (
           <Animated.View entering={FADE_IN} style={[styles.glassCard, styles.layoutOptions]}>
             <View style={styles.toggleRow}>
               <View style={styles.flex}>
@@ -374,10 +377,28 @@ export default function AppearanceScreen() {
           </Animated.View>
         )}
         <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-          {choice.layout === 'sidebar'
-            ? `A menu down the left with the tabs, your training and you. On a wide screen it stays open beside the page${choice.foldOnMap ? ' and folds away on the map' : ', the map included'}; on a phone, Menu at the foot slides it in.`
-            : 'The four tabs float at the foot of the screen. This is the default; Sidebar puts them, with your training, in a menu down the left.'}
+          {choice.nav === 'auto'
+            ? 'Automatic: the sidebar on a computer, the tab bar on a phone. Choose one to use it everywhere.'
+            : layout === 'sidebar'
+              ? `A menu down the left with the tabs and your training. On a wide screen it stays open beside the page${choice.foldOnMap ? ' and folds away on the map' : ', including the map'}. On a phone, tap Menu at the bottom to open it.`
+              : 'The four tabs float at the bottom of the screen.'}
         </Txt>
+        {choice.nav !== 'auto' && (
+          <Pressable
+            onPress={() => {
+              haptic.select();
+              setThemeChoice({ nav: 'auto' });
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Use the automatic layout: the sidebar on a computer, the tab bar on a phone"
+            hitSlop={8}
+            style={styles.autoLayout}
+          >
+            <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+              Use automatic
+            </Txt>
+          </Pressable>
+        )}
 
         <View style={styles.accentHead}>
           <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
@@ -1243,6 +1264,7 @@ const styles = themed(() =>
     layoutBody: { flex: 1, gap: 5 },
     layoutTabs: { position: 'absolute', bottom: 7, left: '24%', right: '24%', height: 13, borderRadius: 6.5, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', ...shadow.plate },
     layoutOptions: { marginTop: space[3] },
+    autoLayout: { alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center', marginHorizontal: space[4] },
     // Text sizes, as "Aa" at each size.
     sizes: { flexDirection: 'row', gap: space[2] },
     sizeTile: { flex: 1, alignItems: 'center', gap: space[1] },

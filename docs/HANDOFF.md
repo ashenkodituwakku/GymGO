@@ -118,6 +118,12 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Sidebar by default on the desktop website** (25 Nov, Update 279).
+  ThemeChoice `nav: 'auto' | 'tabs' | 'sidebar'` (stored as `nav`; the old
+  `layout` is read once: only 'sidebar' carries over). `layoutFor(choice,
+  width, web)` and `navMode(choice, width, web)` in lib/navLayout.ts; pass
+  `Platform.OS === 'web'`. The owner's decisions the same day: move buttons
+  off by default, refunds email-only, three-line gym names, no Places key.
 - **Refunds and disputes** (24 Nov, Update 276). billing.ts `MoneyEvent`,
   `MONEY_EVENT_TYPES`, `moneyEventEmail`, `recordMoney`, table
   `stripe_money_events`; app.ts emails them through `bugReports.send/to`.

@@ -125,7 +125,7 @@ export default function TabsLayout() {
   const keyboardUp = useAndroidKeyboard();
   // The tab bar, or the sidebar: docked beside the page on a wide screen, behind a Menu button on a phone.
   const { width } = useWindowDimensions();
-  const mode = navMode(useThemeChoice().layout, width);
+  const mode = navMode(useThemeChoice().nav, width, Platform.OS === 'web');
   const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     if (mode !== 'drawer') setMenuOpen(false);

@@ -268,10 +268,10 @@ export const useSidebarOpening = (): SharedValue<number> | null => useContext(Si
  * navigator inside it.
  */
 export function SidebarFrame({ signedIn, children }: { signedIn: boolean; children: ReactNode }) {
-  const { layout, foldOnMap } = useThemeChoice();
+  const { nav, foldOnMap } = useThemeChoice();
   const { width } = useWindowDimensions();
   const pathname = usePathname();
-  const mode = navMode(layout, width);
+  const mode = navMode(nav, width, Platform.OS === 'web');
   // All of the sidebar, its capsule on the map, or nothing.
   const inset = sidebarInset(mode, pathname, signedIn, foldOnMap);
   const foldable = foldedOn(mode, pathname, signedIn, foldOnMap);

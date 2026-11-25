@@ -1,13 +1,18 @@
 /**
  * How you get around GymGO (Appearance → Layout): the floating tab bar at
- * the foot of the screen, the default, or a sidebar menu. The sidebar stays
- * open down the left of a wide screen; on a phone it slides in from a Menu
- * button at the foot.
+ * the foot of the screen, or a sidebar menu. Until you choose, it's
+ * automatic: the sidebar on the website on a wide screen (a computer), the
+ * tab bar on a phone and in the phone apps. The sidebar stays open down the
+ * left of a wide screen; on a phone it slides in from a Menu button at the
+ * foot.
  *
  * No React Native here, so it is unit-tested in Node.
  */
 
 export type NavLayout = 'tabs' | 'sidebar';
+
+/** What Appearance holds: one of the two, or 'auto' until you choose (layoutFor). */
+export type NavChoice = 'auto' | NavLayout;
 
 /** From this width (points) the sidebar stays open beside the page. */
 export const SIDEBAR_WIDE = 960;
@@ -18,8 +23,14 @@ export const MENU_BUTTON = 48;
 /** The tab bar; the sidebar always open beside the page; or the sidebar behind a Menu button. */
 export type NavMode = 'tabs' | 'docked' | 'drawer';
 
-export function navMode(layout: NavLayout, width: number): NavMode {
-  if (layout !== 'sidebar') return 'tabs';
+/** The layout in use: yours once chosen; until then the sidebar on the website on a wide screen, the tab bar everywhere else. */
+export function layoutFor(choice: NavChoice, width: number, web: boolean): NavLayout {
+  if (choice !== 'auto') return choice;
+  return web && width >= SIDEBAR_WIDE ? 'sidebar' : 'tabs';
+}
+
+export function navMode(choice: NavChoice, width: number, web = false): NavMode {
+  if (layoutFor(choice, width, web) !== 'sidebar') return 'tabs';
   return width >= SIDEBAR_WIDE ? 'docked' : 'drawer';
 }
 

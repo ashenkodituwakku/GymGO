@@ -64,3 +64,13 @@ describe('your adjustments', () => {
     expect(parseChoice(JSON.stringify({ moveButtons: 'yes' })).moveButtons).toBe(false);
   });
 });
+
+describe('the layout choice', () => {
+  it('starts automatic; a chosen sidebar carries over, the old stored tab bar becomes automatic', () => {
+    expect(parseChoice(null).nav).toBe('auto');
+    expect(parseChoice(JSON.stringify({ layout: 'sidebar' })).nav).toBe('sidebar');
+    expect(parseChoice(JSON.stringify({ layout: 'tabs' })).nav).toBe('auto');
+    expect(parseChoice(JSON.stringify({ nav: 'tabs', layout: 'sidebar' })).nav).toBe('tabs');
+    expect(parseChoice(JSON.stringify({ nav: 'sideways' })).nav).toBe('auto');
+  });
+});

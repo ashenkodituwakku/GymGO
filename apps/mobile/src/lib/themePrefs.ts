@@ -10,7 +10,7 @@
  * splash screen is still up.
  */
 
-import type { NavLayout } from './navLayout';
+import type { NavChoice } from './navLayout';
 import { FREE_MAP_STYLE, isMapStyle, type MapStyleId } from './mapStyles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState, useSyncExternalStore } from 'react';
@@ -64,8 +64,13 @@ export interface ThemeChoice {
   gymPalSide: 'right' | 'left';
   /** How GymPal waits (components/GymPal.tsx): a small tab on the screen's edge (the default), his button in the corner, or nothing to see. For everyone. */
   gymPalButton: GymPalButton;
-  /** How you get around (lib/navLayout.ts): the floating tab bar, the default, or a sidebar menu. For everyone. */
-  layout: NavLayout;
+  /**
+   * How you get around (lib/navLayout.ts): the floating tab bar or a sidebar
+   * menu, or 'auto' until you choose (the sidebar on the website on a wide
+   * screen). Stored as `nav`: the older `layout` couldn't tell a chosen tab
+   * bar from the old default, so only a chosen sidebar carries over. For everyone.
+   */
+  nav: NavChoice;
   /** On the map, the docked sidebar folds away to its capsule (lib/navLayout.ts); off, it stays open there too. For everyone. */
   foldOnMap: boolean;
   /** The map's style (lib/mapStyles.ts): Standard for everyone, the rest with Pro. */
@@ -95,7 +100,7 @@ export const DEFAULT_CHOICE: ThemeChoice = {
   clock24: false,
   gymPalSide: 'right',
   gymPalButton: 'tab',
-  layout: 'tabs',
+  nav: 'auto',
   foldOnMap: true,
   mapStyle: FREE_MAP_STYLE,
   reduceMotion: false,
@@ -105,7 +110,7 @@ export const DEFAULT_CHOICE: ThemeChoice = {
 /** What was stored, cleaned: anything unknown falls back to the default. */
 export function parseChoice(raw: string | null | undefined): ThemeChoice {
   try {
-    const value = raw ? (JSON.parse(raw) as Partial<ThemeChoice>) : {};
+    const value = raw ? (JSON.parse(raw) as Partial<ThemeChoice> & { layout?: unknown }) : {};
     return {
       appearance: value.appearance === 'light' || value.appearance === 'dark' || value.appearance === 'system' ? value.appearance : 'system',
       accent: ACCENT_IDS.includes(value.accent as AccentId) || value.accent === 'custom' ? (value.accent as AccentId) : FREE_ACCENT,
@@ -119,7 +124,7 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
       clock24: value.clock24 === true,
       gymPalSide: value.gymPalSide === 'left' ? 'left' : 'right',
       gymPalButton: value.gymPalButton === 'corner' || value.gymPalButton === 'hidden' ? value.gymPalButton : 'tab',
-      layout: value.layout === 'sidebar' ? 'sidebar' : 'tabs',
+      nav: value.nav === 'tabs' || value.nav === 'sidebar' || value.nav === 'auto' ? value.nav : value.layout === 'sidebar' ? 'sidebar' : 'auto',
       foldOnMap: value.foldOnMap !== false,
       mapStyle: isMapStyle(value.mapStyle) ? value.mapStyle : FREE_MAP_STYLE,
       reduceMotion: value.reduceMotion === true,

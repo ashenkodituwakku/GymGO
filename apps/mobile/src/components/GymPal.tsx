@@ -144,9 +144,9 @@ export function GymPal() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   // How and on which side he waits, and the layout (Appearance).
-  const { gymPalSide: side, gymPalButton: button, layout, foldOnMap } = useThemeChoice();
+  const { gymPalSide: side, gymPalButton: button, nav, foldOnMap } = useThemeChoice();
   const { width } = useWindowDimensions();
-  const mode = navMode(layout, width);
+  const mode = navMode(nav, width, Platform.OS === 'web');
   const sidebarUnfolded = useSidebarUnfolded();
   const { billing, openPro } = useApp();
   const pro = billing.isPro;

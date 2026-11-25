@@ -9,9 +9,27 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 279 · The sidebar is the default on the desktop website; four decisions settled
+
+*25 Nov 2026 · the commit "The sidebar by default on the desktop website"*
+
+You asked for the sidebar to be the default on the website on a computer.
+
+- **Layout is now automatic until you choose**: the sidebar, open down the left, on the website from 960 points wide (a computer); the tab bar on a phone, in a narrow browser window and in the phone apps (an iPad included). Appearance → Layout still shows Tab bar and Sidebar, with the one in use ticked and "Automatic: the sidebar on a computer, the tab bar on a phone. Choose one to use it everywhere." Picking one keeps it on every screen size, and **Use automatic** goes back.
+- The choice is stored under a new name (`nav`). The old setting couldn't tell a tab bar someone chose from the old default, so a chosen sidebar carries over and everyone else starts on automatic.
+- Code: lib/navLayout.ts `NavChoice` and `layoutFor`; `navMode` takes whether it's the website; lib/themePrefs.ts `nav` (with the old `layout` read once).
+- Checked: 2 new app tests (automatic at each width, the website and the phone apps; the old setting read), app 682 tests and a typecheck; in the browser, the sidebar on Home at 1280 for a new visitor and for an old stored tab bar, the tab bar at 390 and 900, a chosen tab bar kept at 1280, and Appearance's Layout in both states with axe clean.
+
+**Your four decisions** (you said "you choose", so the recommended ones):
+
+- **Move buttons on Home widgets** stay off by default (Appearance → Motion turns them on). Screen readers and the keyboard keep Move up and Move down.
+- **Refunds and disputes** are emailed to you and change nobody's access (Update 276). You end access in Stripe when you want to.
+- **Long gym names** in Explore's list keep the three-line limit, with the full name read out and on the gym's page.
+- **No Google Places key** for now: the free Google map, listing and Street View stay.
+
 ## Update 278 · Checked after the rewrite: small screens, and code Safari and Firefox would trip on
 
-*24 Nov 2026 · the commit "Checks after the rewrite: small screens, Safari and Firefox code review"*
+*24 Nov 2026 · `471c19c`*
 
 No change to the app; a record of what was checked.
 

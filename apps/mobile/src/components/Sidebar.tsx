@@ -483,7 +483,9 @@ function DockedSidebar({ foldable, open, opening }: { foldable: boolean; open: b
 /** On a phone: a small glass Menu button at the foot, naming the tab you're on. */
 export function MenuButton({ bottom, onPress }: { bottom: number; onPress: () => void }) {
   const pathname = usePathname();
-  const here = SIDEBAR_TABS.find((tab) => tab.href === tabFor(pathname))?.label ?? 'Menu';
+  // The tab you're on, shown beside the icon; on a page over the tabs (Appearance, a gym) just "Menu".
+  const tab = SIDEBAR_TABS.find((item) => item.href === tabFor(pathname))?.label ?? null;
+  const here = tab ?? 'Menu';
   return (
     <View style={[CHILD_TOUCH, styles.menuDock, { bottom }]}>
       <Pressable
@@ -492,7 +494,7 @@ export function MenuButton({ bottom, onPress }: { bottom: number; onPress: () =>
           onPress();
         }}
         accessibilityRole="button"
-        accessibilityLabel={`Menu. On ${here}`}
+        accessibilityLabel={tab ? `Menu. On ${tab}` : 'Menu'}
         style={({ pressed }) => [styles.menuShadow, pressed && styles.itemPressed]}
       >
         <Glass kind="control" style={[StyleSheet.absoluteFill, styles.menuCapsule]} />

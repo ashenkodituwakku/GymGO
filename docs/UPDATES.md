@@ -9,6 +9,16 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 286 · The phone's Menu button says "Menu" off the tabs, not "Menu. On Menu"
+
+*25 Nov 2026 · the commit "The sidebar's Menu button: 'Menu' off the tabs, not 'Menu. On Menu'"*
+
+With the sidebar chosen on a phone, the Menu button at the foot reads out the tab you're on ("Menu. On Home"). On a page over the tabs (Appearance, a gym, Progress) it read "Menu. On Menu". It now says just "Menu" there; the words beside the icon are unchanged (the tab's name, or "Menu").
+
+- Also clicked through Appearance → Layout at 1280: Tab bar (the sidebar goes, the choice is kept after a reload, **Use automatic** appears), Use automatic (the sidebar comes back, the link goes), Sidebar; no errors.
+- A full workout driven in the browser: a template started, two sets ticked, Finish and Finish anyway, the summary with its record; nothing in the console (the test workout deleted after).
+- Checked: app 682 tests and a typecheck; the Menu button's label on Home and Appearance at 390.
+
 ## Update 285 · GymPal and the README catch up with the newest features
 
 *25 Nov 2026 · `94cf2b9` and `25b8f80`*

@@ -78,12 +78,13 @@ export function ModerationQueue({ token, records, onPublished }: { token: string
               {gym ? gym.location.name : review.gymId} · {review.overall} of 5 stars · {review.authorDisplayName}
             </Txt>
             <Txt variant="subhead">{review.body}</Txt>
-            {/* The aspects it rates are published with it, so the moderator sees them too. */}
-            {aspectsLine(review) && (
+            {/* The aspects it rates are published with it, so the moderator sees them too. A ternary, not &&: with none rated
+                the line is '', and an empty string beside the Views crashes the phone apps ("Text strings must be rendered within a <Text>"). */}
+            {aspectsLine(review) ? (
               <Txt variant="footnote" color={color.labelSecondary}>
                 {aspectsLine(review)}
               </Txt>
-            )}
+            ) : null}
             <DecideButtons approveLabel="Publish" reasons={REVIEW_REASONS} onApprove={() => void decide(review, 'publish')} onReject={(reason) => void decide(review, 'reject', reason)} />
           </View>
         );

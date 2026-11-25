@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 281 · Moderating a review with no aspect ratings no longer crashes the phone apps
+
+*25 Nov 2026 · the commit "Moderating a review without aspect ratings no longer crashes the phone apps"*
+
+A sweep of the browser console across 37 screens found one real fault. In the moderation queue, a review that rates no aspects (equipment, cleanliness and so on) put an empty line, `''`, straight into the layout. The website only warns about that; the phone apps stop with "Text strings must be rendered within a <Text> component", so a moderator on a phone would hit the crash screen on the first such review.
+
+- components/AccountContent.tsx: the aspects line is shown with a ternary, so nothing is rendered when it's empty.
+- **scripts/jsx-empty-text.cjs**, new: finds every `{a && <X/>}` whose `a` is a string or number (so `''` or `0` would be rendered). It finds this one in the old code and none now. Run it with `node scripts/jsx-empty-text.cjs`.
+- The sweep's only other message is the map's own style (OpenFreeMap) reading a missing number in its data on Explore: harmless, and not GymGO's code.
+- Checked: the console sweep over 37 screens (Home to Moderation and Welcome back), Moderation clean after the fix; app 682 tests and a typecheck.
+
 ## Update 280 · A friend's deleted workout no longer shows the crash screen
 
-*25 Nov 2026 · the commit "A friend's workout that's gone shows its message, not the crash screen"*
+*25 Nov 2026 · `1f56a77`*
 
 The hooks check (HANDOFF, 20 Nov) found one hook placed after an early return, in a friend's workout page (app/feed/[id].tsx): the "Save to my workouts" state was declared below the return for a workout that's gone. So opening a workout that was deleted, hidden or no longer shared (an old link, or a notification) showed the crash screen ("Rendered fewer hooks than expected") in place of "This workout isn’t shared with you".
 

@@ -118,6 +118,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Empty text crash check** (25 Nov, Update 281). `node
+  scripts/jsx-empty-text.cjs` lists any `{a && <X/>}` whose `a` is a string
+  or number: '' or 0 would be rendered and the phone apps crash. Use
+  `a ? <X/> : null`. A console sweep of 37 screens is clean apart from
+  OpenFreeMap's own style on Explore.
 - **First load measured** (25 Nov): about 5.1 MB of script, 1.27 MB
   gzipped. An option if it matters later: load @gymgo/usa-data and
   @gymgo/eu-data (118 KB gzipped) only for those countries; mind lib/query.ts

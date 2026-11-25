@@ -419,6 +419,9 @@ function migrate(db: Db): void {
   if (!userColumns.some((column) => column.name === 'terms_accepted_at')) db.exec('alter table users add column terms_accepted_at text');
   // Whether your friends see the workouts you log, in the feed (feed.ts); off until you turn it on (added 23 Nov 2026).
   if (!userColumns.some((column) => column.name === 'share_workouts')) db.exec('alter table users add column share_workouts integer not null default 0');
+  // The folder a saved workout is kept in, or none (added 25 Nov 2026).
+  const workoutColumns = db.prepare('pragma table_info(workouts)').all() as Array<{ name: string }>;
+  if (!workoutColumns.some((column) => column.name === 'folder')) db.exec('alter table workouts add column folder text');
   // A review's optional ratings for four aspects, 1 to 5 or none (added 18 Nov 2026).
   const reviewColumns = db.prepare('pragma table_info(reviews)').all() as Array<{ name: string }>;
   for (const aspect of ['equipment', 'cleanliness', 'atmosphere', 'value']) {

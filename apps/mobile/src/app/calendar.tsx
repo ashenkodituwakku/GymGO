@@ -3,7 +3,8 @@
  * going back to your first workout (lib/calendar.ts, components/MonthGrid).
  * Above them, your weeks in a row, this month and this year. Tap a day you
  * trained to see its workouts, each opening in full; tap a month's name for
- * its monthly report. Free.
+ * its monthly report. Year shows a whole year at once, twelve small months
+ * stepped back to your first year, with its workouts, days and weeks. Free.
  */
 
 import { useRouter } from 'expo-router';
@@ -20,9 +21,9 @@ import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { ListSkeleton } from '@/components/Skeleton';
-import { PrimaryButton, Txt } from '@/components/ui';
+import { PrimaryButton, Segmented, Txt } from '@/components/ui';
 import { useApp } from '@/lib/app-state';
-import { calendarMonths, dayWords, yearSoFar, type CalendarDay } from '@/lib/calendar';
+import { calendarMonths, calendarYear, dayWords, yearSoFar, yearsWithTraining, type CalendarDay, type CalendarMonth } from '@/lib/calendar';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { clockText } from '@/lib/sessionEdit';
 import { haptic } from '@/lib/haptics';
@@ -44,6 +45,12 @@ export default function CalendarScreen() {
   const log = useTrainingLog(account.token);
   const [shown, setShown] = useState(STEP);
   const [picked, setPicked] = useState<CalendarDay | null>(null);
+  const [view, setView] = useState<'month' | 'year'>('month');
+  const [shownYear, setShownYear] = useState(() => new Date().getFullYear());
+  // Which way the year last stepped, so the new one slides in from that side.
+  const [forward, setForward] = useState<boolean | null>(null);
+  const span = useMemo(() => yearsWithTraining(log.sessions), [log.sessions]);
+  const yearView = useMemo(() => calendarYear(shownYear, log.sessions), [shownYear, log.sessions]);
   const { months, more } = useMemo(() => calendarMonths(log.sessions, new Date(), shown), [log.sessions, shown]);
   const year = useMemo(() => yearSoFar(log.sessions), [log.sessions]);
   const streak = useMemo(() => weekStreak(log.sessions), [log.sessions]);
@@ -91,11 +98,77 @@ export default function CalendarScreen() {
       </Txt>
 
       {!none && (
+        <Segmented
+          options={[
+            { value: 'month', label: 'Month' },
+            { value: 'year', label: 'Year' },
+          ]}
+          value={view}
+          onChange={(next: 'month' | 'year') => {
+            haptic.select();
+            setView(next);
+          }}
+        />
+      )}
+
+      {!none && view === 'month' && (
         <View style={styles.figures}>
           <Figure id="calendar.streak" icon="flame" value={streak} label={streak === 1 ? 'week in a row' : 'weeks in a row'} />
           <Figure id="calendar.month" icon="calendar" value={thisMonth.workouts} label="this month" />
           <Figure id="calendar.year" icon="chart" value={year.workouts} label={`in ${year.year}`} />
         </View>
+      )}
+
+      {!none && view === 'year' && (
+        <>
+          <View style={styles.yearBar}>
+            <Pressable
+              disabled={shownYear <= span.first}
+              onPress={() => {
+                haptic.select();
+                setForward(false);
+                setShownYear((value) => value - 1);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Earlier year"
+              accessibilityState={{ disabled: shownYear <= span.first }}
+              hitSlop={8}
+              style={({ pressed }) => [styles.yearStep, shownYear <= span.first && styles.off, pressed && { opacity: 0.6 }]}
+            >
+              <View style={styles.flip}>
+                <Icon name="chevron" size={14} color={color.brand} />
+              </View>
+            </Pressable>
+            <Txt variant="title2" accessibilityRole="header" style={[styles.flex, styles.center, styles.tabular]}>
+              {String(shownYear)}
+            </Txt>
+            <Pressable
+              disabled={shownYear >= span.last}
+              onPress={() => {
+                haptic.select();
+                setForward(true);
+                setShownYear((value) => value + 1);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Later year"
+              accessibilityState={{ disabled: shownYear >= span.last }}
+              hitSlop={8}
+              style={({ pressed }) => [styles.yearStep, shownYear >= span.last && styles.off, pressed && { opacity: 0.6 }]}
+            >
+              <Icon name="chevron" size={14} color={color.brand} />
+            </Pressable>
+          </View>
+          <View style={styles.figures}>
+            <Figure id="calendar.y.workouts" icon="workout" value={yearView.workouts} label={yearView.workouts === 1 ? 'workout' : 'workouts'} />
+            <Figure id="calendar.y.days" icon="calendar" value={yearView.days} label={yearView.days === 1 ? 'day trained' : 'days trained'} />
+            <Figure id="calendar.y.weeks" icon="flame" value={yearView.weeks} label={yearView.weeks === 1 ? 'week trained' : 'weeks trained'} />
+          </View>
+          <Animated.View key={shownYear} entering={forward === null ? undefined : FADE_IN} style={styles.yearGrid}>
+            {yearView.months.map((month) => (
+              <MiniMonth key={month.key} month={month} columns={width >= 640 ? 4 : width >= 340 ? 3 : 2} onOpen={() => router.push({ pathname: '/month', params: { m: month.key } })} />
+            ))}
+          </Animated.View>
+        </>
       )}
 
       {log.error && (
@@ -104,7 +177,7 @@ export default function CalendarScreen() {
         </Txt>
       )}
 
-      {months.map((month, index) => {
+      {(none || view === 'month') && months.map((month, index) => {
         const open = picked && month.weeks.some((week) => week.some((day) => day.inMonth && day.key === picked.key)) ? picked : null;
         const summary = month.workouts === 0 ? 'No workouts' : `${month.workouts} ${month.workouts === 1 ? 'workout' : 'workouts'} · ${month.days} ${month.days === 1 ? 'day' : 'days'}`;
         return (
@@ -147,7 +220,7 @@ export default function CalendarScreen() {
         );
       })}
 
-      {more && (
+      {more && view === 'month' && (
         <View style={styles.button}>
           <PrimaryButton
             label="Show earlier months"
@@ -172,6 +245,67 @@ function Figure({ id, icon, value, label }: { id: string; icon: IconName; value:
         {label}
       </Txt>
     </View>
+  );
+}
+
+/**
+ * A month, small, for the year view: its days as squares, filled for the
+ * days you trained. Opens the monthly report when it had a workout.
+ */
+function MiniMonth({ month, columns, onOpen }: { month: CalendarMonth; columns: number; onOpen: () => void }) {
+  const has = month.workouts > 0;
+  const words = `${month.label}, ${has ? `${month.workouts} ${month.workouts === 1 ? 'workout' : 'workouts'} on ${month.days} ${month.days === 1 ? 'day' : 'days'}. Monthly report` : 'no workouts'}`;
+  return (
+    <Pressable
+      disabled={!has}
+      onPress={() => {
+        haptic.select();
+        onOpen();
+      }}
+      accessibilityRole={has ? 'link' : 'text'}
+      accessibilityLabel={words}
+      style={({ pressed }) => [styles.mini, { width: `${100 / columns}%` }, pressed && { opacity: 0.7 }]}
+    >
+      <View style={styles.miniCard}>
+        <View style={styles.miniHead}>
+          <Txt variant="subhead" style={[face('semibold'), styles.flex]}>
+            {month.label.slice(0, 3)}
+          </Txt>
+          {has && (
+            <Txt variant="caption" color={color.brand} style={[face('semibold'), styles.tabular]}>
+              {month.workouts}
+            </Txt>
+          )}
+        </View>
+        <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+          {month.weeks.map((week) => (
+            <View key={week[0]!.key} style={styles.miniRow}>
+              {week.map((day) => (
+                <View key={day.key} style={styles.miniCell}>
+                  {day.inMonth && (
+                    <View
+                      style={[
+                        styles.miniDay,
+                        day.sessions.length > 0 ? { backgroundColor: color.brandFill } : day.future ? styles.miniFuture : { backgroundColor: color.fill },
+                        day.today && styles.miniToday,
+                      ]}
+                    />
+                  )}
+                </View>
+              ))}
+            </View>
+          ))}
+          {/* Every month six rows tall, so the year's cards line up. */}
+          {Array.from({ length: 6 - month.weeks.length }, (_, index) => (
+            <View key={`pad-${index}`} style={styles.miniRow}>
+              {Array.from({ length: 7 }, (_, cell) => (
+                <View key={cell} style={styles.miniCell} />
+              ))}
+            </View>
+          ))}
+        </View>
+      </View>
+    </Pressable>
   );
 }
 
@@ -229,5 +363,18 @@ const styles = themed(() =>
     dayList: { gap: space[2], paddingTop: space[3], borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
     session: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2] },
     empty: { gap: space[3], alignItems: 'stretch', paddingTop: space[2] },
+    yearBar: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    yearStep: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: color.plate, ...shadow.plate },
+    off: { opacity: 0.35 },
+    flip: { transform: [{ rotate: '180deg' }] },
+    yearGrid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -space[1] },
+    mini: { padding: space[1] },
+    miniCard: { gap: space[1], padding: space[2], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
+    miniHead: { flexDirection: 'row', alignItems: 'baseline', gap: space[1], paddingHorizontal: 2 },
+    miniRow: { flexDirection: 'row' },
+    miniCell: { flex: 1, aspectRatio: 1, padding: 1.5 },
+    miniDay: { flex: 1, borderRadius: 3 },
+    miniFuture: { borderWidth: StyleSheet.hairlineWidth, borderColor: color.separator },
+    miniToday: { borderWidth: 1.5, borderColor: color.brand },
   }),
 );

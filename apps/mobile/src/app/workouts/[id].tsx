@@ -1,7 +1,7 @@
 /** One saved workout, as it was when saved. */
 
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
 import { PlanSummary } from '@/components/PlanSummary';
@@ -39,13 +39,16 @@ export default function SavedWorkoutScreen() {
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
 
-  useEffect(() => {
-    if (!token) return;
-    api
-      .workouts(token)
-      .then((result) => setSaved(result.workouts.find((item) => item.id === id) ?? 'missing'))
-      .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t reach the GymGO server to load this workout.')));
-  }, [token, id]);
+  // Loaded each time the page shows, so a change made from here (its folder, its plan) is there on return.
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      api
+        .workouts(token)
+        .then((result) => setSaved(result.workouts.find((item) => item.id === id) ?? 'missing'))
+        .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t reach the GymGO server to load this workout.')));
+    }, [token, id]),
+  );
 
   if (saved === 'missing' || !token) {
     return (
@@ -146,6 +149,13 @@ export default function SavedWorkoutScreen() {
             icon="settings"
             tone="quiet"
             onPress={() => (billing.isPro ? router.push({ pathname: '/workout-edit', params: { id: saved.id } }) : openPro('workouts'))}
+          />
+          {/* Tidying, so on Free too (app/workout-folder.tsx). */}
+          <PrimaryButton
+            label={saved.folder ? `In ${saved.folder}` : 'Move to folder'}
+            icon="folder"
+            tone="quiet"
+            onPress={() => router.push({ pathname: '/workout-folder', params: { id: saved.id } })}
           />
           <PrimaryButton
             label="Share"

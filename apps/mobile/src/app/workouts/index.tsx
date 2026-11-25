@@ -1,10 +1,12 @@
 /**
  * My workouts: the plans you've saved to your account (a Pro feature). They
- * stay here if Pro ends; only saving new ones stops.
+ * stay here if Pro ends; only saving new ones stops. Sorted into folders
+ * of your own (lib/workoutFolders.ts, app/workout-folder.tsx), each one
+ * folding away; moving and renaming are tidying, so they work on Free too.
  */
 
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
@@ -23,6 +25,7 @@ import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWork
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
+import { groupByFolder } from '@/lib/workoutFolders';
 import { PageScroll } from '@/components/PageScroll';
 import { LIMITED } from '@/lib/limited';
 
@@ -36,6 +39,8 @@ export default function MyWorkouts() {
   const router = useRouter();
   const [workouts, setWorkouts] = useState<SavedWorkout[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  // Folders folded away on this visit.
+  const [folded, setFolded] = useState<ReadonlySet<string>>(new Set());
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
@@ -70,6 +75,58 @@ export default function MyWorkouts() {
     haptic.success();
     startSavedWorkout(workout, unitFor(prefs.country));
     router.push('/train');
+  };
+
+  const groups = workouts ? groupByFolder(workouts) : [];
+  const row = (workout: SavedWorkout, index: number): ReactNode => {
+              const title = libraryTitle(workout.name, workout.plan.gymName);
+              return (
+                <View key={workout.id} style={[styles.row, index > 0 && styles.rowLine]}>
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/workouts/[id]', params: { id: workout.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${title}, ${details.get(workout.id) ?? ''}`}
+                    style={({ pressed }) => [styles.open, pressed && styles.pressed]}
+                  >
+                    <ExerciseTile exerciseId={leadExercise(workout.plan.items.map((item) => item.exerciseId))} size={46} />
+                    <View style={styles.flex}>
+                      {/* Up to three lines: beside the Start button, wider text (WCAG 1.4.12) needed more than two. */}
+                      <Txt variant="headline" numberOfLines={3}>
+                        {title}
+                      </Txt>
+                      <Txt variant="footnote" color={color.labelSecondary} numberOfLines={3}>
+                        {details.get(workout.id)}
+                      </Txt>
+                    </View>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/workout-folder', params: { id: workout.id } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={workout.folder ? `Move ${title} out of ${workout.folder} or to another folder` : `Move ${title} to a folder`}
+                    hitSlop={6}
+                    style={({ pressed }) => [styles.folderButton, pressed && styles.pressed]}
+                  >
+                    <Icon name="folder" size={15} color={color.labelSecondary} />
+                  </Pressable>
+                  {!active && (
+                    <Pressable
+                      onPress={() => start(workout)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Start ${title}`}
+                      hitSlop={6}
+                      style={({ pressed }) => [styles.startPill, narrow && styles.startRound, pressed && styles.pressed]}
+                    >
+                      <Icon name="play" size={13} color={color.brandOnTint} />
+                      {/* On a narrow phone the button is its ▷ alone, as on Workout, so the name has the room. */}
+                      {!narrow && (
+                        <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
+                          Start
+                        </Txt>
+                      )}
+                    </Pressable>
+                  )}
+                </View>
+              );
   };
 
   return (
@@ -119,51 +176,64 @@ export default function MyWorkouts() {
       )}
       {workouts !== null && workouts.length > 0 && (
         <>
-          <View style={styles.list}>
-            {workouts.map((workout, index) => {
-              const title = libraryTitle(workout.name, workout.plan.gymName);
-              return (
-                <View key={workout.id} style={[styles.row, index > 0 && styles.rowLine]}>
-                  <Pressable
-                    onPress={() => router.push({ pathname: '/workouts/[id]', params: { id: workout.id } })}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${title}, ${details.get(workout.id) ?? ''}`}
-                    style={({ pressed }) => [styles.open, pressed && styles.pressed]}
-                  >
-                    <ExerciseTile exerciseId={leadExercise(workout.plan.items.map((item) => item.exerciseId))} size={46} />
-                    <View style={styles.flex}>
-                      {/* Up to three lines: beside the Start button, wider text (WCAG 1.4.12) needed more than two. */}
-                      <Txt variant="headline" numberOfLines={3}>
-                        {title}
-                      </Txt>
-                      <Txt variant="footnote" color={color.labelSecondary} numberOfLines={3}>
-                        {details.get(workout.id)}
-                      </Txt>
-                    </View>
-                  </Pressable>
-                  {!active && (
+          {groups.map((group) => {
+            const open = group.folder === null || !folded.has(group.folder);
+            const count = group.workouts.length;
+            return (
+              <View key={group.folder ?? '-'} style={styles.section}>
+                {group.folder !== null ? (
+                  <View style={styles.folderHead}>
                     <Pressable
-                      onPress={() => start(workout)}
+                      onPress={() => {
+                        haptic.select();
+                        setFolded((now) => {
+                          const next = new Set(now);
+                          if (next.has(group.folder!)) next.delete(group.folder!);
+                          else next.add(group.folder!);
+                          return next;
+                        });
+                      }}
                       accessibilityRole="button"
-                      accessibilityLabel={`Start ${title}`}
-                      hitSlop={6}
-                      style={({ pressed }) => [styles.startPill, narrow && styles.startRound, pressed && styles.pressed]}
+                      accessibilityLabel={`${group.folder}, ${count} ${count === 1 ? 'workout' : 'workouts'}`}
+                      aria-expanded={open}
+                      style={({ pressed }) => [styles.folderToggle, pressed && styles.pressed]}
                     >
-                      <Icon name="play" size={13} color={color.brandOnTint} />
-                      {/* On a narrow phone the button is its ▷ alone, as on Workout, so the name has the room. */}
-                      {!narrow && (
-                        <Txt variant="subhead" color={color.brandOnTint} style={face('semibold')}>
-                          Start
-                        </Txt>
-                      )}
+                      <Icon name="folder" size={16} color={color.brand} />
+                      <Txt variant="headline" numberOfLines={1} style={styles.flexShrink}>
+                        {group.folder}
+                      </Txt>
+                      <Txt variant="footnote" color={color.labelSecondary}>
+                        {count}
+                      </Txt>
+                      <View style={open ? styles.chevronOpen : styles.chevronShut}>
+                        <Icon name="chevron" size={11} color={color.labelTertiary} />
+                      </View>
                     </Pressable>
-                  )}
-                </View>
-              );
-            })}
-          </View>
+                    <Pressable
+                      onPress={() => router.push({ pathname: '/workout-folder', params: { rename: group.folder! } })}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Rename ${group.folder}`}
+                      hitSlop={6}
+                      style={({ pressed }) => [styles.folderAction, pressed && styles.pressed]}
+                    >
+                      <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                        Rename
+                      </Txt>
+                    </Pressable>
+                  </View>
+                ) : (
+                  groups.length > 1 && (
+                    <Txt variant="footnote" color={color.labelSecondary} style={[styles.looseHead, face('semibold')]} accessibilityRole="header">
+                      Not in a folder
+                    </Txt>
+                  )
+                )}
+                {open && <View style={styles.list}>{group.workouts.map((workout, index) => row(workout, index))}</View>}
+              </View>
+            );
+          })}
           <Txt variant="footnote" color={color.labelSecondary} style={styles.footer}>
-            Saved to your account and available on all your devices. Tap a workout to view, edit, share or delete it.
+            Saved to your account and available on all your devices. Tap a workout to view, edit, share or delete it, or the folder to sort it.
           </Txt>
           {billing.isPro && (
             <Group>
@@ -196,4 +266,13 @@ const styles = themed(() => StyleSheet.create({
   startRound: { width: 36, height: 36, paddingHorizontal: 0, paddingVertical: 0, justifyContent: 'center' },
   footer: { paddingHorizontal: space[4] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
+  flexShrink: { flexShrink: 1, minWidth: 0 },
+  section: { gap: space[2] },
+  folderHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], paddingHorizontal: space[1] },
+  folderToggle: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space[2], minHeight: 44, paddingHorizontal: space[3], borderRadius: radius.md },
+  folderAction: { minHeight: 44, justifyContent: 'center', paddingHorizontal: space[3], borderRadius: radius.md },
+  looseHead: { paddingHorizontal: space[4], paddingTop: space[2] },
+  chevronOpen: { transform: [{ rotate: '90deg' }] },
+  chevronShut: { transform: [{ rotate: '0deg' }] },
+  folderButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
 }));

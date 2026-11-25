@@ -563,6 +563,8 @@ export interface SavedWorkout {
   name: string;
   gymId: string | null;
   createdAt: string;
+  /** The folder it's kept in, or none (older servers leave it out). */
+  folder?: string | null;
   plan: SavedWorkoutPlan;
 }
 
@@ -713,6 +715,11 @@ export const api = {
   /** Pro: a saved workout's name and plan, changed in place. */
   editWorkout: (token: string, id: string, body: { name: string; plan: Omit<SavedWorkoutPlan, 'version'> }) =>
     request<{ workout: SavedWorkout }>('PATCH', `/api/workouts/${encodeURIComponent(id)}`, { token, body }),
+  /** A saved workout into a folder, or out of one (null). Anyone may: it's tidying. */
+  moveWorkout: (token: string, id: string, folder: string | null) =>
+    request<{ workout: SavedWorkout }>('PATCH', `/api/workouts/${encodeURIComponent(id)}`, { token, body: { folder } }),
+  /** A folder renamed for all its workouts; to null, they leave it and the folder goes. */
+  renameWorkoutFolder: (token: string, from: string, to: string | null) => request<{ moved: number }>('PATCH', '/api/workouts/folders', { token, body: { from, to } }),
 
   /** Exercises and splits of your own (making or changing them is Pro). */
   /** MET Norway's forecast for the middle of your own map square: the block's south-west corner, as the gym lookup sends it (lib/weather.ts). */

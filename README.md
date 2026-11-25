@@ -578,8 +578,9 @@ month you trained in, and ‹ › step through the months with a workout.
 month, Monday first, back to your first workout. Days you trained are
 filled in (a dot for each workout when there were two or more), with your
 weeks in a row, this month and this year above. Tap a day for its workouts,
-or a month's name for its monthly report. A workout counts on the day it
-started. **Edit workout** can move a workout to another day and start time
+or a month's name for its monthly report. **Year** shows the whole year as
+twelve small months, with its workouts, days and weeks trained, stepping
+back to your first year. A workout counts on the day it started. **Edit workout** can move a workout to another day and start time
 (picked on a small calendar, typed as 6:30 pm or 18:30, never in the
 future), so one logged late goes on the day it was; the summary after you
 finish links to it.
@@ -1069,7 +1070,10 @@ your account. A plan that's already there shows as Saved, so you don't get
 a second copy. Each saved workout has a **Start** button in the list, and
 the Workout screen, with nothing in progress, lists your latest ones to
 start in one tap. Saved workouts stay, and can still be started, if Pro
-ends.
+ends. Sort them into **folders** of your own (the folder button beside a
+workout, or Move to folder on its page): folders are listed A to Z, fold
+away, and can be renamed or removed (the workouts stay). Moving and
+renaming work on Free too, since they're tidying.
 
 **Make your own** (the builder, or My workouts): a workout from scratch.
 Name it, add exercises with the picker (GymGO's and your own), then set

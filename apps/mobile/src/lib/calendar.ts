@@ -143,3 +143,34 @@ export function yearSoFar(sessions: readonly TrainingSession[], now: Date = new 
   const mine = sessions.filter((session) => new Date(session.startedAt).getFullYear() === year);
   return { year, workouts: mine.length, days: new Set(mine.map((session) => dayKey(new Date(session.startedAt)))).size };
 }
+
+export interface CalendarYear {
+  year: number;
+  /** January to December. */
+  months: CalendarMonth[];
+  workouts: number;
+  days: number;
+  /** Weeks (Monday to Sunday) with at least one workout that started in this year. */
+  weeks: number;
+}
+
+/** A year as twelve month grids, with its totals. */
+export function calendarYear(year: number, sessions: readonly TrainingSession[], now: Date = new Date()): CalendarYear {
+  const byDay = sessionsByDay(sessions);
+  const months = Array.from({ length: 12 }, (_, month) => calendarMonth(year, month, byDay, now));
+  const mine = sessions.filter((session) => new Date(session.startedAt).getFullYear() === year);
+  const weeks = new Set(
+    mine.map((session) => {
+      const day = new Date(session.startedAt);
+      const monday = new Date(day.getFullYear(), day.getMonth(), day.getDate() - ((day.getDay() + 6) % 7));
+      return dayKey(monday);
+    }),
+  );
+  return { year, months, workouts: mine.length, days: months.reduce((sum, month) => sum + month.days, 0), weeks: weeks.size };
+}
+
+/** The years to step through: from your first workout's to this one. */
+export function yearsWithTraining(sessions: readonly TrainingSession[], now: Date = new Date()): { first: number; last: number } {
+  const first = sessions.reduce((low, session) => Math.min(low, new Date(session.startedAt).getFullYear()), now.getFullYear());
+  return { first, last: now.getFullYear() };
+}

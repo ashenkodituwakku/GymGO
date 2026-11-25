@@ -384,6 +384,19 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Workout folders, the calendar's year** (25 Nov, Update 290). Server:
+  `workouts.folder` (migrate() adds it), `cleanFolder` (1 to 40
+  characters, blank is none), GET/POST and the export carry it; PATCH
+  /api/workouts/:id with only `folder` skips the Pro check (tidying);
+  PATCH /api/workouts/folders { from, to } renames, to null empties it.
+  Tests in workoutFolders.test.ts (billing.test.ts is the other session's).
+  App: lib/workoutFolders.ts (`groupByFolder`, `folderNames`, `tidyFolder`,
+  `moveLine`; tested), app/workout-folder.tsx (`?id=` to move, `?rename=`
+  to rename or remove; MODAL in _layout), workouts/index.tsx groups and
+  folds, workouts/[id].tsx has Move to folder and reloads on focus. New
+  `folder` icon. Calendar: `view` month/year, lib/calendar.ts
+  `calendarYear` and `yearsWithTraining`; `MiniMonth` pads to six rows so
+  the cards line up.
 - **Calendar, a workout's day and start** (24 Nov, Update 275).
   lib/calendar.ts (`dayKey`, `dayFromKey`, `sessionsByDay` by startedAt in
   the device's time, `calendarMonth` Monday first, `calendarMonths` back

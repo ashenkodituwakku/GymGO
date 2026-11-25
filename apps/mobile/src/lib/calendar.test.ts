@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calendarMonth, calendarMonths, dayFromKey, dayKey, dayWords, sessionsByDay, shiftMonth, shortDay, yearSoFar } from './calendar';
+import { calendarMonth, calendarMonths, calendarYear, dayFromKey, dayKey, dayWords, sessionsByDay, shiftMonth, shortDay, yearSoFar, yearsWithTraining } from './calendar';
 import type { TrainingSession } from './training';
 
 const NOW = new Date(2026, 10, 25, 9, 0); // Wednesday 25 November 2026, 9 am
@@ -86,5 +86,27 @@ describe('days', () => {
   it('counts this year’s workouts and days', () => {
     const sessions = [session('a', new Date(2026, 0, 2, 9)), session('b', new Date(2026, 0, 2, 18)), session('c', new Date(2026, 5, 1, 9)), session('d', new Date(2025, 11, 31, 9))];
     expect(yearSoFar(sessions, NOW)).toEqual({ year: 2026, workouts: 3, days: 2 });
+  });
+});
+
+describe('calendarYear', () => {
+  it('lays out a year as twelve months, with its workouts, days and weeks', () => {
+    const sessions = [
+      session('a', new Date(2026, 0, 5, 9)), // Monday 5 January
+      session('b', new Date(2026, 0, 7, 9)), // the same week
+      session('c', new Date(2026, 0, 7, 18)), // the same day
+      session('d', new Date(2026, 10, 24, 7)),
+      session('e', new Date(2025, 11, 30, 9)), // last year
+    ];
+    const year = calendarYear(2026, sessions, NOW);
+    expect(year.months.map((m) => m.label.slice(0, 3))).toEqual(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']);
+    expect(year).toMatchObject({ year: 2026, workouts: 4, days: 3, weeks: 2 });
+    expect(year.months[0]!.workouts).toBe(3);
+    expect(year.months[11]!.weeks.flat().every((day) => !day.inMonth || day.future)).toBe(true);
+  });
+
+  it('steps from the first year you trained to this one', () => {
+    expect(yearsWithTraining([session('a', new Date(2024, 5, 1, 9)), session('b', new Date(2026, 1, 1, 9))], NOW)).toEqual({ first: 2024, last: 2026 });
+    expect(yearsWithTraining([], NOW)).toEqual({ first: 2026, last: 2026 });
   });
 });

@@ -217,7 +217,7 @@ export default function SessionEditScreen() {
               }}
               accessibilityRole="button"
               accessibilityLabel={`Day, ${dayWords(pickedDay)}. Change`}
-              accessibilityState={{ expanded: pickingDay }}
+              aria-expanded={pickingDay}
               style={({ pressed }) => [styles.dayButton, pickingDay && styles.dayButtonOpen, pressed && { opacity: 0.8 }]}
             >
               <Icon name="calendar" size={16} color={color.brand} />

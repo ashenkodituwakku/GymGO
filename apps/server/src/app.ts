@@ -82,7 +82,8 @@
  *   GET    /api/workouts                  your saved workouts
  *   POST   /api/workouts                  Pro: { name, gymId?, plan } -> saved
  *   DELETE /api/workouts/:id
- *   PATCH  /api/workouts/:id              Pro: { name, plan } -> the saved workout, changed
+ *   PATCH  /api/workouts/:id              Pro: { name, plan } -> the saved workout, changed; { folder } alone: anyone
+ *   PATCH  /api/workouts/folders          { from, to } -> renames a folder (to null: its workouts leave it)
  *   GET    /api/own-exercises             { exercises }: the exercises you made, archived ones too (for your history's names)
  *   POST   /api/own-exercises             Pro: { name, primary, secondary, kit, timed, cue, drawnAs } -> { exercise }
  *   PATCH  /api/own-exercises/:id         Pro: the same -> { exercise }
@@ -432,6 +433,19 @@ function planSteps(items: unknown): string {
       return [item.exerciseId, item.sets, item.reps, item.restSeconds, ...(typeof item.group === 'string' ? [item.group] : [])];
     }),
   );
+}
+
+/**
+ * A saved workout's folder: a name of 1 to 40 characters, its spaces
+ * tidied, or null for none (blank counts as none).
+ */
+export function cleanFolder(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== 'string') throw new HttpError(400, 'A folder is a name, or none.');
+  const name = value.trim().replace(/\s+/g, ' ');
+  if (name.length === 0) return null;
+  if (name.length > 40 || /[\u0000-\u001f\u007f]/.test(name)) throw new HttpError(400, 'Give the folder a name of up to 40 characters.');
+  return name;
 }
 
 /** A saved workout, checked field by field: only what the app needs to show it again. */
@@ -1230,10 +1244,10 @@ export function createApp(options: AppOptions) {
     if (path === '/api/workouts' && method === 'GET') {
       const { account } = requireAccount(req);
       const rows = db
-        .prepare('select id, name, gym_id, plan_json, created_at from workouts where user_id = ? order by created_at desc')
-        .all(account.id) as Array<{ id: string; name: string; gym_id: string | null; plan_json: string; created_at: string }>;
+        .prepare('select id, name, gym_id, plan_json, created_at, folder from workouts where user_id = ? order by created_at desc')
+        .all(account.id) as Array<{ id: string; name: string; gym_id: string | null; plan_json: string; created_at: string; folder: string | null }>;
       return send(res, 200, {
-        workouts: rows.map((row) => ({ id: row.id, name: row.name, gymId: row.gym_id, createdAt: row.created_at, plan: JSON.parse(row.plan_json) })),
+        workouts: rows.map((row) => ({ id: row.id, name: row.name, gymId: row.gym_id, createdAt: row.created_at, folder: row.folder, plan: JSON.parse(row.plan_json) })),
       });
     }
 
@@ -1245,31 +1259,34 @@ export function createApp(options: AppOptions) {
       if (name.length < 1 || name.length > 80) throw new HttpError(400, 'Give it a name of up to 80 characters.');
       const gymId = typeof body.gymId === 'string' && body.gymId.length <= 120 ? body.gymId : null;
       const plan = cleanWorkoutPlan(body.plan);
+      const folder = 'folder' in body ? cleanFolder(body.folder) : null;
       // The same plan for the same gym again (a second tap on Save, or a
       // retry after a dropped reply) is the workout already kept, not a copy.
-      const same = (db.prepare('select id, name, gym_id, plan_json, created_at from workouts where user_id = ? and gym_id is ?').all(account.id, gymId) as Array<{
+      const same = (db.prepare('select id, name, gym_id, plan_json, created_at, folder from workouts where user_id = ? and gym_id is ?').all(account.id, gymId) as Array<{
         id: string;
         name: string;
         gym_id: string | null;
         plan_json: string;
         created_at: string;
+        folder: string | null;
       }>).find((row) => planSteps((JSON.parse(row.plan_json) as { items?: unknown }).items) === planSteps(plan.items));
       if (same) {
-        return send(res, 200, { workout: { id: same.id, name: same.name, gymId: same.gym_id, createdAt: same.created_at, plan: JSON.parse(same.plan_json) } });
+        return send(res, 200, { workout: { id: same.id, name: same.name, gymId: same.gym_id, createdAt: same.created_at, folder: same.folder, plan: JSON.parse(same.plan_json) } });
       }
       const count = (db.prepare('select count(*) as n from workouts where user_id = ?').get(account.id) as { n: number }).n;
       if (count >= LIMITS.pro.savedWorkouts) throw new HttpError(409, `You’ve reached the limit of ${count} saved workouts. Delete one to save another.`);
       const id = randomUUID();
       const createdAt = now().toISOString();
-      db.prepare('insert into workouts (id, user_id, name, gym_id, plan_json, created_at) values (?, ?, ?, ?, ?, ?)').run(
+      db.prepare('insert into workouts (id, user_id, name, gym_id, plan_json, created_at, folder) values (?, ?, ?, ?, ?, ?, ?)').run(
         id,
         account.id,
         name,
         gymId,
         JSON.stringify(plan),
         createdAt,
+        folder,
       );
-      return send(res, 201, { workout: { id, name, gymId, createdAt, plan } });
+      return send(res, 201, { workout: { id, name, gymId, createdAt, folder, plan } });
     }
 
     if (method === 'DELETE' && parts[0] === 'api' && parts[1] === 'workouts' && parts.length === 3) {
@@ -1280,19 +1297,42 @@ export function createApp(options: AppOptions) {
       return send(res, 204);
     }
 
-    // A saved workout changed in place (Pro): its name and plan; its gym and the day it was saved stay.
+    // A folder renamed, for all its workouts at once; renamed to null, its
+    // workouts leave it (the folder is gone, the workouts stay). Tidying, so
+    // anyone may, as with deleting.
+    if (method === 'PATCH' && path === '/api/workouts/folders') {
+      const { account } = requireAccount(req);
+      const body = (await readJson(req)) as Record<string, unknown>;
+      const from = cleanFolder(body.from);
+      if (from === null) throw new HttpError(400, 'Say which folder to rename.');
+      const to = cleanFolder(body.to);
+      const moved = db.prepare('update workouts set folder = ? where user_id = ? and folder = ?').run(to, account.id, from);
+      if (moved.changes === 0) throw new HttpError(404, 'No folder with that name.');
+      return send(res, 200, { moved: Number(moved.changes) });
+    }
+
+    // A saved workout changed in place (Pro): its name and plan; its gym and the
+    // day it was saved stay. Its folder alone may be changed by anyone (tidying).
     if (method === 'PATCH' && parts[0] === 'api' && parts[1] === 'workouts' && parts.length === 3) {
       const { account } = requireAccount(req);
-      if (!billing.isPro(account.id)) throw new HttpError(403, 'Changing saved workouts is part of GymGO Pro.', 'pro_required');
       const id = decodeURIComponent(parts[2]!);
-      const row = db.prepare('select id, gym_id, created_at from workouts where id = ? and user_id = ?').get(id, account.id) as { id: string; gym_id: string | null; created_at: string } | undefined;
-      if (!row) throw new HttpError(404, 'No saved workout with that id.');
       const body = (await readJson(req)) as Record<string, unknown>;
+      const onlyFolder = 'folder' in body && !('name' in body) && !('plan' in body);
+      if (!onlyFolder && !billing.isPro(account.id)) throw new HttpError(403, 'Changing saved workouts is part of GymGO Pro.', 'pro_required');
+      const row = db.prepare('select id, name, gym_id, plan_json, created_at, folder from workouts where id = ? and user_id = ?').get(id, account.id) as
+        | { id: string; name: string; gym_id: string | null; plan_json: string; created_at: string; folder: string | null }
+        | undefined;
+      if (!row) throw new HttpError(404, 'No saved workout with that id.');
+      const folder = 'folder' in body ? cleanFolder(body.folder) : row.folder;
+      if (onlyFolder) {
+        db.prepare('update workouts set folder = ? where id = ?').run(folder, id);
+        return send(res, 200, { workout: { id, name: row.name, gymId: row.gym_id, createdAt: row.created_at, folder, plan: JSON.parse(row.plan_json) } });
+      }
       const name = typeof body.name === 'string' ? body.name.trim().replace(/\s+/g, ' ') : '';
       if (name.length < 1 || name.length > 80) throw new HttpError(400, 'Give it a name of up to 80 characters.');
       const plan = cleanWorkoutPlan(body.plan);
-      db.prepare('update workouts set name = ?, plan_json = ? where id = ?').run(name, JSON.stringify(plan), id);
-      return send(res, 200, { workout: { id, name, gymId: row.gym_id, createdAt: row.created_at, plan } });
+      db.prepare('update workouts set name = ?, plan_json = ?, folder = ? where id = ?').run(name, JSON.stringify(plan), folder, id);
+      return send(res, 200, { workout: { id, name, gymId: row.gym_id, createdAt: row.created_at, folder, plan } });
     }
 
     // --- Exercises and splits of your own (ownTraining.ts): making or changing them is Pro ---
@@ -1901,7 +1941,7 @@ export function createApp(options: AppOptions) {
         visitReports: rows(
           `select gym_id as gymId, outcome, visited_on as visitedOn, reported_at as reportedAt from access_reports where user_id = ? order by reported_at`,
         ),
-        workouts: rows('select id, name, gym_id as gymId, plan_json, created_at as createdAt from workouts where user_id = ? order by created_at').map(
+        workouts: rows('select id, name, gym_id as gymId, plan_json, created_at as createdAt, folder from workouts where user_id = ? order by created_at').map(
           ({ plan_json, ...workout }) => ({ ...workout, plan: JSON.parse(String(plan_json)) }),
         ),
         collection: rows('select entry_json from collection_gyms where user_id = ? order by gym_id').map(({ entry_json }) => JSON.parse(String(entry_json))),

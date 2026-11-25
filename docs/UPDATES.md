@@ -9,6 +9,32 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 290 · Folders for your saved workouts, and a year on the calendar
+
+*25 Nov 2026 · the commit "Folders for My workouts, and a year view on the calendar"*
+
+You asked for more Hevy features. Two more, in GymGO's own look:
+
+- **Folders in My workouts.** Sort your saved workouts into folders of your own, such as "Upper body" or "Week A".
+  - Tap the folder button beside a workout, or **Move to folder** on its page. Pick a folder, make a new one, or take it out of its folder.
+  - Folders are listed A to Z, each with how many workouts it holds. Tap a folder's name to fold it away. Workouts in no folder are listed last.
+  - **Rename** a folder for all its workouts at once, or **Remove folder**. Removing it keeps the workouts, just not in a folder.
+  - Moving and renaming work on Free too, as deleting does. They're tidying up what you've kept. Saving new workouts is still Pro.
+  - Folders are kept on your account, so they're the same on every device, and they're in Download my data.
+- **Year view on the calendar.** A **Month / Year** switch at the top of Calendar.
+  - Year shows the twelve months at once as small grids, with the days you trained filled in violet.
+  - Above them: that year's workouts, days trained and weeks trained.
+  - Step back a year at a time, as far as your first workout.
+  - Tap a month you trained in for its monthly report.
+- Polish:
+  - A saved workout's page loads again whenever you come back to it, so a change made from it shows straight away.
+  - The edit screen's Day button tells a screen reader whether its calendar is open.
+- Checked:
+  - domain 205, server 378 (3 new, for folders) and app 691 tests (6 new for folders and the year), typecheck, lint and the empty-text scan;
+  - in a browser: a workout moved into a new folder, a second into the same one, the folder renamed, folded, shown on the workout's page and removed, with no errors;
+  - in a browser: the year view at 390 light, 1280 dark and 320 (two columns there); November opens its monthly report.
+- Not checked: a real phone.
+
 ## Update 289 · The tests pass in every time zone, Melbourne included
 
 *25 Nov 2026 · the commit "The exercise chart test passes in every time zone"*

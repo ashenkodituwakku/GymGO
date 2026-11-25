@@ -417,8 +417,11 @@ your accent glows behind them.
   - **Clock** (everyone), from two faces showing a time in each: 12-hour or 24-hour, for opening hours, visit
     times, workout times and reminders ("19:00"; a late close reads
     "02:00 (next day)").
-  - **Layout** (everyone), chosen from two picture tiles: **Tab bar**, the default (the four tabs float at
-    the foot of the screen), or **Sidebar**: a menu down the left with the
+  - **Layout** (everyone), chosen from two picture tiles. Until you choose
+    it's automatic: the sidebar on the website from 960 points wide (a
+    computer), the tab bar on a phone, in a narrow window and in the phone
+    apps; **Use automatic** goes back to that. **Tab bar**: the four tabs
+    float at the foot of the screen. **Sidebar**: a menu down the left with the
     tabs, then Training (Workout, Progress, My workouts, Programme) and You
     (Collection, Friends, Appearance). From 960 points wide it stays open,
     hovering over the left of every page (Progress and the rest too, not

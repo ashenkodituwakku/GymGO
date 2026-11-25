@@ -9,9 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 283 · A broken address is a 400, not a server error
+
+*25 Nov 2026 · the commit "A broken %-escape in an API address is a 400, not a server error"*
+
+Probing every route that takes an id in its address found a second shared fault: an id with a broken %-escape (`/api/gyms/%E0%A4%A`) made the route's `decodeURIComponent` throw, so 22 routes (a gym, its reviews, photos, reports, owner, Google page, icons; a country pack; avatars and photos; the feed, head to head and a friend's cards) answered "Something went wrong on the server." (500).
+
+- apps/server/src/app.ts: before routing, any API address with a part that doesn't decode is refused with "That address isn’t valid." (400). The website's own files already handled this (web.ts).
+- The server test from Update 282 now also sends three broken addresses.
+- Checked: 600 requests with odd ids (broken and stray escapes, encoded dots and slashes, a 5,000-character id, a null byte, accents, an emoji, a quote) to every read and write route with an id; 732 with nonsense query values (empty, letters for numbers, NaN, huge numbers, 3,000 characters) to every read route: no server errors. Server 375 tests and a typecheck.
+
 ## Update 282 · The server answers a malformed request with a 400, not a server error
 
-*25 Nov 2026 · the commit "A bare null or plain value as a request body is a 400, not a server error"*
+*25 Nov 2026 · `9aa01bb`*
 
 Sending each create and update route odd bodies on a local server found one fault shared by 24 routes: a body of `null` (valid JSON) reached handlers that read fields straight off it, so reviews, photos, members' reports, friends, comments, moderation, workouts and more answered "Something went wrong on the server." (500) where a 400 belongs. A bare string did the same on editing a workout.
 

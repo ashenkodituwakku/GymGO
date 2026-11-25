@@ -118,6 +118,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Broken addresses** (25 Nov, Update 283). `route` refuses an /api/
+  address with a part that doesn't decode (400) before any handler, so
+  `decodeURIComponent(parts[n])` in a route can't throw.
 - **Request bodies** (25 Nov, Update 282). `readJson` (app.ts) now refuses
   a top-level null or plain value with a 400, so handlers can read fields
   off what it returns. Every route takes an object (or a list).

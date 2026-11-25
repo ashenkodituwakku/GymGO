@@ -189,7 +189,7 @@ describe('accounts', () => {
 });
 
 describe('request bodies', () => {
-  it('answers a bare null, string or number with a 400, not a server error', async () => {
+  it('answers a bare null, string or number, or a broken address, with a 400, not a server error', async () => {
     const { token } = await signUp();
     for (const [method, path] of [
       ['POST', '/api/gyms/dohertys-gym-city/reviews'],
@@ -203,6 +203,12 @@ describe('request bodies', () => {
         expect(response.status, `${method} ${path} ${raw}`).toBe(400);
         expect(((await response.json()) as { error: string }).error).toBe('The request body should be a JSON object.');
       }
+    }
+    // A broken %-escape in the address: a 400, where decoding the id used to throw.
+    for (const path of ['/api/gyms/%E0%A4%A', '/api/gyms/%E0%A4%A/reviews', '/api/feed/%ZZ']) {
+      const response = await fetch(`${base}${path}`, { headers: { authorization: `Bearer ${token}` } });
+      expect(response.status, path).toBe(400);
+      expect(((await response.json()) as { error: string }).error).toBe('That address isn’t valid.');
     }
     // Not JSON at all still says so.
     const broken = await fetch(`${base}/api/friends`, { method: 'POST', headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' }, body: '{nope' });

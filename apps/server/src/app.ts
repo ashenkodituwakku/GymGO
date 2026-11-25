@@ -381,6 +381,16 @@ export function isAllowedOrigin(origin: string, extra: string[] = []): boolean {
   return /^(10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/.test(host);
 }
 
+/** Whether a part of a path decodes (decodeURIComponent throws on a broken %-escape). */
+function decodes(part: string): boolean {
+  try {
+    decodeURIComponent(part);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function readJson(req: IncomingMessage, maxBytes = MAX_BODY_BYTES): Promise<unknown> {
   const chunks: Buffer[] = [];
   let size = 0;
@@ -902,6 +912,8 @@ export function createApp(options: AppOptions) {
     const path = url.pathname.replace(/\/+$/, '') || '/';
     const method = req.method ?? 'GET';
     const parts = path.split('/').filter(Boolean);
+    // Routes read their ids with decodeURIComponent, which throws on a broken %-escape ("%E0%A4%A"): a 500 where a 400 belongs.
+    if (path.startsWith('/api/') && !parts.every(decodes)) throw new HttpError(400, 'That address isn’t valid.');
 
     // GymGO needs an account: everything but the public routes (isPublicRoute) answers only a signed-in session.
     if (!isPublicRoute(method, path)) requireAccount(req);

@@ -118,6 +118,10 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **First load measured** (25 Nov): about 5.1 MB of script, 1.27 MB
+  gzipped. An option if it matters later: load @gymgo/usa-data and
+  @gymgo/eu-data (118 KB gzipped) only for those countries; mind lib/query.ts
+  BUNDLED_GYMS (limited website, offline copy) and lib/places.ts (city lists).
 - **Sidebar by default on the desktop website** (25 Nov, Update 279).
   ThemeChoice `nav: 'auto' | 'tabs' | 'sidebar'` (stored as `nav`; the old
   `layout` is read once: only 'sidebar' carries over). `layoutFor(choice,
@@ -303,6 +307,9 @@ mobile 550, domain 191 and web 39 tests, all passing.
   @typescript-eslint parser, run with `--no-config-lookup` over
   `src/**/*.{ts,tsx}`, is clean. `KEEP_FOCUS_ON_ENTER` (lib/focusNext.ts)
   keeps a one-line field focused after Enter on the web.
+  25 Nov: the check found a hook after an early return in app/feed/[id].tsx
+  (fixed, Update 280); run it with `--no-inline-config` too. Its
+  exhaustive-deps warnings (25) are deliberate.
 
 - **Measure leftovers are icons** (20 Nov). The screen measure's empty-text
   readings are Material Symbols glyphs (private-use code points), all

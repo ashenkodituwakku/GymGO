@@ -9,9 +9,24 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 285 · GymPal and the README catch up with the newest features
+
+*25 Nov 2026 · `94cf2b9` and `25b8f80`*
+
+- **GymPal's guide** (apps/server/src/gymPalGuide.ts), which its answers come from, said the tab bar was the default and had nothing on several new features. It now covers:
+  - the layout: automatic until chosen (the sidebar on the website on a computer), Tab bar or Sidebar;
+  - **Calendar**, and changing a workout's day and start time;
+  - **timed and distance sets** (a time typed as 45 or 1:30, or the stopwatch; carries by weight and metres; Longest yet and Furthest yet);
+  - the **Feed** and **Head to head**;
+  - **Welcome back** after signing in again;
+  - what counts as a **week in a row** (a week, Monday to Sunday, with a workout; this week counts once you've trained; Pro's streak freeze), as the app counts it.
+- **Starter questions** on Calendar ("How do I move a workout to another day?", "What counts as a week in a row?") and the Feed ("Who can see my workouts?", "What is Head to head?"), which offered Home's before.
+- **README and STATUS** describe the automatic layout.
+- Checked: server 375 and app tests (GymPal's suggestions 4), typecheck. Real GymPal answers still need an OpenRouter or Groq key on the server.
+
 ## Update 284 · The limited version never asks for an account; console sweeps as a free user and on the limited website
 
-*25 Nov 2026 · the commit "The limited version never asks for an account"*
+*25 Nov 2026 · `0efb96f`*
 
 - **Limited means no account needed, always.** The limited website has no server, so it can't sign anyone in. It relied on a second setting (`EXPO_PUBLIC_ACCOUNT=optional`, which netlify.toml and pages-build.sh both set) to skip the sign-in screen; a limited build without it opened on a sign-in form that couldn't work. lib/accountRule.ts now treats the limited version as account-optional by itself. The live site was set up correctly, so nothing changes there.
 - **Console sweeps**, no new faults: every main screen again as a free account at phone width (Pro locks and prompts), and the limited website at phone width, run without the account setting (19 screens, Home, Explore, a gym, Workout, Progress, Templates, Timer, Plates, 1-rep max, Collection, Pro, the Terms, Exercises, My workouts, Calendar, Machines). The only message anywhere is OpenFreeMap's own map style on Explore.

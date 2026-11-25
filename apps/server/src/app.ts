@@ -115,6 +115,9 @@
  *   POST   /api/invites/:id               { answer: 'yes' | 'no' } -> your answer to an invite
  *   DELETE /api/invites/:id               take back an invite you sent
  *   PUT    /api/me/leaderboard            { join } -> on or off the public leaderboard
+ *   GET    /api/challenges?tz=            this month's challenge: your target and count, and friends who joined (counts and targets only)
+ *   PUT    /api/challenges/:month         { target, timeZone } -> join it, or change your target
+ *   DELETE /api/challenges/:month         leave it
  *   GET    /api/leaderboard?scope=everyone|friends&city=&country=   ranked by gyms, then visits
  *   GET    /api/moderation/reviews        moderators: the queue
  *   POST   /api/moderation/reviews/:id    moderators: { decision, reason? }

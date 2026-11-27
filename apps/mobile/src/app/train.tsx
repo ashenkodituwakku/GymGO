@@ -92,6 +92,7 @@ import { SessionNote } from '@/components/SessionNote';
 import { ProgressRing } from '@/components/ProgressRing';
 import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
+import { changeLine, routineChange, routineFromSession } from '@/lib/routineUpdate';
 import { useTrainingLog } from '@/lib/useTraining';
 import { TYPICAL_KIT, exerciseName, knownKit, setMeasure, swapFor, type Exercise, type Kit, exerciseById } from '@/lib/workout';
 import { groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
@@ -1099,7 +1100,12 @@ const ExerciseLog = memo(function ExerciseLog({
                 </>
               )}
               {measure === 'time' && watch?.at === at ? (
-                <Stopwatch since={watch.since} label={`${name}, ${tags[at]!.spoken}: stopwatch running`} />
+                <Stopwatch
+                  since={watch.since}
+                  target={parseTime(timedFor(at, 'time')) ?? null}
+                  label={`${name}, ${tags[at]!.spoken}: stopwatch running`}
+                  onReached={() => say(`Target time reached: ${name}, ${tags[at]!.spoken}`)}
+                />
               ) : (
                 <Input
                   value={(measure === 'time' ? set.time : set.distance) ?? ''}
@@ -1353,16 +1359,41 @@ function Elapsed({ since }: { since: string }) {
   return <>{clockLabel((now - Date.parse(since)) / 1000)}</>;
 }
 
-/** A hold's stopwatch, in its time box's place: counting up, by itself, so the card doesn't redraw. */
-function Stopwatch({ since, label }: { since: number; label: string }) {
+/**
+ * A hold's stopwatch, in its time box's place, by itself so the card doesn't
+ * redraw. With a target time (the plan's, last time's or the set above's)
+ * it counts down to it, a soft beep at 3, 2 and 1 and a buzz at zero, then
+ * counts the time past it in green; stopping always puts in the whole time.
+ */
+function Stopwatch({ since, label, target = null, onReached }: { since: number; label: string; target?: number | null; onReached?: () => void }) {
   const now = useNow(true, 250);
   const seconds = Math.floor((now - since) / 1000);
+  const left = target && target > 0 ? target - seconds : null;
+  const over = left !== null && left <= 0;
+  // Each cue once: the last three seconds, then the target.
+  const cued = useRef<number | null>(null);
+  useEffect(() => {
+    if (left === null || cued.current === left) return;
+    if (left > 0 && left <= 3) {
+      cued.current = left;
+      playSound('timer-count');
+    } else if (left <= 0 && cued.current !== 0) {
+      cued.current = 0;
+      haptic.success();
+      playSound('timer-go');
+      onReached?.();
+    }
+  }, [left, onReached]);
+  const shown = left === null ? clockLabel(seconds) : over ? `+${clockLabel(-left)}` : clockLabel(left);
   // A timer, read with how long so far ("42 seconds"), not "zero forty-two"; it doesn't speak each second.
+  const spoken = left === null ? spokenClock(seconds) : over ? `target reached, ${spokenClock(seconds)} in all` : `${spokenClock(left)} to go`;
   return (
-    <View style={[styles.input, styles.watching]} accessible role="timer" accessibilityLabel={`${label}, ${spokenClock(seconds)}`}>
-      <Txt variant="body" color={color.brand} style={[face('semibold'), styles.watchText]} aria-hidden>
-        {clockLabel(seconds)}
+    <View style={[styles.input, styles.watching]} accessible role="timer" accessibilityLabel={`${label}, ${spoken}`}>
+      <Txt variant="body" color={over ? color.goodInk : color.brand} style={[face('semibold'), styles.watchText]} aria-hidden>
+        {shown}
       </Txt>
+      {/* How far to the target, as a line along the box's foot. */}
+      {target ? <View style={[styles.watchBar, { width: `${Math.min(100, (seconds / target) * 100)}%`, backgroundColor: over ? color.good : color.brand }]} /> : null}
     </View>
   );
 }
@@ -1479,8 +1510,42 @@ function Summary({
   onProgress: () => void;
 }) {
   const { session, records, compared } = result;
-  const { prefs, billing } = useApp();
+  const { prefs, billing, account } = useApp();
   const router = useRouter();
+  // Started from one of My workouts and done differently: an offer to change it to match (Pro, as changing it is).
+  const [routine, setRoutine] = useState<{ saved: SavedWorkout; line: string; state: 'idle' | 'saving' | 'done' } | null>(null);
+  useEffect(() => {
+    const token = account.token;
+    if (!session.workoutId || !token || !billing.isPro) return;
+    let live = true;
+    api
+      .workouts(token)
+      .then(({ workouts }) => {
+        const saved = workouts.find((item) => item.id === session.workoutId);
+        if (!live || !saved) return;
+        const change = routineChange(saved.plan, session);
+        if (change.changed && routineFromSession(saved.plan, session)) setRoutine({ saved, line: changeLine(change), state: 'idle' });
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [session, account.token, billing.isPro]);
+  const updateRoutine = async () => {
+    const token = account.token;
+    if (!routine || routine.state !== 'idle' || !token) return;
+    const plan = routineFromSession(routine.saved.plan, session);
+    if (!plan) return;
+    setRoutine({ ...routine, state: 'saving' });
+    try {
+      await api.editWorkout(token, routine.saved.id, { name: routine.saved.name, plan });
+      haptic.success();
+      setRoutine({ ...routine, state: 'done' });
+    } catch {
+      setRoutine({ ...routine, state: 'idle' });
+      setShared('Couldn’t update it. Try again.');
+    }
+  };
   const celebration = celebrationFor(prefs.celebration, billing.isPro);
   // Worked out as the summary opens: the log taking in this workout afterwards doesn't change what it said.
   const [weekNow] = useState(week);
@@ -1611,6 +1676,19 @@ function Summary({
             // The workout as a picture, as a training app shares it (app/share-workout.tsx).
             { id: 'picture', icon: 'photo' as IconName, title: 'Share as a picture', go: () => router.push({ pathname: '/share-workout', params: { id: session.id } }), busy: false },
             { id: 'workout', icon: 'share' as IconName, title: 'Share this workout', go: () => void share(), busy: false },
+            // Done differently from the saved workout it started from: change that to match (lib/routineUpdate.ts).
+            ...(routine
+              ? [
+                  {
+                    id: 'routine',
+                    icon: (routine.state === 'done' ? 'check' : 'refresh') as IconName,
+                    title: routine.state === 'done' ? `${libraryTitle(routine.saved.name, routine.saved.plan.gymName)} updated` : routine.state === 'saving' ? 'Updating…' : `Update ${libraryTitle(routine.saved.name, routine.saved.plan.gymName)} to match`,
+                    line: routine.state === 'done' ? undefined : routine.line,
+                    go: () => void updateRoutine(),
+                    busy: routine.state !== 'idle',
+                  },
+                ]
+              : []),
             // Logged late, or on the wrong day: its day, start and sets can change (app/session-edit.tsx).
             { id: 'edit', icon: 'note' as IconName, title: 'Edit workout', go: () => router.push({ pathname: '/session-edit', params: { id: session.id } }), busy: false },
             { id: 'progress', icon: 'chart' as IconName, title: 'See your progress', go: onProgress, busy: false },
@@ -1624,10 +1702,17 @@ function Summary({
               style={({ pressed }) => [styles.savedRow, index > 0 && styles.savedLine, pressed && { backgroundColor: color.fill }]}
             >
               <Icon name={row.icon} size={20} color={color.brand} />
-              <Txt variant="body" style={styles.flex}>
-                {row.title}
-              </Txt>
-              <Icon name="chevron" size={13} color={color.labelTertiary} />
+              <View style={styles.flex}>
+                <Txt variant="body">{row.title}</Txt>
+                {/* What would change, said before it changes. */}
+                {'line' in row && row.line ? (
+                  <Txt variant="footnote" color={color.labelSecondary}>
+                    {row.line}
+                  </Txt>
+                ) : null}
+              </View>
+              {/* Nothing to tap while it's working or once it's done. */}
+              {!row.busy && <Icon name="chevron" size={13} color={color.labelTertiary} />}
             </Pressable>
           ))}
         </View>
@@ -1777,8 +1862,9 @@ const styles = themed(() => StyleSheet.create({
   watchCol: { width: 32 },
   watchButton: { height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.brandTint },
   watchOn: { backgroundColor: color.brand },
-  watching: { justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: color.brand },
+  watching: { justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: color.brand, overflow: 'hidden' },
   watchText: { fontVariant: ['tabular-nums'] },
+  watchBar: { position: 'absolute', left: 0, bottom: 0, height: 3 },
   // Last time's set, right up against the tick: read across, it says "beat this".
   previous: { textAlign: 'right', fontVariant: ['tabular-nums'] },
   previousCell: { alignSelf: 'stretch', justifyContent: 'center', paddingRight: space[1] },

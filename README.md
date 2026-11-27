@@ -664,7 +664,9 @@ workouts go to your log.
 - **Holds, cardio and carries.** A plank, wall sit, hollow hold, rower or
   bike sprints is logged by **time**: type "1:30" (or "90"), or tap ▶ for
   a **stopwatch** on that set and tap again to stop, which puts its time in
-  and ticks it. A farmer's carry is logged by the weight carried and
+  and ticks it. With a target (last time's, the set above's or the plan's)
+  the stopwatch counts down to it, beeps at 3, 2 and 1, buzzes at zero and
+  then counts on in green. A farmer's carry is logged by the weight carried and
   **metres**. A blank one stands for last time's at the same place, else
   the set above, else the plan. They have their own records (**Longest
   yet**, **Furthest yet**) and chart, add nothing to the weight lifted, and
@@ -1083,6 +1085,9 @@ workout, or Move to folder on its page): folders are listed A to Z, fold
 away, and can be renamed or removed (the workouts stay). Moving and
 renaming work on Free too, since they're tidying. **Duplicate** (Pro) makes
 a copy ("Push (copy)") in the same folder to change into a variation.
+Finish a saved workout differently (an exercise added or skipped, more or
+fewer sets, a new order) and the summary offers **Update Push to match**
+(Pro), saying what would change first.
 
 **Make your own** (the builder, or My workouts): a workout from scratch.
 Name it, add exercises with the picker (GymGO's and your own), then set

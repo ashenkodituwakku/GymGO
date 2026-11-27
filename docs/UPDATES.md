@@ -9,6 +9,29 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 295 · A countdown for holds, and a saved workout that follows the day
+
+*27 Nov 2026 · the commit "Timed sets count down to their target; update a saved workout to match the day"*
+
+You asked for more Hevy features. Two more, in GymGO's own look:
+
+- **Holds count down.** The stopwatch on a timed set (a plank, a hollow hold, a wall sit) now counts down to the set's target: last time's at the same place, else the set above, else the plan's ("30–45 s" counts down from 0:30).
+  - A soft beep at 3, 2 and 1, then a buzz and a tone at zero.
+  - Past the target it counts on in green ("+0:12"), and a line along the foot of the box fills as you go.
+  - Stopping still puts in the whole time held, so a 0:30 target held for 0:42 logs 0:42.
+  - A screen reader hears "12 seconds to go", then "Target time reached" once.
+  - With no target (no plan, nothing last time) it counts up as before.
+- **Update a saved workout to match** (the finish summary, Pro). A workout started from My workouts that went differently offers **Update Push to match**, with what would change underneath ("1 exercise added, 1 not done, 1 with different sets", or "a new order").
+  - Exercises you did keep their reps, rest and kit from the plan; only their sets follow the day. Warm-ups don't count.
+  - An exercise you added takes its reps from what you did ("12", "8–10", "45 s") and 90 s rest.
+  - One you skipped comes out, which is why the summary says so first.
+  - A superset stays only where its exercises are still side by side.
+  - It's only offered when something changed, and only for workouts of 1 to 12 exercises (a saved workout's limit).
+- Checked:
+  - domain 205, server 379 and app 710 tests (5 new for updating a workout), typecheck, lint and the empty-text scan;
+  - in a browser at 390 light, 1280 dark and 320: a hollow hold with a 5 s target counting 0:04, then +0:01 in green with the line full, the announcement made once and 0:06 logged; a saved workout finished with two of three bench sets, a push-up added and the plank skipped, offering "Update Countdown check to match · 1 exercise added, 1 not done, 1 with different sets", and the saved workout changed to match after tapping it. The test workout and session were deleted afterwards.
+- Not checked: a real phone, so the beeps and buzz weren't heard or felt.
+
 ## Update 294 · Year in review, Duplicate, and reordering a past workout
 
 *27 Nov 2026 · the commit "Year in review, Duplicate a saved workout, reorder exercises when editing"*

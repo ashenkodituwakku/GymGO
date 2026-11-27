@@ -384,6 +384,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Hold countdown, Update routine** (27 Nov, Update 295). train.tsx's
+  `Stopwatch` takes `target` (parseTime of `timedFor(at, 'time')`) and
+  `onReached`: it counts down, `cued` ref plays 'timer-count' at 3/2/1 and
+  haptic.success + 'timer-go' once at zero, then shows "+m:ss" in goodInk;
+  `watchBar` is the progress line. lib/routineUpdate.ts (`routineChange`,
+  `routineFromSession`, `changeLine`; tested) pairs logged exercises to the
+  first unused plan item with the same id; kept items keep reps/rest/uses,
+  sets follow working sets; added ones get reps from the day and 90 s.
+  The summary loads the saved workout (session.workoutId, Pro) and adds
+  the "Update … to match" row, saved with api.editWorkout. Rows hide their
+  chevron while busy or done.
 - **Year in review, Duplicate, reorder** (27 Nov, Update 294).
   lib/yearReview.ts (`yearReview`, `yearShareText`; tested; reuses
   monthReport's now-exported `totalsOf` and `muscleSets`; a year is by

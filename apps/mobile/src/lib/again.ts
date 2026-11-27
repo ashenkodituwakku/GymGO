@@ -52,3 +52,16 @@ export function againPlan(session: TrainingSession): AgainPlan | null {
   if (items.length === 0) return null;
   return { name: session.name, workoutId: session.workoutId, gymId: session.gymId, items };
 }
+
+/**
+ * A name for a workout started empty, from the time it starts:
+ * "Morning workout" (5 am to before noon), "Afternoon workout" (to 5 pm),
+ * "Evening workout" (to 10 pm), else "Night workout". It can be renamed.
+ */
+export function emptyWorkoutName(at: Date = new Date()): string {
+  const hour = at.getHours();
+  if (hour >= 5 && hour < 12) return 'Morning workout';
+  if (hour >= 12 && hour < 17) return 'Afternoon workout';
+  if (hour >= 17 && hour < 22) return 'Evening workout';
+  return 'Night workout';
+}

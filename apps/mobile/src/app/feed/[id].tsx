@@ -165,13 +165,15 @@ export default function FeedWorkoutScreen() {
   const split = item ? muscleSplit(item.exercises) : [];
   // A friend's workout, to do yourself: the same exercises, sets and reps (theirs that they made themselves left out); your weights come from your own log.
   const plan = item && !item.you ? againPlan({ ...item, workoutId: null, gymId: null, exercises: item.exercises.filter((exercise) => !exercise.exerciseId.startsWith('mine-')) }) : null;
+  // Your own, to do again or keep (your own exercises stay in), at the gym it was at.
+  const again = item && item.you ? againPlan({ ...item, workoutId: null, gymId: item.gym?.id ?? null }) : null;
   const keep = async () => {
     if (!item || !token) return;
     if (!billing.isPro) {
       router.push({ pathname: '/pro', params: { reason: 'workouts' } });
       return;
     }
-    const saving = friendWorkoutPlan(item);
+    const saving = friendWorkoutPlan(item, { keepOwn: item.you });
     if (!saving) return;
     setKept('saving');
     try {
@@ -186,6 +188,23 @@ export default function FeedWorkoutScreen() {
       else setProblem(problemText(error));
     }
   };
+  const doAgain = () => {
+    if (!again || !item) return;
+    haptic.success();
+    startSession({ ...again, name: item.name, workoutId: null, gymId: item.gym?.id ?? null, gymName: item.gym?.name ?? null, unit: item.unit });
+    router.push('/train');
+  };
+  // Keeping it in My workouts (Pro), from a friend's or your own; once kept, into a folder.
+  const saveRow = (
+    <Row
+      icon={kept === 'saved' ? 'check' : 'save'}
+      tile={TILE.orange}
+      title={kept === 'saved' ? 'Saved to My workouts' : kept === 'saving' ? 'Saving…' : 'Save to my workouts'}
+      subtitle={kept === 'saved' ? (keptId ? 'Add it to a folder' : 'Start it any time from My workouts') : billing.isPro ? 'Keep it, to do again' : 'Keep it, to do again (Pro)'}
+      onPress={kept === 'idle' ? () => void keep() : kept === 'saved' && keptId ? () => router.push({ pathname: '/workout-folder', params: { id: keptId } }) : undefined}
+      chevron={kept === 'idle' || (kept === 'saved' && keptId !== null)}
+    />
+  );
   const doIt = () => {
     if (!plan || !item) return;
     haptic.success();
@@ -275,17 +294,16 @@ export default function FeedWorkoutScreen() {
           {!item.you && (
             <Group footer={active ? 'Finish the workout you’re doing first, then you can start this one.' : 'The same exercises, sets and reps. Your weights come from your own log.'}>
               {plan && !active && <Row icon="play" tile={TILE.green} title="Do this workout" subtitle={`${plan.items.length} exercise${plan.items.length === 1 ? '' : 's'}, as ${firstName(item.person)} did it`} onPress={doIt} />}
-              {plan && (
-                <Row
-                  icon={kept === 'saved' ? 'check' : 'save'}
-                  tile={TILE.orange}
-                  title={kept === 'saved' ? 'Saved to My workouts' : kept === 'saving' ? 'Saving…' : 'Save to my workouts'}
-                  subtitle={kept === 'saved' ? (keptId ? 'Add it to a folder' : 'Start it any time from My workouts') : billing.isPro ? 'Keep it, to do again' : 'Keep it, to do again (Pro)'}
-                  onPress={kept === 'idle' ? () => void keep() : kept === 'saved' && keptId ? () => router.push({ pathname: '/workout-folder', params: { id: keptId } }) : undefined}
-                  chevron={kept === 'idle' || (kept === 'saved' && keptId !== null)}
-                />
-              )}
+              {plan && saveRow}
               <Row icon="compare" tile={TILE.indigo} title={`Head to head with ${firstName(item.person)}`} subtitle="Your best lifts beside theirs" onPress={() => router.push({ pathname: '/friends/[id]', params: { id: item.person.id, name: item.person.displayName } })} />
+            </Group>
+          )}
+
+          {/* Your own: do it again, or keep it to do again. */}
+          {item.you && again && (
+            <Group footer={active ? 'Finish the workout you’re doing first, then you can start this one.' : 'The same exercises and sets. Each shows what you lifted last time.'}>
+              {!active && <Row icon="play" tile={TILE.green} title="Do it again" subtitle={`${again.items.length} exercise${again.items.length === 1 ? '' : 's'}, as you did them`} onPress={doAgain} />}
+              {saveRow}
             </Group>
           )}
 

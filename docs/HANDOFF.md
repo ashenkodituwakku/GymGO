@@ -384,6 +384,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Do it again, Empty workout, History records** (27 Nov, Update 297).
+  feed/[id].tsx: `again` (againPlan of your own item, gym kept) and
+  `doAgain`; the Save row is `saveRow`, shared with a friend's workout;
+  friendWorkoutPlan takes `{ keepOwn }`. progress/index.tsx: `recordCounts`
+  from insights' `recordsByWorkout` (only the days shown) into SessionRow's
+  `records` (trophy chip), and an Open link to feed/[id]. train.tsx
+  NoWorkout's "Empty workout" row starts a session with no items, named by
+  again.ts `emptyWorkoutName`; AddExercise takes `startOpen`.
 - **Exercise menu, Remove set, rename** (27 Nov, Update 296).
   lib/liveEdits.ts (`canMove`, `moveExercise` with blocks so a group moves
   as one, `removeExercise`, `replaceExercise`, `removeSet`; tested) and

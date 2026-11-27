@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { againPlan } from './again';
+import { againPlan, emptyWorkoutName } from './again';
 import type { LoggedExercise, TrainingSession } from './training';
 
 const session = (exercises: LoggedExercise[]): TrainingSession => ({
@@ -45,5 +45,17 @@ describe('againPlan', () => {
 
   it('has nothing to start from a workout with no sets', () => {
     expect(againPlan(session([{ exerciseId: 'bench-press', sets: [] }]))).toBeNull();
+  });
+});
+
+describe('a workout started empty', () => {
+  it('is named for the time of day', () => {
+    const at = (hour: number) => new Date(2026, 10, 27, hour, 30);
+    expect(emptyWorkoutName(at(6))).toBe('Morning workout');
+    expect(emptyWorkoutName(at(11))).toBe('Morning workout');
+    expect(emptyWorkoutName(at(12))).toBe('Afternoon workout');
+    expect(emptyWorkoutName(at(18))).toBe('Evening workout');
+    expect(emptyWorkoutName(at(23))).toBe('Night workout');
+    expect(emptyWorkoutName(at(3))).toBe('Night workout');
   });
 });

@@ -24,8 +24,8 @@ import { Icon } from './Icon';
 import { Pressable } from './motion';
 import { Input, PrimaryButton, Txt } from './ui';
 
-export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: (exercise: Exercise) => void }) {
-  const [open, setOpen] = useState(false);
+export function AddExercise({ inWorkout, onAdd, startOpen = false }: { inWorkout: string[]; onAdd: (exercise: Exercise) => void; startOpen?: boolean }) {
+  const [open, setOpen] = useState(startOpen);
   // Closing hands keyboard focus back to the button that opened it, rather than to the page.
   const button = useRef<ViewInstance>(null);
   const close = () => {

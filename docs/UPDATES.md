@@ -9,6 +9,23 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 297 · Do it again, an empty workout, and records in History
+
+*27 Nov 2026 · the commit "Do it again and Save on your own workouts, an empty workout, records in History"*
+
+You asked for more polish and Hevy features. Three more, in GymGO's own look:
+
+- **Do it again and Save on your own workout.** Your own workout's page (from Calendar, or Open in History) now has, above the exercises:
+  - **Do it again**: the same exercises and sets, at the gym it was at, started straight away. Each exercise shows what you lifted last time, as any workout does. Not offered while another workout is going.
+  - **Save to my workouts** (Pro): keeps it as one of My workouts, your own exercises included, then offers Add it to a folder.
+  - A friend's workout already had Do this workout and Save; they now share the same row.
+- **Records and Open in History** (Progress). A workout that broke records shows a trophy with how many, matching its page and its finish screen. Opening a workout's row now has **Open**, beside Edit and Delete, for its full page. Only the workouts on screen are worked out, so a long log stays quick.
+- **Empty workout** (the Workout screen, first under Start another way). It starts at once with nothing planned, named for the time of day ("Morning workout", "Afternoon workout", "Evening workout" or "Night workout"), with the exercise picker already open. Rename it with the pencil.
+- Checked:
+  - domain 205, server 379 and app 723 tests (2 new: the time-of-day names, and records counted per workout), typecheck, lint and the empty-text scan;
+  - in a browser at 390 light and 1280 dark (Melbourne time): Empty workout started as "Evening workout" with the search focused, and bench press added; History's trophy on the workout that set a record; Open going to its page with Do it again and Save to my workouts; Save making a copy (deleted afterwards); Do it again starting the same three exercises.
+- Not checked: a real phone.
+
 ## Update 296 · An exercise menu, Remove any set, and renaming a workout
 
 *27 Nov 2026 · the commit "An exercise menu in a workout in progress, Remove any set, rename a workout"*

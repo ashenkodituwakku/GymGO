@@ -134,6 +134,22 @@ export function bestWeekStreak(sessions: TrainingSession[]): number {
   return best;
 }
 
+/**
+ * Records each of the wanted workouts broke, against everything logged
+ * before it (as its finish screen counted them). Only the workouts asked
+ * for are worked out, so a long log's history list stays quick.
+ */
+export function recordsByWorkout(sessions: TrainingSession[], wanted: ReadonlySet<string>): Map<string, number> {
+  const ordered = [...sessions].sort((a, b) => (a.finishedAt < b.finishedAt ? -1 : a.finishedAt > b.finishedAt ? 1 : 0));
+  const counts = new Map<string, number>();
+  ordered.forEach((session, index) => {
+    if (!wanted.has(session.id)) return;
+    const count = index === 0 ? 0 : recordsBroken(session, ordered.slice(0, index)).length;
+    if (count > 0) counts.set(session.id, count);
+  });
+  return counts;
+}
+
 // --- Milestones --------------------------------------------------------------------
 
 /** Records you've broken over the whole log, counted the way the finish screen counts them. */

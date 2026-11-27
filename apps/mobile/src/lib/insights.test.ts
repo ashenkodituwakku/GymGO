@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsEver, sessionsOnDay, trainingCalendar, weekAfter, weekRange, weekRecap, workoutShareText } from './insights';
+import { bestWeekStreak, goalStreak, logToCsv, milestones, muscleBalance, recordsByWorkout, recordsEver, sessionsOnDay, trainingCalendar, weekAfter, weekRange, weekRecap, workoutShareText } from './insights';
 import type { Collection, CollectedGym } from '@gymgo/domain';
 import type { LoggedExercise, TrainingSession } from './training';
 
@@ -67,6 +67,16 @@ describe('milestones', () => {
     const squat = (weight: number): LoggedExercise[] => [{ exerciseId: 'back-squat', sets: [{ weight, reps: 5 }] }];
     const log = [session(at(4, 1), squat(60)), session(at(4, 3), squat(70)), session(at(4, 5), squat(65)), session(at(4, 7), squat(75))];
     expect(recordsEver(log)).toBe(2);
+  });
+
+  it('counts the records each wanted workout broke, and only those', () => {
+    const squat = (weight: number): LoggedExercise[] => [{ exerciseId: 'back-squat', sets: [{ weight, reps: 5 }] }];
+    const log = [session(at(4, 1), squat(60)), session(at(4, 3), squat(70)), session(at(4, 5), squat(65)), session(at(4, 7), squat(75))];
+    const counts = recordsByWorkout([...log].reverse(), new Set([log[0]!.id, log[1]!.id, log[2]!.id]));
+    expect(counts.get(log[0]!.id)).toBeUndefined();
+    expect(counts.get(log[1]!.id)).toBeGreaterThan(0);
+    expect(counts.get(log[2]!.id)).toBeUndefined();
+    expect(counts.has(log[3]!.id)).toBe(false);
   });
 
   it('reports each ladder with what is reached and what is next', () => {

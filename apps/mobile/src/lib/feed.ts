@@ -163,8 +163,9 @@ export function muscleSplit(exercises: ReadonlyArray<{ exerciseId: string; sets:
  * exercises, sets and reps (theirs that they made themselves left out), in
  * the shape a saved workout takes: up to 12 exercises, 10 sets each.
  */
-export function friendWorkoutPlan(item: Pick<FeedItem, 'name' | 'exercises' | 'unit' | 'startedAt' | 'finishedAt' | 'id'>) {
-  const plan = againPlan({ ...item, workoutId: null, gymId: null, exercises: item.exercises.filter((exercise) => !exercise.exerciseId.startsWith('mine-')) });
+export function friendWorkoutPlan(item: Pick<FeedItem, 'name' | 'exercises' | 'unit' | 'startedAt' | 'finishedAt' | 'id'>, { keepOwn = false }: { keepOwn?: boolean } = {}) {
+  // A friend's own exercises are theirs alone; yours (saving your own workout) stay.
+  const plan = againPlan({ ...item, workoutId: null, gymId: null, exercises: keepOwn ? item.exercises : item.exercises.filter((exercise) => !exercise.exerciseId.startsWith('mine-')) });
   if (!plan || plan.items.length === 0) return null;
   const items = plan.items.slice(0, 12).map((entry) => ({ ...entry, sets: Math.min(10, Math.max(1, entry.sets)), reps: entry.reps.slice(0, 20), uses: [] as string[], confirmed: false }));
   const muscles = muscleSplit(item.exercises)

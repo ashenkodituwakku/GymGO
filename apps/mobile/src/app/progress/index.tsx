@@ -17,7 +17,7 @@ import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { Group, Row, RowChevron, TILE } from '@/components/ios';
 import { ListSkeleton } from '@/components/Skeleton';
-import { weekRecap } from '@/lib/insights';
+import { recordsByWorkout, weekRecap } from '@/lib/insights';
 import { useCollection } from '@/lib/useCollection';
 import { useActiveSessionGlance } from '@/lib/activeSession';
 import { api } from '@/lib/api';
@@ -106,6 +106,11 @@ export default function ProgressScreen() {
   // workout with its icons) would keep a phone busy for nothing.
   const [shownDays, setShownDays] = useState(HISTORY_DAYS);
   const olderSessions = days.slice(shownDays).reduce((sum, day) => sum + day.sessions.length, 0);
+  // The records each workout shown broke, for its trophy (only those shown are worked out).
+  const recordCounts = useMemo(
+    () => recordsByWorkout(log.sessions, new Set(days.slice(0, shownDays).flatMap((day) => day.sessions.map((session) => session.id)))),
+    [log.sessions, days, shownDays],
+  );
   const [open, setOpen] = useState<string | null>(null);
 
   const start = active ? (
@@ -392,6 +397,7 @@ export default function ProgressScreen() {
                       key={session.id}
                       session={session}
                       first={index === 0}
+                      records={recordCounts.get(session.id) ?? 0}
                       open={open === session.id}
                       onToggle={() => setOpen(open === session.id ? null : session.id)}
                       onDelete={async () => {
@@ -454,12 +460,15 @@ function Stat({ value, one, many }: { value: number | null; one: string; many: s
 function SessionRow({
   session,
   first,
+  records,
   open,
   onToggle,
   onDelete,
 }: {
   session: TrainingSession;
   first: boolean;
+  /** Records it broke, against everything before it. */
+  records: number;
   open: boolean;
   onToggle: () => void;
   onDelete: () => Promise<void>;
@@ -481,7 +490,19 @@ function SessionRow({
         style={({ pressed }) => [styles.row, pressed && { backgroundColor: color.fill }]}
       >
         <View style={styles.flex}>
-          <Txt variant="body">{session.name}</Txt>
+          <View style={styles.nameLine}>
+            <Txt variant="body" style={styles.nameText}>
+              {session.name}
+            </Txt>
+            {records > 0 && (
+              <View style={styles.trophy} accessibilityLabel={`${records} ${records === 1 ? 'record' : 'records'}`}>
+                <Icon name="trophy" size={12} color={color.maybeInk} />
+                <Txt variant="caption" color={color.maybeInk} style={face('semibold')} aria-hidden>
+                  {records}
+                </Txt>
+              </View>
+            )}
+          </View>
           <Txt variant="footnote" color={color.labelSecondary}>
             {[startTime(session.startedAt), session.gymName ?? null, durationLabel(Date.parse(session.finishedAt) - Date.parse(session.startedAt)), `${setCount(session)} set${setCount(session) === 1 ? '' : 's'}`, volume > 0 ? `${Math.round(volume).toLocaleString()} ${session.unit}` : null]
               .filter(Boolean)
@@ -526,6 +547,17 @@ function SessionRow({
             </View>
           ))}
           <View style={styles.rowActions}>
+            {/* Its own page: every set, the muscles it worked, Do it again (app/feed/[id].tsx). */}
+            <Pressable
+              onPress={() => router.push({ pathname: '/feed/[id]', params: { id: session.id } })}
+              accessibilityRole="link"
+              accessibilityLabel={`Open ${session.name}`}
+              style={styles.delete}
+            >
+              <Txt variant="footnote" color={color.brand} style={face('semibold')}>
+                Open
+              </Txt>
+            </Pressable>
             {/* A typo, a set forgotten, the wrong unit: changed in place, records and totals following. */}
             <Pressable
               onPress={() => router.push({ pathname: '/session-edit', params: { id: session.id } })}
@@ -594,4 +626,7 @@ const styles = themed(() => StyleSheet.create({
   detail: { paddingHorizontal: space[4], paddingBottom: space[3], gap: space[2] },
   delete: { alignSelf: 'flex-start', paddingVertical: space[2] },
   rowActions: { flexDirection: 'row', gap: space[5] },
+  nameLine: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  nameText: { flexShrink: 1 },
+  trophy: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: color.maybeTint },
 }));

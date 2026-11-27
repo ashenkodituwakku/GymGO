@@ -27,7 +27,7 @@ import { ExerciseNote } from '@/components/ExerciseNote';
 import { useExerciseNote } from '@/lib/exerciseNotes';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { endSession, startSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
-import { againPlan } from '@/lib/again';
+import { againPlan, emptyWorkoutName } from '@/lib/again';
 import { addedPlan, agoLabel, daysAgo } from '@/lib/exerciseLibrary';
 import { AddExercise, ExercisePicker } from '@/components/AddExercise';
 import { ApiError, api, apiBase, type SavedWorkout } from '@/lib/api';
@@ -315,6 +315,15 @@ function NoWorkout({ token }: { token: string | null }) {
             ...(last || recent.length > 0
               ? [{ icon: 'body' as IconName, title: 'Build from muscles', go: () => router.replace({ pathname: '/workout/[id]', params: { id: 'any' } }) }]
               : []),
+            // Nothing planned: add exercises as you go, named for the time of day (renamed with the pencil).
+            {
+              icon: 'play' as IconName,
+              title: 'Empty workout',
+              go: () => {
+                haptic.success();
+                startSession({ name: emptyWorkoutName(), workoutId: null, gymId: null, gymName: null, unit, items: [] });
+              },
+            },
             // In place of this page, as the builder is: starting it comes back here with the workout.
             { icon: 'plus' as IconName, title: 'Make your own', go: () => router.replace('/workout-edit') },
             { icon: 'list' as IconName, title: 'From a template', go: () => router.push('/templates') },
@@ -723,7 +732,8 @@ export default function TrainScreen() {
           />
         )}
 
-        <AddExercise inWorkout={inWorkout} onAdd={addExercise} />
+        {/* Started empty: the picker's already open. */}
+        <AddExercise inWorkout={inWorkout} onAdd={addExercise} startOpen={session.items.length === 0} />
 
         <View style={styles.finish}>
           {finishAnyway && unticked > 0 && (

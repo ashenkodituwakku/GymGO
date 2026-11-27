@@ -789,6 +789,14 @@ A workout in progress is kept on your device as you go, so closing the app
 between sets loses nothing, and Home shows **Back to your workout**. It's
 saved to your account when you finish, so logging needs a (free) account.
 
+**Empty workout** (the Workout screen) starts one with nothing planned,
+named for the time of day ("Evening workout"), with the exercise picker
+open; add exercises as you go and rename it with the pencil. In Progress
+→ History, a trophy on a workout counts the records it broke, and
+**Open** shows its own page: every set, the muscles it worked, **Do it
+again** (the same exercises and sets, at the same gym) and **Save to my
+workouts** (Pro). Calendar opens the same page.
+
 With **Pro**, each exercise in Progress has a chart over time of your
 estimated one-rep max, heaviest weight, best set (weight × reps), the
 weight lifted that day or the reps that day (a point a day: the day's best

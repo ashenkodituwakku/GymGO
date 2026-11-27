@@ -68,7 +68,8 @@ export interface MonthReport {
 
 const inMonth = (sessions: readonly TrainingSession[], month: string) => sessions.filter((session) => monthKeyOf(session.finishedAt) === month);
 
-function totalsOf(sessions: readonly TrainingSession[]): MonthTotals {
+/** Totals for any set of workouts (a month here; a year in lib/yearReview.ts). */
+export function totalsOf(sessions: readonly TrainingSession[]): MonthTotals {
   const days = new Set(sessions.map((session) => new Date(session.finishedAt).toDateString()));
   let reps = 0;
   for (const session of sessions) for (const logged of session.exercises) for (const set of workingSets(logged.sets)) reps += set.reps;
@@ -83,7 +84,8 @@ function totalsOf(sessions: readonly TrainingSession[]): MonthTotals {
 }
 
 
-function muscleSets(sessions: readonly TrainingSession[]): Map<Muscle, number> {
+/** Working sets for each muscle (a half for a muscle worked second). */
+export function muscleSets(sessions: readonly TrainingSession[]): Map<Muscle, number> {
   const counts = new Map<Muscle, number>();
   for (const session of sessions) {
     for (const logged of session.exercises) {

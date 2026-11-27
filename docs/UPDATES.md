@@ -9,6 +9,33 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 294 · Year in review, Duplicate, and reordering a past workout
+
+*27 Nov 2026 · the commit "Year in review, Duplicate a saved workout, reorder exercises when editing"*
+
+You asked for more Hevy features. Four more, in GymGO's own look:
+
+- **Year in review** (Calendar → Year → **2026 in review**).
+  - The year's workouts, hours, weight lifted, sets, days trained and records broken, counting up.
+  - A bar for each month, the best one in your accent. Tap a month you trained in for its monthly report.
+  - Highlights:
+    - your best month;
+    - your longest run of weeks in a row;
+    - your favourite gym (the one you tagged most);
+    - the muscle you trained most;
+    - your biggest workout, which opens in full.
+  - Your top five exercises by sets, each opening its progress page.
+  - **Share your year** sends the totals in a few lines, never where or when you trained.
+  - A workout counts in the year it started, as on the calendar. Warm-ups never count.
+- **Duplicate** (a saved workout's page, Pro): makes "Push (copy)" in the same folder and opens it, ready to change into a variation.
+  - Saving the same workout twice under the same name (a double tap, a retry) still keeps only one. Only a copy under a new name is kept as well.
+- **Reorder exercises in Edit workout.** Up and down buttons beside each exercise put them in the order you did them. A screen reader hears where it moved ("Plank moved to 2 of 3").
+- **Saving a friend's workout:** once it's saved, the row offers **Add it to a folder**.
+- Checked:
+  - domain 205, server 379 (1 new: a copy under a new name is kept, a retry isn't) and app 705 tests (6 new for the year), typecheck, lint and the empty-text scan;
+  - in a browser: Calendar's Year view → 2026 in review, with its figures, the November bar and highlights; Duplicate on Pull making Pull (copy) and opening it; Plank moved down in Edit workout and saved in the new order.
+- Not checked: a real phone. Add to folder after saving a friend's workout wasn't tried in a browser (it needs a friend's shared workout); its typecheck passes.
+
 ## Update 293 · Pro's cards in your accent, and Minimal made plainer
 
 *25 Nov 2026 · the commit "Pro cards in your accent; Minimal plainer, with a plain sidebar"*

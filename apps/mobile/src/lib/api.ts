@@ -709,7 +709,7 @@ export const api = {
   billingPortal: (token: string, returnUrl: string) => request<{ url: string }>('POST', '/api/billing/portal', { token, body: { returnUrl } }),
 
   workouts: (token: string) => request<{ workouts: SavedWorkout[] }>('GET', '/api/workouts', { token }),
-  saveWorkout: (token: string, body: { name: string; gymId: string | null; plan: Omit<SavedWorkoutPlan, 'version'> }) =>
+  saveWorkout: (token: string, body: { name: string; gymId: string | null; plan: Omit<SavedWorkoutPlan, 'version'>; folder?: string | null }) =>
     request<{ workout: SavedWorkout }>('POST', '/api/workouts', { token, body }),
   deleteWorkout: (token: string, id: string) => request<unknown>('DELETE', `/api/workouts/${encodeURIComponent(id)}`, { token }),
   /** Pro: a saved workout's name and plan, changed in place. */

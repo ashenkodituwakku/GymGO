@@ -25,7 +25,7 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { ScreenOptions } from '@/components/ScreenOptions';
 import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpeCell, RpeHead, RpePicker, askSetKindNatively } from '@/components/SetKinds';
 import { ListSkeleton } from '@/components/Skeleton';
-import { Input, PrimaryButton, Segmented, TextField, Txt, LiveLine } from '@/components/ui';
+import { Input, PrimaryButton, Segmented, TextField, Txt, LiveLine, useAnnouncer } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
 import { askToDiscard } from '@/lib/askToDiscard';
 import { useApp } from '@/lib/app-state';
@@ -72,6 +72,8 @@ export default function SessionEditScreen() {
   const [rating, setRating] = useState<SetAt | null>(null);
   // The small calendar for the day, open or not, and the month it shows.
   const [pickingDay, setPickingDay] = useState(false);
+  // Where an exercise moved, said to a screen reader.
+  const { say, region } = useAnnouncer();
   const [shownMonth, setShownMonth] = useState<{ year: number; month: number } | null>(null);
   // The workout as it was logged, to tell whether anything's been changed.
   const [original, setOriginal] = useState<string | null>(null);
@@ -347,10 +349,41 @@ export default function SessionEditScreen() {
               <Txt variant="headline" style={styles.flex}>
                 {name}
               </Txt>
+              {/* The order you did them in: up and down, one place at a time. */}
+              {draft.exercises.length > 1 &&
+                ([-1, 1] as const).map((by) => {
+                  const to = exerciseAt + by;
+                  const can = to >= 0 && to < draft.exercises.length;
+                  return (
+                    <Pressable
+                      key={by}
+                      disabled={!can}
+                      onPress={() => {
+                        haptic.select();
+                        setRating(null);
+                        setTyping(null);
+                        const next = [...draft.exercises];
+                        [next[exerciseAt], next[to]] = [next[to]!, next[exerciseAt]!];
+                        setDraft({ ...draft, exercises: next });
+                        say(`${name} moved to ${to + 1} of ${next.length}`);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Move ${name} ${by < 0 ? 'up' : 'down'}`}
+                      accessibilityState={{ disabled: !can }}
+                      hitSlop={4}
+                      style={({ pressed }) => [styles.move, !can && styles.moveOff, pressed && { opacity: 0.6 }]}
+                    >
+                      <View style={by < 0 ? styles.chevronUp : styles.chevronDown}>
+                        <Icon name="chevron" size={12} color={color.labelSecondary} />
+                      </View>
+                    </Pressable>
+                  );
+                })}
               <Pressable
                 onPress={() => {
                   haptic.select();
                   setRating(null);
+                  setTyping(null);
                   setDraft({ ...draft, exercises: draft.exercises.filter((_, at) => at !== exerciseAt) });
                 }}
                 accessibilityRole="button"
@@ -515,6 +548,7 @@ export default function SessionEditScreen() {
           onClose={() => setTyping(null)}
         />
       )}
+      {region}
     </PageScroll>
   );
 }
@@ -549,6 +583,10 @@ const styles = themed(() =>
     times: { width: 10, textAlign: 'center' },
     removeCol: { width: 30 },
     remove: { height: 30, alignItems: 'center', justifyContent: 'center' },
+    move: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: color.fill },
+    moveOff: { opacity: 0.3 },
+    chevronUp: { transform: [{ rotate: '-90deg' }] },
+    chevronDown: { transform: [{ rotate: '90deg' }] },
     tag: { minWidth: 22, height: 24, alignItems: 'center', justifyContent: 'center', borderRadius: 6 },
     tagKind: { backgroundColor: color.fill },
     input: {

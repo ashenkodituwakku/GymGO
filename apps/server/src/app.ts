@@ -1260,8 +1260,9 @@ export function createApp(options: AppOptions) {
       const gymId = typeof body.gymId === 'string' && body.gymId.length <= 120 ? body.gymId : null;
       const plan = cleanWorkoutPlan(body.plan);
       const folder = 'folder' in body ? cleanFolder(body.folder) : null;
-      // The same plan for the same gym again (a second tap on Save, or a
-      // retry after a dropped reply) is the workout already kept, not a copy.
+      // The same plan for the same gym under the same name again (a second
+      // tap on Save, or a retry after a dropped reply) is the workout already
+      // kept, not a copy. A copy under a new name (Duplicate) is kept as well.
       const same = (db.prepare('select id, name, gym_id, plan_json, created_at, folder from workouts where user_id = ? and gym_id is ?').all(account.id, gymId) as Array<{
         id: string;
         name: string;
@@ -1269,7 +1270,7 @@ export function createApp(options: AppOptions) {
         plan_json: string;
         created_at: string;
         folder: string | null;
-      }>).find((row) => planSteps((JSON.parse(row.plan_json) as { items?: unknown }).items) === planSteps(plan.items));
+      }>).find((row) => row.name === name && planSteps((JSON.parse(row.plan_json) as { items?: unknown }).items) === planSteps(plan.items));
       if (same) {
         return send(res, 200, { workout: { id: same.id, name: same.name, gymId: same.gym_id, createdAt: same.created_at, folder: same.folder, plan: JSON.parse(same.plan_json) } });
       }

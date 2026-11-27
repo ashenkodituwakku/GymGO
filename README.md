@@ -584,7 +584,10 @@ filled in (a dot for each workout when there were two or more), with your
 weeks in a row, this month and this year above. Tap a day for its workouts,
 or a month's name for its monthly report. **Year** shows the whole year as
 twelve small months, with its workouts, days and weeks trained, stepping
-back to your first year. A workout counts on the day it started. **Edit workout** can move a workout to another day and start time
+back to your first year, and **2026 in review** (or whichever year): the
+year's totals, a bar for each month, your best month, longest run of weeks,
+favourite gym, most-trained muscle, top exercises and biggest workout, with
+Share your year (totals only). A workout counts on the day it started. **Edit workout** can move a workout to another day and start time
 (picked on a small calendar, typed as 6:30 pm or 18:30, never in the
 future), so one logged late goes on the day it was; the summary after you
 finish links to it.
@@ -733,7 +736,8 @@ workouts go to your log.
   that isn't a warm-up has to stay, and the server checks the change as it
   checks a new workout. Records, totals and charts follow, since they're
   worked out from the log. The day and start time can change too (picked
-  on a small calendar and typed), never into the future.
+  on a small calendar and typed), never into the future, and the exercises
+  can be moved up and down into the order you did them.
   Leaving with changes not saved (Cancel, back, a swipe, closing the tab)
   asks **Discard your changes?** first; Save doesn't.
 - **Notes.** After Finish, **Add a note** under the summary ("left knee a
@@ -1077,7 +1081,8 @@ start in one tap. Saved workouts stay, and can still be started, if Pro
 ends. Sort them into **folders** of your own (the folder button beside a
 workout, or Move to folder on its page): folders are listed A to Z, fold
 away, and can be renamed or removed (the workouts stay). Moving and
-renaming work on Free too, since they're tidying.
+renaming work on Free too, since they're tidying. **Duplicate** (Pro) makes
+a copy ("Push (copy)") in the same folder to change into a variation.
 
 **Make your own** (the builder, or My workouts): a workout from scratch.
 Name it, add exercises with the picker (GymGO's and your own), then set

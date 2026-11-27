@@ -35,6 +35,7 @@ export default function SavedWorkoutScreen() {
   const [saved, setSaved] = useState<SavedWorkout | null | 'missing'>(null);
   const [confirmDelete, setConfirmDelete] = useTapAgain();
   const [problem, setProblem] = useState<string | null>(null);
+  const [copying, setCopying] = useState(false);
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
@@ -89,6 +90,25 @@ export default function SavedWorkoutScreen() {
       router.canGoBack() ? router.back() : router.replace('/workouts');
     } catch {
       setProblem('Couldn’t delete it. Try again.');
+    }
+  };
+
+  // A copy to change into a variation (Pro, as saving is): "Push (copy)", in the same folder, opened at once.
+  const duplicate = async () => {
+    if (!billing.isPro) return openPro('workouts');
+    if (copying) return;
+    setCopying(true);
+    setProblem(null);
+    try {
+      const { version: _version, ...plan } = saved.plan;
+      const name = `${saved.name.slice(0, 73)} (copy)`;
+      const { workout: copy } = await api.saveWorkout(token, { name, gymId: saved.gymId, plan, folder: saved.folder ?? null });
+      haptic.success();
+      router.replace({ pathname: '/workouts/[id]', params: { id: copy.id } });
+    } catch (error) {
+      setProblem(failureText(error, 'Couldn’t make a copy. Try again.'));
+    } finally {
+      setCopying(false);
     }
   };
 
@@ -149,6 +169,13 @@ export default function SavedWorkoutScreen() {
             icon="settings"
             tone="quiet"
             onPress={() => (billing.isPro ? router.push({ pathname: '/workout-edit', params: { id: saved.id } }) : openPro('workouts'))}
+          />
+          <PrimaryButton
+            label={copying ? 'Copying…' : billing.isPro ? 'Duplicate' : 'Duplicate · Pro'}
+            icon="copy"
+            tone="quiet"
+            disabled={copying}
+            onPress={() => void duplicate()}
           />
           {/* Tidying, so on Free too (app/workout-folder.tsx). */}
           <PrimaryButton

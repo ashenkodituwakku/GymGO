@@ -53,6 +53,8 @@ export default function FeedWorkoutScreen() {
   const [note, setNote] = useState<string | null>(null);
   // Kept as one of yours (Pro: My workouts), as it was done. Declared with the others, before the early return for a workout that's gone.
   const [kept, setKept] = useState<'idle' | 'saving' | 'saved'>('idle');
+  // The copy kept in My workouts, so it can go into a folder from here.
+  const [keptId, setKeptId] = useState<string | null>(null);
   const box = useRef<TextInputInstance>(null);
   usePageTitle(item ? item.name : 'Workout');
 
@@ -173,8 +175,9 @@ export default function FeedWorkoutScreen() {
     if (!saving) return;
     setKept('saving');
     try {
-      await api.saveWorkout(token, { name: saving.name, gymId: null, plan: saving.plan });
+      const { workout: copy } = await api.saveWorkout(token, { name: saving.name, gymId: null, plan: saving.plan });
       haptic.success();
+      setKeptId(copy.id);
       setKept('saved');
     } catch (error) {
       haptic.warn();
@@ -277,9 +280,9 @@ export default function FeedWorkoutScreen() {
                   icon={kept === 'saved' ? 'check' : 'save'}
                   tile={TILE.orange}
                   title={kept === 'saved' ? 'Saved to My workouts' : kept === 'saving' ? 'Saving…' : 'Save to my workouts'}
-                  subtitle={kept === 'saved' ? 'Start it any time from My workouts' : billing.isPro ? 'Keep it, to do again' : 'Keep it, to do again (Pro)'}
-                  onPress={kept === 'idle' ? () => void keep() : undefined}
-                  chevron={kept === 'idle'}
+                  subtitle={kept === 'saved' ? (keptId ? 'Add it to a folder' : 'Start it any time from My workouts') : billing.isPro ? 'Keep it, to do again' : 'Keep it, to do again (Pro)'}
+                  onPress={kept === 'idle' ? () => void keep() : kept === 'saved' && keptId ? () => router.push({ pathname: '/workout-folder', params: { id: keptId } }) : undefined}
+                  chevron={kept === 'idle' || (kept === 'saved' && keptId !== null)}
                 />
               )}
               <Row icon="compare" tile={TILE.indigo} title={`Head to head with ${firstName(item.person)}`} subtitle="Your best lifts beside theirs" onPress={() => router.push({ pathname: '/friends/[id]', params: { id: item.person.id, name: item.person.displayName } })} />

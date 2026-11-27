@@ -91,6 +91,22 @@ describe('folders for saved workouts', () => {
     expect((await call('PATCH', '/api/workouts/folders', me.token, { from: '', to: 'X' })).status).toBe(400);
   });
 
+  it('keeps a copy under a new name, but not the same save twice', async () => {
+    const me = await signUp();
+    pro(me.id);
+    const first = (await call('POST', '/api/workouts', me.token, { name: 'Push', plan: plan('bench-press'), folder: 'Week A' })).body!.workout;
+    // A retry: the same name and plan is the one already kept.
+    const again = await call('POST', '/api/workouts', me.token, { name: 'Push', plan: plan('bench-press'), folder: 'Week A' });
+    expect(again.status).toBe(200);
+    expect(again.body!.workout.id).toBe(first.id);
+    // Duplicate: a new name, the same plan, kept as well, in the folder asked for.
+    const copy = await call('POST', '/api/workouts', me.token, { name: 'Push (copy)', plan: plan('bench-press'), folder: 'Week A' });
+    expect(copy.status).toBe(201);
+    expect(copy.body!.workout).toMatchObject({ name: 'Push (copy)', folder: 'Week A' });
+    expect(copy.body!.workout.id).not.toBe(first.id);
+    expect(((await call('GET', '/api/workouts', me.token)).body!.workouts as unknown[]).length).toBe(2);
+  });
+
   it('takes a folder name of up to 40 characters, or none', () => {
     expect(cleanFolder('  Week   A ')).toBe('Week A');
     expect(cleanFolder('')).toBeNull();

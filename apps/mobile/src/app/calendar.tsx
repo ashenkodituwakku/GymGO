@@ -163,6 +163,26 @@ export default function CalendarScreen() {
             <Figure id="calendar.y.days" icon="calendar" value={yearView.days} label={yearView.days === 1 ? 'day trained' : 'days trained'} />
             <Figure id="calendar.y.weeks" icon="flame" value={yearView.weeks} label={yearView.weeks === 1 ? 'week trained' : 'weeks trained'} />
           </View>
+          {yearView.workouts > 0 && (
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                router.push({ pathname: '/year-review', params: { year: String(shownYear) } });
+              }}
+              accessibilityRole="link"
+              accessibilityLabel={`${shownYear} in review: your best month, longest run, top exercises and more`}
+              style={({ pressed }) => [styles.reviewRow, pressed && { opacity: 0.8 }]}
+            >
+              <Icon name="sparkle" size={18} color={color.brand} />
+              <View style={styles.flex}>
+                <Txt variant="headline">{`${shownYear} in review`}</Txt>
+                <Txt variant="footnote" color={color.labelSecondary}>
+                  Your best month, longest run, top exercises and more
+                </Txt>
+              </View>
+              <Icon name="chevron" size={13} color={color.labelTertiary} />
+            </Pressable>
+          )}
           <Animated.View key={shownYear} entering={forward === null ? undefined : FADE_IN} style={styles.yearGrid}>
             {yearView.months.map((month) => (
               <MiniMonth key={month.key} month={month} columns={width >= 640 ? 4 : width >= 340 ? 3 : 2} onOpen={() => router.push({ pathname: '/month', params: { m: month.key } })} />
@@ -374,6 +394,7 @@ const styles = themed(() =>
     empty: { gap: space[3], alignItems: 'stretch', paddingTop: space[2] },
     todayEmpty: { gap: space[3] },
     yearBar: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    reviewRow: { flexDirection: 'row', alignItems: 'center', gap: space[3], padding: space[4], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     yearStep: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: color.plate, ...shadow.plate },
     off: { opacity: 0.35 },
     flip: { transform: [{ rotate: '180deg' }] },

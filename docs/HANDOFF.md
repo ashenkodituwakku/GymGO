@@ -384,6 +384,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Year in review, Duplicate, reorder** (27 Nov, Update 294).
+  lib/yearReview.ts (`yearReview`, `yearShareText`; tested; reuses
+  monthReport's now-exported `totalsOf` and `muscleSets`; a year is by
+  startedAt, as on the calendar) and app/year-review.tsx (?year=), linked
+  from calendar.tsx's Year view. POST /api/workouts dedupes on name and
+  plan and gym now, so workouts/[id].tsx's Duplicate ("Name (copy)", same
+  folder) is kept; workoutFolders.test.ts covers it. session-edit.tsx moves
+  exercises with up/down buttons (useAnnouncer says where), clearing
+  `typing` and `rating`. feed/[id].tsx keeps `keptId` from saving a
+  friend's workout for Add it to a folder. New `copy` icon.
 - **Minimal look, sidebar Pro card, Pro reminder** (25 Nov, Updates 292 and 293).
   lib/looks.ts `minimal` (solid, hairline boxShadows, radius 6 to 12),
   `FREE_LOOKS` and `isFreeLook` (re-exported from theme.ts) used in

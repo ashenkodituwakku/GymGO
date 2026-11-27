@@ -384,6 +384,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Exercise menu, Remove set, rename** (27 Nov, Update 296).
+  lib/liveEdits.ts (`canMove`, `moveExercise` with blocks so a group moves
+  as one, `removeExercise`, `replaceExercise`, `removeSet`; tested) and
+  exerciseLibrary's `replacementsFor`. ChoiceSheet takes `actions` (a
+  destructive one in red; with no options it's a menu) and
+  `askActionsNatively` for iPhone; askSetKindNatively takes `onRemove`.
+  train.tsx: ExerciseLog's ⋯ calls `onMenu`; TrainScreen keeps `menuFor`,
+  `replacing` (AddExercise.tsx's `ExercisePicker` in that card's place) and
+  `renaming`, reading items through the `itemsNow` ref so the callbacks
+  stay stable. New `more` and `pencil` icons.
 - **Hold countdown, Update routine** (27 Nov, Update 295). train.tsx's
   `Stopwatch` takes `target` (parseTime of `timedFor(at, 'time')`) and
   `onReached`: it counts down, `cued` ref plays 'timer-count' at 3/2/1 and

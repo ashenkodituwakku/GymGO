@@ -9,6 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 296 · An exercise menu, Remove any set, and renaming a workout
+
+*27 Nov 2026 · the commit "An exercise menu in a workout in progress, Remove any set, rename a workout"*
+
+You asked for more polish and Hevy features. Three, in GymGO's own look, all in a workout in progress:
+
+- **An exercise menu.** Each exercise has a ⋯ button with what can be done to it now:
+  - **Move up** and **Move down**. A superset or circuit moves as one: an exercise outside it hops over the whole group, one inside it moves within it, and one at its edge takes the group along. Take out of Superset A is still how one leaves.
+  - **Replace exercise**: the add-an-exercise picker opens in its place, "Replace Barbell bench press", with moves for the same muscles first, or a search. The new one keeps the number of sets and the plan's reps and rest when it's measured the same way (a plank for a hold takes a time instead). Offered only before a set is ticked, as Swap is.
+  - **Remove exercise**, in red. With sets ticked, the menu says first that they go with it. The last exercise can't be removed (Discard workout ends it).
+  - On iPhone it's Apple's own action sheet; elsewhere GymGO's, as for kinds of set.
+  - A screen reader hears what happened ("Hollow hold moved to 2 of 4", "Push-up removed").
+- **Remove any set.** Tapping a set's number now ends with **Remove set**, so a set in the middle can go, not only the last. One set always stays.
+- **Rename a workout as you go.** A pencil beside the name turns it into a field; Return or tapping away keeps it, and a blank name keeps the old one. A template's or programme's day keeps its name, since the next day is found by it. Edit workout still renames one already logged.
+- Checked:
+  - domain 205, server 379 and app 721 tests (11 new: moving, groups moving together, removing, replacing, suggestions), typecheck, lint and the empty-text scan;
+  - in a browser at 390 light, 320 light and 1280 dark: Hollow hold moved up past a superset; Push-up moved up with its superset; Barbell bench press replaced with Incline dumbbell press from same-muscle suggestions; Push-up removed after a ticked set, with the warning shown and its superset undone; the middle goblet squat set removed; a workout renamed (spaces tidied), a blank name ignored, and no rename on a template day.
+- Not checked: a real phone, so Apple's action sheet versions weren't seen.
+
 ## Update 295 · A countdown for holds, and a saved workout that follows the day
 
 *27 Nov 2026 · the commit "Timed sets count down to their target; update a saved workout to match the day"*

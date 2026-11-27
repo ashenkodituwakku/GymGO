@@ -4,17 +4,21 @@
  * (lib/exerciseLibrary.ts addableExercises). The one picked joins the end
  * of the workout, planned as the builder would plan it. Your own exercises
  * (Pro) are offered with GymGO's; at the foot, a way to make one.
+ *
+ * The same picker replaces an exercise (its menu's Replace exercise), in
+ * that exercise's place, suggesting moves for the same muscles first
+ * (replacementsFor).
  */
 
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type ViewInstance } from 'react-native';
-import { addableExercises, kitShort, kitText } from '@/lib/exerciseLibrary';
+import { addableExercises, kitShort, kitText, replacementsFor } from '@/lib/exerciseLibrary';
 import { haptic } from '@/lib/haptics';
 import { FIELD_FRAME, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useApp } from '@/lib/app-state';
 import { useOwnTraining } from '@/lib/ownTraining';
-import { EXERCISES, ownExercises, type Exercise } from '@/lib/workout';
+import { EXERCISES, exerciseName, ownExercises, type Exercise } from '@/lib/workout';
 import { ExerciseTile } from './ExerciseGlyph';
 import { Icon } from './Icon';
 import { Pressable } from './motion';
@@ -22,18 +26,10 @@ import { Input, PrimaryButton, Txt } from './ui';
 
 export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: (exercise: Exercise) => void }) {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const router = useRouter();
-  const { billing, openPro } = useApp();
-  // Yours first, then GymGO's; read again when yours change.
-  const own = useOwnTraining();
-  const pool = useMemo(() => [...ownExercises(), ...EXERCISES], [own]);
-  const found = useMemo(() => addableExercises(query, inWorkout, 8, pool), [query, inWorkout, pool]);
   // Closing hands keyboard focus back to the button that opened it, rather than to the page.
   const button = useRef<ViewInstance>(null);
   const close = () => {
     setOpen(false);
-    setQuery('');
     requestAnimationFrame(() => (button.current as unknown as { focus?: () => void } | null)?.focus?.());
   };
 
@@ -51,14 +47,51 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
       />
     );
   }
+  return <ExercisePicker inWorkout={inWorkout} onPick={onAdd} onClose={close} />;
+}
+
+/** The picker itself: adding to the workout, or, with `replacing`, putting one in that exercise's place. */
+export function ExercisePicker({
+  inWorkout,
+  replacing,
+  onPick,
+  onClose,
+}: {
+  inWorkout: string[];
+  /** The exercise being replaced, if this is Replace exercise. */
+  replacing?: string;
+  onPick: (exercise: Exercise) => void;
+  onClose: () => void;
+}) {
+  const [query, setQuery] = useState('');
+  const router = useRouter();
+  const { billing, openPro } = useApp();
+  // Yours first, then GymGO's; read again when yours change.
+  const own = useOwnTraining();
+  const pool = useMemo(() => [...ownExercises(), ...EXERCISES], [own]);
+  const found = useMemo(
+    () => (replacing ? replacementsFor(query, inWorkout, replacing, 8, pool) : addableExercises(query, inWorkout, 8, pool)),
+    [query, inWorkout, replacing, pool],
+  );
+  const oldName = replacing ? exerciseName(replacing) : null;
+  const close = () => {
+    setQuery('');
+    onClose();
+  };
 
   return (
     <View style={styles.card}>
       <View style={styles.head}>
         <Txt variant="headline" style={styles.flex}>
-          Add an exercise
+          {oldName ? `Replace ${oldName}` : 'Add an exercise'}
         </Txt>
-        <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Close without adding" hitSlop={10} style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}>
+        <Pressable
+          onPress={close}
+          accessibilityRole="button"
+          accessibilityLabel={oldName ? `Keep ${oldName}` : 'Close without adding'}
+          hitSlop={10}
+          style={({ pressed }) => [styles.close, pressed && { opacity: 0.6 }]}
+        >
           <Icon name="close" size={14} color={color.labelSecondary} />
         </Pressable>
       </View>
@@ -68,7 +101,7 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
           value={query}
           onChangeText={setQuery}
           placeholder="Search by name or muscle"
-          accessibilityLabel="Search exercises to add, by name or muscle"
+          accessibilityLabel={oldName ? `Search exercises to use instead of ${oldName}, by name or muscle` : 'Search exercises to add, by name or muscle'}
           autoFocus
           autoCorrect={false}
           autoCapitalize="none"
@@ -77,7 +110,7 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
         />
       </View>
       <Txt variant="eyebrow" color={color.labelSecondary}>
-        {query.trim() ? (found.length ? 'MATCHES' : 'NO MATCHES') : 'FOR THE MUSCLES YOU’RE TRAINING'}
+        {query.trim() ? (found.length ? 'MATCHES' : 'NO MATCHES') : oldName ? 'FOR THE SAME MUSCLES' : 'FOR THE MUSCLES YOU’RE TRAINING'}
       </Txt>
       {query.trim() !== '' && found.length === 0 && (
         <Txt variant="footnote" color={color.labelSecondary}>
@@ -90,11 +123,11 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
             key={exercise.id}
             onPress={() => {
               haptic.success();
-              onAdd(exercise);
+              onPick(exercise);
               close();
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Add ${exercise.name}. ${kitText(exercise)}`}
+            accessibilityLabel={`${oldName ? 'Use' : 'Add'} ${exercise.name}. ${kitText(exercise)}`}
             style={({ pressed }) => [styles.row, index > 0 && styles.line, pressed && { backgroundColor: color.fill }]}
           >
             <ExerciseTile exerciseId={exercise.id} size={36} />
@@ -106,7 +139,7 @@ export function AddExercise({ inWorkout, onAdd }: { inWorkout: string[]; onAdd: 
                 {kitShort(exercise)}
               </Txt>
             </View>
-            <Icon name="plus" size={16} color={color.brand} />
+            <Icon name={oldName ? 'shuffle' : 'plus'} size={16} color={color.brand} />
           </Pressable>
         ))}
       </View>

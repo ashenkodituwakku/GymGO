@@ -649,8 +649,15 @@ workouts go to your log.
   (nobody has said; never counted as "no"). For one that isn't there, a
   **Swap** the known kit allows; **Start it here** starts the workout at
   that gym with the swaps you chose.
+- **An exercise's menu.** The ⋯ on an exercise in a workout in progress
+  can **Move up** or **Move down** (a superset moves as one), **Replace
+  exercise** with any other (moves for the same muscles first; only before
+  a set is ticked) or **Remove exercise** (it says first if ticked sets go
+  with it). The pencil beside the workout's name renames it, except a
+  template's or programme's day, whose name finds the next day.
 - **Kinds of set.** Tap a set's number to make it a **warm-up** (W), a
-  **drop set** (D) or a set **to failure** (F), or back to an ordinary one.
+  **drop set** (D) or a set **to failure** (F), or back to an ordinary one,
+  or **Remove set** to take out that one set.
   Warm-ups are left out of records, the weight lifted, set counts, muscle
   balance, the recovery map and "last time", rest a minute at most after
   them, and never ask for an RPE; a drop set follows the set before with

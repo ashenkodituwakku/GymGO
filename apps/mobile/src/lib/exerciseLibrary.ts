@@ -149,6 +149,26 @@ export function addableExercises(query: string, inWorkout: readonly string[], li
   return [...open].sort((a, b) => score(b) - score(a)).slice(0, limit);
 }
 
+/**
+ * What could take an exercise's place in a workout: a search by name or
+ * muscle, or, with nothing typed, the moves for the same muscles first
+ * (its main muscles count most). Ones already in the workout are left out.
+ */
+export function replacementsFor(query: string, inWorkout: readonly string[], replacing: string, limit = 8, exercises: Exercise[] = EXERCISES): Exercise[] {
+  const present = new Set([...inWorkout, replacing]);
+  const open = exercises.filter((exercise) => !present.has(exercise.id));
+  if (query.trim()) return open.filter((exercise) => matchesQuery(exercise, query)).slice(0, limit);
+  const old = exercises.find((exercise) => exercise.id === replacing) ?? EXERCISES.find((exercise) => exercise.id === replacing);
+  if (!old) return open.slice(0, limit);
+  const main = new Set(old.primary);
+  const also = new Set(old.secondary);
+  const score = (exercise: Exercise) =>
+    exercise.primary.filter((muscle) => main.has(muscle)).length * 3 +
+    exercise.primary.filter((muscle) => also.has(muscle)).length +
+    exercise.secondary.filter((muscle) => main.has(muscle)).length;
+  return [...open].sort((a, b) => score(b) - score(a)).slice(0, limit);
+}
+
 /** How an added exercise is planned: the builder's usual sets, reps and rest; a finisher once, as its cue says. */
 export function addedPlan(exercise: Exercise): { sets: number; reps: string; restSeconds: number } {
   if (exercise.cardio) return { sets: 1, reps: 'see cue', restSeconds: 0 };

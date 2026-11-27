@@ -25,17 +25,30 @@ export const KIND_MESSAGE = 'Warm-ups are left out of records and totals. A drop
 /** Each kind's letter in an ink that reads on the card. */
 export const KIND_INK: Record<SetKind, () => string> = { warmup: () => color.maybeInk, drop: () => color.brand, failure: () => color.dangerInk };
 
+/** The set sheet's last button: takes that set out (never the only one). */
+export const REMOVE_SET = 'Remove set';
+
 /**
  * On iPhone, Apple's action sheet for a set's kind: true once it's shown.
- * Elsewhere false, and the caller shows GymGO's own (ChoiceSheet).
+ * Elsewhere false, and the caller shows GymGO's own (ChoiceSheet). With
+ * `onRemove`, it ends with Remove set, in red.
  */
-export function askSetKindNatively(title: string, onPick: (kind: SetKind | 'normal') => void): boolean {
+export function askSetKindNatively(title: string, onPick: (kind: SetKind | 'normal') => void, onRemove?: () => void): boolean {
   if (Platform.OS !== 'ios') return false;
+  const labels = [...KIND_OPTIONS.map((option) => option.label), ...(onRemove ? [REMOVE_SET] : []), 'Cancel'];
   ActionSheetIOS.showActionSheetWithOptions(
-    { title, message: KIND_MESSAGE, options: [...KIND_OPTIONS.map((option) => option.label), 'Cancel'], cancelButtonIndex: KIND_OPTIONS.length, tintColor: color.brand },
+    {
+      title,
+      message: KIND_MESSAGE,
+      options: labels,
+      cancelButtonIndex: labels.length - 1,
+      ...(onRemove ? { destructiveButtonIndex: KIND_OPTIONS.length } : {}),
+      tintColor: color.brand,
+    },
     (chosen) => {
       const option = KIND_OPTIONS[chosen];
       if (option) onPick(option.key);
+      else if (onRemove && chosen === KIND_OPTIONS.length) onRemove();
     },
   );
   return true;

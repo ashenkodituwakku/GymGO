@@ -21,15 +21,15 @@ import { CountUp } from '@/components/CountUp';
 import { HeroMark } from '@/components/HeroMark';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Chip, Input, PrimaryButton, Segmented, Txt, LiveLine, useAnnouncer } from '@/components/ui';
-import { ChoiceSheet } from '@/components/ChoiceSheet';
-import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, RpePicker, askSetKindNatively, RpeCell, RpeHead } from '@/components/SetKinds';
+import { ChoiceSheet, askActionsNatively, type SheetAction } from '@/components/ChoiceSheet';
+import { KIND_INK, KIND_MESSAGE, KIND_OPTIONS, REMOVE_SET, RpePicker, askSetKindNatively, RpeCell, RpeHead } from '@/components/SetKinds';
 import { ExerciseNote } from '@/components/ExerciseNote';
 import { useExerciseNote } from '@/lib/exerciseNotes';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { endSession, startSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { againPlan } from '@/lib/again';
 import { addedPlan, agoLabel, daysAgo } from '@/lib/exerciseLibrary';
-import { AddExercise } from '@/components/AddExercise';
+import { AddExercise, ExercisePicker } from '@/components/AddExercise';
 import { ApiError, api, apiBase, type SavedWorkout } from '@/lib/api';
 import { CoachNote } from '@/components/CoachNote';
 import { MaxBadge } from '@/components/MaxBadge';
@@ -46,7 +46,7 @@ import { RecordCard } from '@/components/Celebrate';
 import { Celebration } from '@/components/Celebration';
 import { celebrationFor } from '@/lib/celebrations';
 import { alpha } from '@/lib/looks';
-import { LOOKS, color, currentLook, face, radius, shadow, space, themed } from '@/lib/theme';
+import { LOOKS, color, currentLook, face, radius, shadow, space, themed, type } from '@/lib/theme';
 import {
   BAR,
   PLATES,
@@ -93,9 +93,10 @@ import { ProgressRing } from '@/components/ProgressRing';
 import { useOverhang } from '@/lib/layout';
 import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
 import { changeLine, routineChange, routineFromSession } from '@/lib/routineUpdate';
+import { canMove, moveExercise, removeExercise, removeSet, replaceExercise } from '@/lib/liveEdits';
 import { useTrainingLog } from '@/lib/useTraining';
 import { TYPICAL_KIT, exerciseName, knownKit, setMeasure, swapFor, type Exercise, type Kit, exerciseById } from '@/lib/workout';
-import { groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
+import { groupName, groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
 import { GroupControls, groupTag, joinableNext } from '@/components/GroupControls';
 import { SwapButton } from '@/components/ExerciseCard';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
@@ -463,6 +464,54 @@ export default function TrainScreen() {
   const showWarmUpPro = useCallback(() => openPro('warmup'), [openPro]);
   // An exercise's page: how to do it, what it works, swaps (the workout keeps going).
   const openHowTo = useCallback((exerciseId: string) => router.push({ pathname: '/progress/[exercise]', params: { exercise: exerciseId } }), [router]);
+  // An exercise's menu (its ⋯ button): move it, put another in its place, or take it out (lib/liveEdits.ts).
+  const [menuFor, setMenuFor] = useState<number | null>(null);
+  const [replacing, setReplacing] = useState<number | null>(null);
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const { say, region } = useAnnouncer();
+  // The latest exercises, so the menu's callbacks stay the same and the cards don't redraw.
+  const itemsNow = useRef<ActiveItem[]>([]);
+  itemsNow.current = session?.items ?? [];
+  const onMenuAction = useCallback(
+    (index: number, action: MenuAction) => {
+      const items = itemsNow.current;
+      const item = items[index];
+      if (!item) return;
+      const name = exerciseName(item.exerciseId);
+      if (action === 'replace') return setReplacing(index);
+      haptic.select();
+      // A picker open for another exercise would now point at the wrong one.
+      setReplacing(null);
+      if (action === 'remove') {
+        updateSession((current) => ({ ...current, items: removeExercise(current.items, index) }));
+        return say(`${name} removed`);
+      }
+      const moved = moveExercise(items, index, action);
+      updateSession((current) => ({ ...current, items: moveExercise(current.items, index, action).items }));
+      const group = groupOf(items, index);
+      say(`${moved.group && group ? `${groupName(group)}, with ${name},` : name} moved to ${moved.at + 1} of ${items.length}`);
+    },
+    [say],
+  );
+  const openMenu = useCallback(
+    (index: number) => {
+      const items = itemsNow.current;
+      const item = items[index];
+      if (!item) return;
+      // iPhone: Apple's own action sheet. Elsewhere GymGO's (below).
+      if (!askActionsNatively(exerciseName(item.exerciseId), menuActions(items, index), (action) => onMenuAction(index, action), menuMessage(item))) setMenuFor(index);
+    },
+    [onMenuAction],
+  );
+  const replaceAt = useCallback(
+    (index: number, exercise: Exercise) => {
+      const old = itemsNow.current[index];
+      if (!old) return;
+      updateSession((current) => ({ ...current, items: current.items.map((item, at) => (at === index ? replaceExercise(item, exercise) : item)) }));
+      say(`${exerciseName(old.exerciseId)} replaced with ${exercise.name}`);
+    },
+    [say],
+  );
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'));
 
@@ -493,6 +542,13 @@ export default function TrainScreen() {
   // A plank's sets are logged like a squat's (by their time), so they count as left undone too.
   const unticked = session.items.reduce((sum, item) => sum + item.sets.filter((set) => !set.done).length, 0);
   const named = workoutTitle(session.name);
+  // Renaming it in place; a blank name keeps the one it had.
+  const saveName = () => {
+    if (renaming === null) return;
+    const name = renaming.trim().replace(/\s+/g, ' ');
+    setRenaming(null);
+    if (name && name !== session.name) updateSession((current) => ({ ...current, name }));
+  };
 
   const finish = async () => {
     setProblem(null);
@@ -551,9 +607,41 @@ export default function TrainScreen() {
         extraBottom={restEndsAt !== null ? 90 : 0}
       >
         <View style={styles.intro}>
-          <Txt variant="largeTitle" accessibilityRole="header" level={1}>
-            {named.title}
-          </Txt>
+          {renaming !== null ? (
+            <Input
+              value={renaming}
+              onChangeText={setRenaming}
+              onSubmitEditing={saveName}
+              onBlur={saveName}
+              autoFocus
+              selectTextOnFocus
+              maxLength={80}
+              returnKeyType="done"
+              accessibilityLabel="Workout name"
+              style={[type.largeTitle, styles.titleInput]}
+            />
+          ) : (
+            <View style={styles.titleRow}>
+              <Txt variant="largeTitle" accessibilityRole="header" level={1} style={styles.titleText}>
+                {named.title}
+              </Txt>
+              {/* A template's or programme's day keeps its name: the next day is found by it. */}
+              {!named.plan && (
+                <Pressable
+                  onPress={() => {
+                    haptic.select();
+                    setRenaming(session.name);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Rename ${named.title}`}
+                  hitSlop={8}
+                  style={({ pressed }) => [styles.renameButton, pressed && { backgroundColor: color.fill }]}
+                >
+                  <Icon name="pencil" size={17} color={color.labelSecondary} />
+                </Pressable>
+              )}
+            </View>
+          )}
           <Txt variant="subhead" color={color.labelSecondary}>
             {named.plan ? `${named.plan} · ` : ''}
             <Elapsed since={session.startedAt} /> so far{liftedSoFar > 0 ? ` · ${Math.round(liftedSoFar).toLocaleString('en')}\u00a0${session.unit}` : ''} · {ticked} of {planned} sets
@@ -592,33 +680,48 @@ export default function TrainScreen() {
           </View>
         )}
 
-        {session.items.map((item, index) => (
-          <ExerciseLog
-            key={`${item.exerciseId}-${index}`}
-            index={index}
-            item={item}
-            unit={session.unit}
-            history={log.sessions}
-            isPro={billing.isPro}
-            onPro={showPro}
-            onWarmUpPro={showWarmUpPro}
-            rpeOn={prefs.rpe}
-            plates={billing.isPro ? (prefs.plates[session.unit] ?? null) : null}
-            onPlates={openPlates}
-            onHowTo={openHowTo}
-            onChange={changeSets}
-            onRest={restAfterTick}
-            onRestChange={changeRest}
-            easier={easierWeek}
-            group={groupInfos[index] ?? null}
-            nextName={joinableNext(session.items, index, (at) => exerciseName(session.items[at]!.exerciseId))}
-            onLink={linkNext}
-            onUnlink={unlinkOne}
-            swapTo={item.sets.some((set) => set.done) ? null : (swapFor(session.items, index, available)?.name ?? null)}
-            onSwap={swapExercise}
-            current={index === upNextIndex}
+        {session.items.map((item, index) =>
+          replacing === index ? (
+            <ExercisePicker key={`replacing-${index}`} inWorkout={inWorkout} replacing={item.exerciseId} onPick={(exercise) => replaceAt(index, exercise)} onClose={() => setReplacing(null)} />
+          ) : (
+            <ExerciseLog
+              key={`${item.exerciseId}-${index}`}
+              index={index}
+              item={item}
+              unit={session.unit}
+              history={log.sessions}
+              isPro={billing.isPro}
+              onPro={showPro}
+              onWarmUpPro={showWarmUpPro}
+              rpeOn={prefs.rpe}
+              plates={billing.isPro ? (prefs.plates[session.unit] ?? null) : null}
+              onPlates={openPlates}
+              onHowTo={openHowTo}
+              onChange={changeSets}
+              onRest={restAfterTick}
+              onRestChange={changeRest}
+              easier={easierWeek}
+              group={groupInfos[index] ?? null}
+              nextName={joinableNext(session.items, index, (at) => exerciseName(session.items[at]!.exerciseId))}
+              onLink={linkNext}
+              onUnlink={unlinkOne}
+              swapTo={item.sets.some((set) => set.done) ? null : (swapFor(session.items, index, available)?.name ?? null)}
+              onSwap={swapExercise}
+              onMenu={openMenu}
+              current={index === upNextIndex}
+            />
+          ),
+        )}
+        {region}
+        {menuFor !== null && session.items[menuFor] && (
+          <ChoiceSheet
+            title={exerciseName(session.items[menuFor]!.exerciseId)}
+            message={menuMessage(session.items[menuFor]!)}
+            actions={menuActions(session.items, menuFor)}
+            onAction={(action) => onMenuAction(menuFor, action)}
+            onClose={() => setMenuFor(null)}
           />
-        ))}
+        )}
 
         <AddExercise inWorkout={inWorkout} onAdd={addExercise} />
 
@@ -665,6 +768,31 @@ export default function TrainScreen() {
   );
 }
 
+// --- An exercise's menu ------------------------------------------------------------
+
+type MenuAction = 'up' | 'down' | 'replace' | 'remove';
+
+/** What its ⋯ menu offers: only what can be done to it now. */
+function menuActions(items: ActiveItem[], index: number): Array<SheetAction<MenuAction>> {
+  const item = items[index];
+  if (!item) return [];
+  const ticked = item.sets.some((set) => set.done);
+  return [
+    ...(canMove(items, index, 'up') ? [{ key: 'up' as const, label: 'Move up' }] : []),
+    ...(canMove(items, index, 'down') ? [{ key: 'down' as const, label: 'Move down' }] : []),
+    // Another in its place starts blank, so not once a set is ticked (Swap's rule too).
+    ...(ticked ? [] : [{ key: 'replace' as const, label: 'Replace exercise' }]),
+    // The last one stays: Discard workout is for ending it.
+    ...(items.length > 1 ? [{ key: 'remove' as const, label: 'Remove exercise', destructive: true }] : []),
+  ];
+}
+
+/** Under the menu's title: the ticked sets that removing it would take too. */
+function menuMessage(item: ActiveItem): string | undefined {
+  const ticked = item.sets.filter((set) => set.done).length;
+  return ticked ? `Removing it takes its ${ticked} ticked ${ticked === 1 ? 'set' : 'sets'} too.` : undefined;
+}
+
 // --- One exercise ------------------------------------------------------------------
 
 const ExerciseLog = memo(function ExerciseLog({
@@ -689,6 +817,7 @@ const ExerciseLog = memo(function ExerciseLog({
   onUnlink,
   swapTo,
   onSwap,
+  onMenu,
   current,
 }: {
   index: number;
@@ -721,6 +850,8 @@ const ExerciseLog = memo(function ExerciseLog({
   /** What Swap would put here: only before any of its sets is ticked. */
   swapTo: string | null;
   onSwap: (index: number) => void;
+  /** Its menu (move, replace, remove), shown by the workout screen. */
+  onMenu: (index: number) => void;
   /** The exercise you're on (the first with a set to tick): its icon moves. */
   current: boolean;
 }) {
@@ -787,9 +918,20 @@ const ExerciseLog = memo(function ExerciseLog({
     );
     if (kind === 'warmup' && rating === at) setRating(null);
   };
+  /** Any one set taken out (not only the last), as long as one is left. */
+  const removeSetAt = (at: number) => {
+    if (item.sets.length <= 1) return;
+    haptic.select();
+    const spoken = tags[at]!.spoken;
+    // A stopwatch or RPE chips on this set or one below it would now point at the wrong set.
+    if (watch && watch.at >= at) setWatch(null);
+    if (rating !== null && rating >= at) setRating(null);
+    onChange(index, removeSet(item.sets, at));
+    say(`${name}, ${spoken} removed`);
+  };
   /** iPhone: Apple's action sheet. Elsewhere GymGO's own (ChoiceSheet, below). */
   const pickKind = (at: number) => {
-    if (!askSetKindNatively(`${name}, ${tags[at]!.spoken}`, (kind) => setKind(at, kind))) setTyping(at);
+    if (!askSetKindNatively(`${name}, ${tags[at]!.spoken}`, (kind) => setKind(at, kind), item.sets.length > 1 ? () => removeSetAt(at) : undefined)) setTyping(at);
   };
   const setRpe = (at: number, rpe: number | null) => {
     const { rpe: _old, ...rest } = item.sets[at]!;
@@ -946,6 +1088,19 @@ const ExerciseLog = memo(function ExerciseLog({
             </View>
           </View>
         </View>
+        {/* Its menu: move it, put another exercise in its place, or take it out. */}
+        <Pressable
+          onPress={() => {
+            haptic.select();
+            onMenu(index);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`More for ${name}`}
+          hitSlop={6}
+          style={({ pressed }) => [styles.moreButton, pressed && { backgroundColor: color.fill }]}
+        >
+          <Icon name="more" size={20} color={color.labelSecondary} />
+        </Pressable>
       </View>
 
       {resting && (
@@ -1316,6 +1471,8 @@ const ExerciseLog = memo(function ExerciseLog({
           options={KIND_OPTIONS}
           selected={item.sets[typing]!.kind ?? 'normal'}
           onPick={(kind) => setKind(typing, kind)}
+          actions={item.sets.length > 1 ? [{ key: 'remove', label: REMOVE_SET, destructive: true }] : []}
+          onAction={() => removeSetAt(typing)}
           onClose={() => setTyping(null)}
         />
       )}
@@ -1823,6 +1980,10 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2, marginBottom: space[1] },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  titleText: { flexShrink: 1 },
+  renameButton: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  titleInput: { color: color.label, paddingVertical: 2, paddingHorizontal: space[2], marginHorizontal: -space[2], borderRadius: radius.md, backgroundColor: color.fill },
   // The gym you're at, as a small chip under the title.
   gymTag: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 5, maxWidth: '100%', marginTop: space[2], marginBottom: space[1], paddingHorizontal: space[3], minHeight: 32, borderRadius: radius.pill, backgroundColor: color.brandTint },
   gymTagEmpty: { backgroundColor: color.fill },
@@ -1843,6 +2004,7 @@ const styles = themed(() => StyleSheet.create({
   unitSwitch: { width: 140 },
   card: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
+  moreButton: { alignSelf: 'flex-start', width: 36, height: 36, marginRight: -space[2], marginTop: -space[1], borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[2], rowGap: space[1], marginTop: 2 },
   meta: { flexGrow: 1, flexShrink: 0, maxWidth: '100%' },
   metaButtons: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2], maxWidth: '100%' },

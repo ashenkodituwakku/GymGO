@@ -91,6 +91,8 @@ const ICONS = {
   folder: { ios: 'folder.fill', android: 'folder', web: 'folder' },
   copy: { ios: 'doc.on.doc', android: 'content_copy', web: 'content_copy' },
   menu: { ios: 'line.3.horizontal', android: 'menu', web: 'menu' },
+  more: { ios: 'ellipsis', android: 'more_horiz', web: 'more_horiz' },
+  pencil: { ios: 'pencil', android: 'edit', web: 'edit' },
   thumbsUp: { ios: 'hand.thumbsup.fill', android: 'thumb_up', web: 'thumb_up' },
   flask: { ios: 'flask.fill', android: 'science', web: 'science' },
   calendar: { ios: 'calendar', android: 'event', web: 'event' },

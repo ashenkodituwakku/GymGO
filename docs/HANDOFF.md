@@ -384,6 +384,16 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Warm-ups for any weight, exercise totals, saved-workout use** (28 Nov, Update 298).
+  training.ts `stepWarmUps` and `WARM_UP_STEP`; workout.ts `warmUpKit`
+  (barbell, dumbbell, machine from `needs`; STACKS lists the machines).
+  train.tsx's addWarmUps picks warmUpSets or stepWarmUps by `warmKit`.
+  training.ts `exerciseTotals` feeds progress/[exercise].tsx's Sets and
+  Lifted tiles and Sessions' last date; the facts row wraps (flexBasis
+  100); Every time rows link to feed/[id]. savedWorkouts.ts `workoutUse`
+  and `doneLine` (named so it doesn't read as a React hook)
+  on workouts/index.tsx. Tests in lib/warmUps.test.ts and
+  savedWorkouts.test.ts.
 - **Do it again, Empty workout, History records** (27 Nov, Update 297).
   feed/[id].tsx: `again` (againPlan of your own item, gym kept) and
   `doAgain`; the Save row is `saveRow`, shared with a friend's workout;

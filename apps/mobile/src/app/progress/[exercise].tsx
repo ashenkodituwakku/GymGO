@@ -25,6 +25,7 @@ import {
   TIMED_METRICS,
   distanceLabel,
   exerciseSeries,
+  exerciseTotals,
   formatWeight,
   fromKg,
   personalRecords,
@@ -85,6 +86,8 @@ export default function ExerciseProgressScreen() {
   /** A weight from a record, in your unit, to a tenth. */
   const weightOf = (kg: number) => formatWeight(Number(fromKg(kg, unit).toFixed(1)), unit);
   const done = log.sessions.filter((session) => session.exercises.some((item) => item.exerciseId === exerciseId));
+  // Over the whole log: sets, reps, weight lifted, and when you last did it.
+  const totals = useMemo(() => exerciseTotals(log.sessions, exerciseId), [log.sessions, exerciseId]);
   const swaps = useMemo(() => (exercise ? alternativesFor(exercise) : []), [exercise]);
 
   if (!exercise && done.length === 0 && log.status !== 'loading') {
@@ -213,7 +216,16 @@ export default function ExerciseProgressScreen() {
           {/* By the clock or the tape: the longest or furthest set. */}
           {record.longestSeconds !== null && <Fact label="Longest" value={secondsLabel(record.longestSeconds)} detail="in one set" />}
           {record.furthestMetres !== null && <Fact label="Furthest" value={distanceLabel(record.furthestMetres)} detail="in one set" />}
-          <Fact label="Sessions" value={String(record.sessions)} detail={record.sessions > 0 ? 'logged' : undefined} />
+          <Fact label="Sessions" value={String(record.sessions)} detail={totals.last ? `last ${dayLabel(totals.last)}` : undefined} />
+          {totals.sets > 0 && (
+            <Fact
+              label="Sets"
+              value={totals.sets.toLocaleString()}
+              detail={totals.reps > 0 ? `${totals.reps.toLocaleString()} reps` : undefined}
+              spoken={`${totals.sets} sets${totals.reps > 0 ? `, ${totals.reps} reps` : ''}, all time`}
+            />
+          )}
+          {totals.volumeKg > 0 && <Fact label="Lifted" value={tonnage(totals.volumeKg)} detail="all time" />}
         </View>
       )}
 
@@ -328,15 +340,27 @@ export default function ExerciseProgressScreen() {
           ))}
         {done.map((session, index) => {
           const logged = session.exercises.find((item) => item.exerciseId === exerciseId)!;
+          const summary = setsSummary(logged.sets, session.unit);
+          // Which workout it was in, and a tap to open it (app/feed/[id].tsx).
           return (
-            <View key={session.id} style={[styles.row, index > 0 && styles.rowLine]}>
+            <Pressable
+              key={session.id}
+              onPress={() => router.push({ pathname: '/feed/[id]', params: { id: session.id } })}
+              accessibilityRole="link"
+              accessibilityLabel={`${dayLabel(session.finishedAt)}, ${session.name}: ${summary}. Open the workout`}
+              style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
+            >
               <Txt variant="footnote" color={color.labelSecondary} style={styles.date}>
                 {dayLabel(session.finishedAt)}
               </Txt>
-              <Txt variant="subhead" style={styles.flex}>
-                {setsSummary(logged.sets, session.unit)}
-              </Txt>
-            </View>
+              <View style={styles.flex}>
+                <Txt variant="subhead">{summary}</Txt>
+                <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                  {session.name}
+                </Txt>
+              </View>
+              <Icon name="chevron" size={13} color={color.labelTertiary} />
+            </Pressable>
           );
         })}
       </View>
@@ -417,8 +441,9 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8], width: '100%', maxWidth: 640, alignSelf: 'center' },
   flex: { flex: 1 },
-  facts: { flexDirection: 'row', gap: space[2] },
-  fact: { flex: 1, gap: 2, padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
+  // Up to five tiles: three to a row on a phone, all in one on a wide screen, each wide enough for "52,300 kg".
+  facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  fact: { flexGrow: 1, flexBasis: 100, gap: 2, padding: space[3], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },
   card: { backgroundColor: color.plate, borderRadius: radius.lg, borderCurve: 'continuous', padding: space[4], gap: space[3], ...shadow.plate },
   cardRow: { flexDirection: 'row', alignItems: 'flex-start' },
   cardText: { flex: 1, minWidth: 0, gap: space[3] },

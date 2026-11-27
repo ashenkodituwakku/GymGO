@@ -9,6 +9,24 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 298 · Warm-ups for dumbbells and machines, and an exercise's whole story
+
+*28 Nov 2026 · the commit "Warm-ups for dumbbells and machines, all-time totals on an exercise, how often a saved workout is done"*
+
+You asked for more polish and Hevy features. Three more, in GymGO's own look:
+
+- **Warm-ups for dumbbells and machines** (Pro). Warm-ups used to be for barbells only. Now a dumbbell or machine exercise has them too: about half your working weight for 8, then three quarters for 4, rounded down to a step the kit can make (2.5 kg or 5 lb for dumbbells, 5 kg or 10 lb for a weight stack). A light weight gets one warm-up, or "At this weight, your first set is warm-up enough." Barbells keep their ramp from the empty bar. Body-weight moves, holds and carries have none.
+- **An exercise's whole story** (its page from Progress or the workout's picture):
+  - New **Sets** (with the reps in them) and **Lifted** (all time) tiles, and **Sessions** now says when you last did it.
+  - On a phone the tiles wrap three to a row instead of squeezing into one.
+  - Each line of **Every time** names the workout it was in and opens it.
+- **How often you do each saved workout.** My workouts says "Done 3 times, last on 24 Nov" under each one you've done, counted from the workouts started from it.
+- Checked:
+  - domain 205, server 379 and app 732 tests (9 new: the warm-up steps, which exercises warm up how, an exercise's totals, and how often a saved workout is done), typecheck, lint and the empty-text scan;
+  - in a browser at 390 and 320 light and 1280 dark (Melbourne time): goblet squat at 30 kg getting 15 × 8 and 22.5 × 4, cable fly at 22 kg getting 10 × 8 and 15 × 4, no Warm-ups on push-ups, and the hint with no weight typed; bench press's tiles (6 sessions, last 24 Nov; 9 sets, 51 reps; 3,870 kg) wrapping 3 and 2 on a phone and in one row on a desktop, and an Every time line opening its workout; "Done 2 times, last on 27 Nov" on Push day after two test workouts (deleted afterwards).
+- Not checked: a real phone.
+- Still not done: assisted exercises (an assisted pull-up machine). They'd need a new machine in the gym equipment list, which also feeds members' kit reports and gym filters, as well as weights below zero (less help as progress) across the app, the server and records. Left for a batch of its own.
+
 ## Update 297 · Do it again, an empty workout, and records in History
 
 *27 Nov 2026 · the commit "Do it again and Save on your own workouts, an empty workout, records in History"*

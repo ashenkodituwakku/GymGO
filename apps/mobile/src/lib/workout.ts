@@ -153,6 +153,22 @@ export interface Exercise {
 
 const BODY: Kit[][] = [[]];
 
+/** Machines whose stack or plates warm up in steps (lib/training.ts stepWarmUps). */
+const STACKS: readonly Kit[] = ['cable_station', 'lat_pulldown', 'leg_press', 'hack_squat', 'smith_machine'];
+
+/**
+ * How an exercise is loaded, for its warm-ups: on a barbell, with
+ * dumbbells, or on a machine. Null for one done at body weight or with
+ * kit that isn't a weight (a pull-up bar, a bench), and for a hold or carry.
+ */
+export function warmUpKit(exercise: Exercise | null | undefined): 'barbell' | 'dumbbell' | 'machine' | null {
+  if (!exercise || exercise.cardio || TIMED.has(exercise.id) || exercise.timed || exercise.id === 'farmer-carry') return null;
+  if (exercise.needs.some((option) => option.includes('barbells'))) return 'barbell';
+  if (exercise.needs.some((option) => option.includes('dumbbells'))) return 'dumbbell';
+  if (exercise.needs.some((option) => option.some((kit) => STACKS.includes(kit)))) return 'machine';
+  return null;
+}
+
 /**
  * An exercise's name: GymGO's own, or, for an id it doesn't list (one logged
  * under an older name, say), its words made readable: "romanian-deadlift"

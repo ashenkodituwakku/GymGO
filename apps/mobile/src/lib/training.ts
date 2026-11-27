@@ -353,6 +353,61 @@ export function warmUpSets(working: number, unit: WeightUnit, bar = BAR[unit], p
   return out;
 }
 
+/** How a weighted exercise is loaded, for its warm-ups: a bar and plates, a pair of dumbbells, or a machine's stack. */
+export type WarmUpKit = 'barbell' | 'dumbbell' | 'machine';
+
+/** The smallest jump dumbbells and a weight stack usually make. */
+export const WARM_UP_STEP: Record<Exclude<WarmUpKit, 'barbell'>, Record<WeightUnit, number>> = {
+  dumbbell: { kg: 2.5, lb: 5 },
+  machine: { kg: 5, lb: 10 },
+};
+
+/**
+ * Warm-ups for dumbbells or a machine: about half the working weight for
+ * 8, then three quarters for 4, each rounded down to a step the kit can
+ * make. Two sets, not a barbell's four, as there's no empty bar to start
+ * from. A step that rounds to nothing, repeats or reaches the working
+ * weight is left out, so a light weight gets one warm-up or none.
+ */
+export function stepWarmUps(working: number, unit: WeightUnit, kit: Exclude<WarmUpKit, 'barbell'>): Array<{ weight: number; reps: number }> {
+  const step = WARM_UP_STEP[kit][unit];
+  const out: Array<{ weight: number; reps: number }> = [];
+  if (!(working > 0)) return out;
+  for (const [share, reps] of [[0.5, 8], [0.75, 4]] as const) {
+    const weight = Number((Math.floor((working * share) / step + 1e-9) * step).toFixed(2));
+    if (weight <= 0 || weight >= working || (out.length > 0 && weight <= out[out.length - 1]!.weight)) continue;
+    out.push({ weight, reps });
+  }
+  return out;
+}
+
+/**
+ * One exercise over your whole log: its working sets, the reps in them (a
+ * hold's or carry's sets count as sets, not reps), the weight lifted
+ * (weight × reps, in kg; body weight left out) and when you last did it.
+ */
+export function exerciseTotals(sessions: readonly TrainingSession[], exerciseId: string): { sets: number; reps: number; volumeKg: number; last: string | null } {
+  let sets = 0;
+  let reps = 0;
+  let volume = 0;
+  let last: string | null = null;
+  for (const session of sessions) {
+    let did = false;
+    for (const logged of session.exercises) {
+      if (logged.exerciseId !== exerciseId) continue;
+      for (const set of workingSets(logged.sets)) {
+        did = true;
+        sets += 1;
+        if (isTimedSet(set)) continue;
+        reps += set.reps;
+        if (set.weight && set.weight > 0) volume += toKg(set.weight, session.unit) * set.reps;
+      }
+    }
+    if (did && (last === null || session.finishedAt > last)) last = session.finishedAt;
+  }
+  return { sets, reps, volumeKg: volume, last };
+}
+
 // --- Over time -------------------------------------------------------------------
 
 /** What an exercise's chart can follow over time. */

@@ -667,7 +667,9 @@ workouts go to your log.
   With Pro, **Warm-ups** on a barbell exercise adds the bar for 10, then
   about 40%, 60% and 80% of your working weight for 5, 3 and 2 (your gym's
   plates, if you've set them), before the first working set; asking again
-  replaces the ones not done yet.
+  replaces the ones not done yet. With dumbbells or on a machine it adds
+  two, about 50% for 8 and 75% for 4, rounded down to 2.5 kg (5 lb) for
+  dumbbells or 5 kg (10 lb) for a weight stack.
 - **Holds, cardio and carries.** A plank, wall sit, hollow hold, rower or
   bike sprints is logged by **time**: type "1:30" (or "90"), or tap ▶ for
   a **stopwatch** on that set and tap again to stop, which puts its time in
@@ -725,7 +727,10 @@ workouts go to your log.
   biggest set, the most in one session, every working set added up, and
   the most reps at body weight) and **Rep records**: the heaviest you've
   lifted for each number of reps up to 20, leaving out any a heavier set
-  for more reps has beaten (100 kg × 5 makes 95 kg × 3 no record). Only against your own earlier sessions: the first
+  for more reps has beaten (100 kg × 5 makes 95 kg × 3 no record). Its
+  tiles also count every set, rep and kilogram you've done of it and say
+  when you last did it, and each line of **Every time** names the workout
+  and opens it. Only against your own earlier sessions: the first
   time you log something is a starting point, not a record. A broken record
   gets confetti (none with Reduce Motion on) and a **record card** to share
   as a picture: the exercise, the set and the day.
@@ -1098,7 +1103,8 @@ start in one tap. Saved workouts stay, and can still be started, if Pro
 ends. Sort them into **folders** of your own (the folder button beside a
 workout, or Move to folder on its page): folders are listed A to Z, fold
 away, and can be renamed or removed (the workouts stay). Moving and
-renaming work on Free too, since they're tidying. **Duplicate** (Pro) makes
+renaming work on Free too, since they're tidying. Each says how often
+you've done it and when last ("Done 3 times, last on 24 Nov"). **Duplicate** (Pro) makes
 a copy ("Push (copy)") in the same folder to change into a variation.
 Finish a saved workout differently (an exercise added or skipped, more or
 fewer sets, a new order) and the summary offers **Update Push to match**

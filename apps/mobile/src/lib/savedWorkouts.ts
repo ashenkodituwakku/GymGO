@@ -6,7 +6,7 @@
 import { usesTwentyFourHour } from '@gymgo/domain';
 import { startSession } from './activeSession';
 import type { SavedWorkout, SavedWorkoutPlan } from './api';
-import type { WeightUnit } from './training';
+import type { TrainingSession, WeightUnit } from './training';
 import { type Kit, type Muscle, type Workout, exerciseById } from './workout';
 
 export function workoutFromSaved(plan: SavedWorkoutPlan): { workout: Workout; missing: number } {
@@ -72,4 +72,23 @@ export function libraryDetails(workouts: SavedWorkout[], locale?: string): Map<s
     );
   }
   return lines;
+}
+
+/** How often each saved workout has been done (sessions started from it), and when last. */
+export function workoutUse(sessions: readonly TrainingSession[]): Map<string, { count: number; last: string }> {
+  const use = new Map<string, { count: number; last: string }>();
+  for (const session of sessions) {
+    if (!session.workoutId) continue;
+    const seen = use.get(session.workoutId);
+    if (!seen) use.set(session.workoutId, { count: 1, last: session.finishedAt });
+    else use.set(session.workoutId, { count: seen.count + 1, last: session.finishedAt > seen.last ? session.finishedAt : seen.last });
+  }
+  return use;
+}
+
+/** "Done once, on 24 Nov", "Done 3 times, last on 24 Nov" (the year when it isn't this one). */
+export function doneLine(use: { count: number; last: string }, now: Date = new Date(), locale?: string): string {
+  const date = new Date(use.last);
+  const day = date.toLocaleDateString(locale, { day: 'numeric', month: 'short', ...(date.getFullYear() !== now.getFullYear() ? { year: 'numeric' } : {}) });
+  return use.count === 1 ? `Done once, on ${day}` : `Done ${use.count} times, last on ${day}`;
 }

@@ -6,7 +6,7 @@
  */
 
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
@@ -21,7 +21,8 @@ import { useActiveSessionGlance } from '@/lib/activeSession';
 import { api, failureText, type SavedWorkout } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { haptic } from '@/lib/haptics';
-import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWorkouts';
+import { libraryDetails, libraryTitle, startSavedWorkout, doneLine, workoutUse } from '@/lib/savedWorkouts';
+import { useTrainingLog } from '@/lib/useTraining';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { unitFor } from '@/lib/training';
 import { usePageTitle } from '@/lib/pageTitle';
@@ -44,6 +45,9 @@ export default function MyWorkouts() {
   // Kept while the server is away too: loading then fails and says so,
   // where a missing token would ask a signed-in person to sign in.
   const token = account.token;
+  // How often each has been done, and when last, from your log.
+  const log = useTrainingLog(token);
+  const use = useMemo(() => workoutUse(log.sessions), [log.sessions]);
 
   // Reload whenever the screen shows, so a delete on the next screen is reflected.
   const load = useCallback(() => {
@@ -85,7 +89,7 @@ export default function MyWorkouts() {
                   <Pressable
                     onPress={() => router.push({ pathname: '/workouts/[id]', params: { id: workout.id } })}
                     accessibilityRole="button"
-                    accessibilityLabel={`${title}, ${details.get(workout.id) ?? ''}`}
+                    accessibilityLabel={`${title}, ${details.get(workout.id) ?? ''}${use.get(workout.id) ? `. ${doneLine(use.get(workout.id)!)}` : ''}`}
                     style={({ pressed }) => [styles.open, pressed && styles.pressed]}
                   >
                     <ExerciseTile exerciseId={leadExercise(workout.plan.items.map((item) => item.exerciseId))} size={46} />
@@ -97,6 +101,11 @@ export default function MyWorkouts() {
                       <Txt variant="footnote" color={color.labelSecondary} numberOfLines={3}>
                         {details.get(workout.id)}
                       </Txt>
+                      {use.get(workout.id) && (
+                        <Txt variant="footnote" color={color.labelSecondary}>
+                          {doneLine(use.get(workout.id)!)}
+                        </Txt>
+                      )}
                     </View>
                   </Pressable>
                   <Pressable

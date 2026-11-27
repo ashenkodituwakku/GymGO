@@ -71,6 +71,7 @@ import {
   toKg,
   unitFor,
   volumeKg,
+  stepWarmUps,
   warmUpSets,
   weightFor,
   withWarmUps,
@@ -95,7 +96,7 @@ import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWork
 import { changeLine, routineChange, routineFromSession } from '@/lib/routineUpdate';
 import { canMove, moveExercise, removeExercise, removeSet, replaceExercise } from '@/lib/liveEdits';
 import { useTrainingLog } from '@/lib/useTraining';
-import { TYPICAL_KIT, exerciseName, knownKit, setMeasure, swapFor, type Exercise, type Kit, exerciseById } from '@/lib/workout';
+import { TYPICAL_KIT, exerciseName, knownKit, setMeasure, swapFor, warmUpKit, type Exercise, type Kit, exerciseById } from '@/lib/workout';
 import { groupName, groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
 import { GroupControls, groupTag, joinableNext } from '@/components/GroupControls';
 import { SwapButton } from '@/components/ExerciseCard';
@@ -873,6 +874,8 @@ const ExerciseLog = memo(function ExerciseLog({
   const timed = measure !== 'reps';
   const bodyWeight = exercise ? exercise.needs.some((option) => option.length === 0) && !exercise.needs.some((option) => option.length > 0) : false;
   const barbell = exercise ? exercise.needs.some((option) => option.includes('barbells')) : false;
+  // Warm-ups: a barbell's ramp from the empty bar, or a shorter one for dumbbells or a machine.
+  const warmKit = warmUpKit(exercise);
   const last = useMemo(() => lastTime(history, item.exerciseId), [history, item.exerciseId]);
   // Your records from before this workout, to mark a set that beats them as you tick it.
   const before = useMemo(() => personalRecords(history).get(item.exerciseId), [history, item.exerciseId]);
@@ -949,13 +952,20 @@ const ExerciseLog = memo(function ExerciseLog({
     setRating(null);
   };
 
-  // Warm-ups (Pro): the bar, then about 40%, 60% and 80% of your working weight, before the first working set.
+  // Warm-ups (Pro), before the first working set: on a barbell the bar, then about 40%, 60% and 80%
+  // of your working weight; with dumbbells or a machine about 50% and 75%, in steps they can make.
   const addWarmUps = () => {
     if (!isPro) return onWarmUpPro();
+    if (!warmKit) return;
     const typed = item.sets.find((set) => set.kind !== 'warmup' && set.weight.trim())?.weight;
     const working = typed ? parseWeight(typed) : weightGuess;
-    const ramp = typeof working === 'number' ? warmUpSets(working, unit, BAR[unit], plates ?? PLATES[unit]) : [];
-    if (ramp.length === 0) return setHint(`Type your working weight first (over the ${formatWeight(BAR[unit], unit)} bar): the warm-ups build up to it.`);
+    if (typeof working !== 'number' || !(working > 0)) {
+      return setHint(warmKit === 'barbell' ? `Type your working weight first (over the ${formatWeight(BAR[unit], unit)} bar): the warm-ups build up to it.` : 'Type your working weight first: the warm-ups build up to it.');
+    }
+    const ramp = warmKit === 'barbell' ? warmUpSets(working, unit, BAR[unit], plates ?? PLATES[unit]) : stepWarmUps(working, unit, warmKit);
+    if (ramp.length === 0) {
+      return setHint(warmKit === 'barbell' ? `Type your working weight first (over the ${formatWeight(BAR[unit], unit)} bar): the warm-ups build up to it.` : 'At this weight, your first set is warm-up enough.');
+    }
     setHint(null);
     // The sets move down: an RPE row open under one would end up under another.
     setRating(null);
@@ -1426,7 +1436,7 @@ const ExerciseLog = memo(function ExerciseLog({
             Add set
           </Txt>
         </Pressable>
-        {barbell && (
+        {warmKit && (
           <Pressable
             onPress={addWarmUps}
             accessibilityRole="button"

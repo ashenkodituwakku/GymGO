@@ -1,8 +1,8 @@
 /**
- * Build a workout with GymPal (GymGO Max). Say what you'd like ("45
- * minutes, upper body, dumbbells only") and GymPal builds it from GymGO's
+ * Build a workout with Verity (GymGO Max). Say what you'd like ("45
+ * minutes, upper body, dumbbells only") and Verity builds it from GymGO's
  * exercises and your own, ready to start. The server keeps only exercises
- * this list offered and numbers within bounds (apps/server/src/gymPalMax.ts),
+ * this list offered and numbers within bounds (apps/server/src/verityMax.ts),
  * so what comes back is always a workout GymGO can run.
  *
  * Without Max: what it is, and the way to Max.
@@ -32,7 +32,7 @@ const IDEAS = ['45 minutes, upper body', 'Legs, dumbbells only', 'Full body in 3
 
 export default function AiWorkoutScreen() {
   useGlassRedraw();
-  usePageTitle('Build with GymPal');
+  usePageTitle('Build with Verity');
   const router = useRouter();
   const { account, billing, prefs } = useApp();
   const [request, setRequest] = useState('');
@@ -52,9 +52,9 @@ export default function AiWorkoutScreen() {
     setProblem(null);
     setBuilt(null);
     try {
-      // GymGO's exercises and your own: GymPal chooses only from these.
+      // GymGO's exercises and your own: Verity chooses only from these.
       const exercises = [...EXERCISES, ...ownExercises()].map((exercise) => ({ id: exercise.id, name: exercise.name, measure: setMeasure(exercise.id) }));
-      const { workout } = await api.gymPalWorkout({ request: request.trim(), exercises, useLog });
+      const { workout } = await api.verityWorkout({ request: request.trim(), exercises, useLog });
       setBuilt(workout);
       haptic.success();
     } catch (error) {
@@ -73,28 +73,28 @@ export default function AiWorkoutScreen() {
 
   return (
     <>
-      <ScreenOptions options={{ title: 'Build with GymPal' }} />
+      <ScreenOptions options={{ title: 'Build with Verity' }} />
       <PageScroll style={styles.page} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.titleRow}>
           <Txt variant="largeTitle" accessibilityRole="header" level={1} style={styles.flex}>
-            Build with GymPal
+            Build with Verity
           </Txt>
           <MaxBadge />
         </View>
         <Txt variant="body" color={color.labelSecondary}>
-          Describe the workout you want and GymPal will build it for you.
+          Describe the workout you want and Verity will build it for you.
         </Txt>
 
         {serverless || !signedIn ? (
           <View style={styles.card}>
-            <Txt variant="subhead">{serverless ? 'GymPal isn’t available in this version of GymGO.' : 'Sign in to build workouts with GymPal.'}</Txt>
+            <Txt variant="subhead">{serverless ? 'Verity isn’t available in this version of GymGO.' : 'Sign in to build workouts with Verity.'}</Txt>
             {!serverless && <PrimaryButton label="Sign in" onPress={() => router.push('/sign-in')} />}
           </View>
         ) : !billing.isMax ? (
           <View style={styles.card}>
             <Txt variant="headline">Included with GymGO Max</Txt>
             <Txt variant="subhead" color={color.labelSecondary}>
-              Get everything in Pro, plus AI workout building, coach notes after every workout and higher GymPal limits.
+              Get everything in Pro, plus building workouts here from your training log, coach notes after every workout and higher Verity limits.
             </Txt>
             <PrimaryButton label="See GymGO Max" onPress={() => router.push({ pathname: '/pro', params: { reason: 'max' } })} />
           </View>
@@ -120,9 +120,9 @@ export default function AiWorkoutScreen() {
             </View>
             <Txt variant="caption" color={color.labelSecondary}>
               {useLog
-                ? 'GymPal can see your recent exercises, sets and weights. It can’t see your gyms or notes.'
+                ? 'Verity can see your recent exercises, sets and weights. It can’t see your gyms or notes.'
                 : 'Turn on to build from your recent workouts.'}{' '}
-              Uses 1 GymPal message.
+              Uses 1 Verity message.
             </Txt>
             <PrimaryButton label={busy ? 'Building…' : built ? 'Build another' : 'Build workout'} busy={busy} onPress={() => void build()} />
           </>

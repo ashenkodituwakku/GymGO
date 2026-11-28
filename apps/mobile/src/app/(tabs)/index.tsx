@@ -104,7 +104,7 @@ export default function Home() {
   const [editing, setEditing] = useState(false);
   const [gallery, setGallery] = useState(false);
   const [dragging, setDragging] = useState(false);
-  // GymPal's tab keeps out of the editing bar's way.
+  // Verity's tab keeps out of the editing bar's way.
   useEffect(() => {
     setHomeEditing(editing);
     return () => setHomeEditing(false);

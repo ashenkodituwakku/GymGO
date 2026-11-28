@@ -37,7 +37,7 @@ import { WalletButton } from '@/components/WalletButton';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Segmented, Txt, LiveLine } from '@/components/ui';
 import { GiftPro, RedeemGift, grantLine } from '@/components/ProExtras';
-import { AskGymPal } from '@/components/AskGymPal';
+import { AskVerity } from '@/components/AskVerity';
 import { useApp, type ProReason } from '@/lib/app-state';
 import type { Sale } from '@/lib/useBilling';
 import { ApiError, OfflineError, apiBase, serverHosted } from '@/lib/api';
@@ -73,11 +73,11 @@ const FEATURE_ICON: Record<string, IconName> = {
   'Lifetime stats': 'trophy',
   'Sound packs': 'sound',
   'Head to head': 'compare',
-  GymPal: 'send',
+  Verity: 'send',
   'Max badge': 'trophy',
   'AI workout builder': 'workout',
   'AI coach notes': 'sparkle',
-  'Higher GymPal limits': 'send',
+  'Higher Verity limits': 'send',
 };
 
 const REASON: Record<ProReason, string> = {
@@ -100,8 +100,8 @@ const REASON: Record<ProReason, string> = {
   lifetime: 'See your all-time totals and favourite exercises, ready to share.',
   sounds: 'Add Arcade, a chiptune sound pack for workouts and check-ins.',
   headToHead: 'Compare your best lifts with a friend’s, exercise by exercise.',
-  max: 'AI workout building and coach notes come with GymGO Max.',
-  gympal: 'Free includes 20 GymPal messages a day. Pro raises that to 100 and uses your training history. Max raises it to 300.',
+  max: 'Build with Verity and coach notes come with GymGO Max.',
+  verity: 'Free includes 20 Verity messages a day. Pro raises that to 100 and uses your training history. Max raises it to 300.',
 };
 
 export default function ProScreen() {
@@ -110,7 +110,7 @@ export default function ProScreen() {
   const params = useLocalSearchParams<{ reason?: string; checkout?: string }>();
   const router = useRouter();
   const { account, billing, filters, prefs } = useApp();
-  // Pro, or Max: Pro with more from GymPal and a badge.
+  // Pro, or Max: Pro with more from Verity and a badge.
   const [plan, setPlan] = useState<'pro' | 'max'>(params.reason === 'max' ? 'max' : 'pro');
   // A new account's free trial of monthly Pro (the server decides who gets one).
   const trialOffer = !billing.isPro && plan === 'pro' ? billing.trial : null;
@@ -447,8 +447,8 @@ export default function ProScreen() {
           ))}
         </View>
 
-        <AskGymPal
-          title="Questions about Pro? Ask GymPal"
+        <AskVerity
+          title="Questions about Pro? Ask Verity"
           detail="Features, pricing and what’s free"
           request={{ question: 'What do GymGO Pro and Max include?' }}
         />

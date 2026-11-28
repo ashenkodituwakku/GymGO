@@ -332,8 +332,8 @@ function NoWorkout({ token }: { token: string | null }) {
             // In place of this page, as the builder is: starting it comes back here with the workout.
             { icon: 'plus' as IconName, title: 'Make your own', go: () => router.replace('/workout-edit') },
             { icon: 'list' as IconName, title: 'From a template', go: () => router.push('/templates') },
-            // GymGO Max: GymPal builds it from what you say (app/ai-workout.tsx). It needs the server.
-            ...(apiBase() !== null ? [{ icon: 'sparkle' as IconName, title: 'Build with GymPal', max: true, go: () => router.push('/ai-workout') }] : []),
+            // GymGO Max: Verity builds it from what you say (app/ai-workout.tsx). It needs the server.
+            ...(apiBase() !== null ? [{ icon: 'sparkle' as IconName, title: 'Build with Verity', max: true, go: () => router.push('/ai-workout') }] : []),
           ].map((row, index) => (
             <Pressable
               key={row.title}
@@ -1938,7 +1938,7 @@ function Summary({
       <View style={styles.noteCard}>
         <SessionNote session={session} />
       </View>
-      {/* GymGO Max: GymPal's take on this workout, when asked (components/CoachNote.tsx). */}
+      {/* GymGO Max: Verity's take on this workout, when asked (components/CoachNote.tsx). */}
       <CoachNote sessionId={session.id} />
       <View style={styles.finish}>
         {/* The other things to do from here, as a list; Done is the one button. */}

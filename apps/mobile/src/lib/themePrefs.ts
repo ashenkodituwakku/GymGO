@@ -60,10 +60,15 @@ export interface ThemeChoice {
   customHue: number;
   /** Times as 19:00 rather than 7 pm, for everyone. */
   clock24: boolean;
-  /** Which side GymPal's button sits on, for everyone. */
-  gymPalSide: 'right' | 'left';
-  /** How GymPal waits (components/GymPal.tsx): a small tab on the screen's edge (the default), his button in the corner, or nothing to see. For everyone. */
-  gymPalButton: GymPalButton;
+  /** Which side Verity's button sits on, for everyone. */
+  veritySide: 'right' | 'left';
+  /**
+   * How Verity waits (components/Verity.tsx): its button in the corner (the
+   * default since Verity replaced GymPal), a tab on the screen's edge, or
+   * nothing to see. For everyone. Read from GymPal's older keys once: a
+   * stored 'tab' was only ever the old default, so it becomes the button.
+   */
+  verityButton: VerityButton;
   /**
    * How you get around (lib/navLayout.ts): the floating tab bar or a sidebar
    * menu, or 'auto' until you choose (the sidebar on the website on a wide
@@ -85,7 +90,7 @@ export interface ThemeChoice {
   moveButtons: boolean;
 }
 
-export type GymPalButton = 'tab' | 'corner' | 'hidden';
+export type VerityButton = 'tab' | 'corner' | 'hidden';
 
 export const DEFAULT_CHOICE: ThemeChoice = {
   appearance: 'system',
@@ -98,8 +103,8 @@ export const DEFAULT_CHOICE: ThemeChoice = {
   corners: 'standard',
   customHue: CUSTOM_HUE_DEFAULT,
   clock24: false,
-  gymPalSide: 'right',
-  gymPalButton: 'tab',
+  veritySide: 'right',
+  verityButton: 'corner',
   nav: 'auto',
   foldOnMap: true,
   mapStyle: FREE_MAP_STYLE,
@@ -110,7 +115,7 @@ export const DEFAULT_CHOICE: ThemeChoice = {
 /** What was stored, cleaned: anything unknown falls back to the default. */
 export function parseChoice(raw: string | null | undefined): ThemeChoice {
   try {
-    const value = raw ? (JSON.parse(raw) as Partial<ThemeChoice> & { layout?: unknown }) : {};
+    const value = raw ? (JSON.parse(raw) as Partial<ThemeChoice> & { layout?: unknown; gymPalSide?: unknown; gymPalButton?: unknown }) : {};
     return {
       appearance: value.appearance === 'light' || value.appearance === 'dark' || value.appearance === 'system' ? value.appearance : 'system',
       accent: ACCENT_IDS.includes(value.accent as AccentId) || value.accent === 'custom' ? (value.accent as AccentId) : FREE_ACCENT,
@@ -122,8 +127,9 @@ export function parseChoice(raw: string | null | undefined): ThemeChoice {
       corners: CORNER_STYLES.some((style) => style.id === value.corners) ? (value.corners as CornerStyle) : 'standard',
       customHue: typeof value.customHue === 'number' && Number.isFinite(value.customHue) ? Math.round(((value.customHue % 360) + 360) % 360) : CUSTOM_HUE_DEFAULT,
       clock24: value.clock24 === true,
-      gymPalSide: value.gymPalSide === 'left' ? 'left' : 'right',
-      gymPalButton: value.gymPalButton === 'corner' || value.gymPalButton === 'hidden' ? value.gymPalButton : 'tab',
+      veritySide: (value.veritySide ?? value.gymPalSide) === 'left' ? 'left' : 'right',
+      verityButton:
+        value.verityButton === 'tab' || value.verityButton === 'corner' || value.verityButton === 'hidden' ? value.verityButton : value.gymPalButton === 'hidden' ? 'hidden' : 'corner',
       nav: value.nav === 'tabs' || value.nav === 'sidebar' || value.nav === 'auto' ? value.nav : value.layout === 'sidebar' ? 'sidebar' : 'auto',
       foldOnMap: value.foldOnMap !== false,
       mapStyle: isMapStyle(value.mapStyle) ? value.mapStyle : FREE_MAP_STYLE,

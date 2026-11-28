@@ -4,7 +4,7 @@
  * it is, how many of this week's workouts are done, the next day with its
  * exercises (swap any), and the rule for adding weight. Every fourth week is
  * easier. With Pro, each exercise shows exactly what to lift next, and
- * GymPal can suggest changes from your training log.
+ * Verity can suggest changes from your training log.
  *
  * The programme is kept on this device (lib/programmeStore.ts); its
  * workouts go to your log like any other.
@@ -13,7 +13,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type ScrollViewInstance } from 'react-native';
-import { AskGymPal } from '@/components/AskGymPal';
+import { AskVerity } from '@/components/AskVerity';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
 import Animated from 'react-native-reanimated';
@@ -316,8 +316,8 @@ function Running({ programme }: { programme: Programme }) {
       )}
 
       {!LIMITED && (
-        <AskGymPal
-          title="Ask GymPal to adjust it"
+        <AskVerity
+          title="Ask Verity to adjust it"
           detail={billing.isPro ? 'From how your training has gone' : 'What to change, and why'}
           request={{
             question: 'How should I adjust my training programme, from how my training has gone?',

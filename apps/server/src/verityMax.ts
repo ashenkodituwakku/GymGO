@@ -1,6 +1,6 @@
 /**
- * GymPal's GymGO Max features (app.ts routes POST /api/gympal/workout and
- * POST /api/gympal/note), on the same models as the chat (gymPal.ts):
+ * Verity's GymGO Max features (app.ts routes POST /api/verity/workout and
+ * POST /api/verity/note), on the same models as the chat (verity.ts):
  *
  * - **Build me a workout**: a request in your own words ("45 minutes, upper
  *   body, dumbbells only") becomes a GymGO workout. The app sends the
@@ -10,10 +10,10 @@
  * - **Coach's note**: a few sentences on the workout you've just finished,
  *   beside your recent ones: what went well, and what to aim for next time.
  *
- * Each runs only when asked for, and counts as one of GymPal's questions.
+ * Each runs only when asked for, and counts as one of Verity's questions.
  */
 
-import { GymPalError } from './gymPal';
+import { VerityError } from './verity';
 
 /** What one request may say. */
 export const MAX_REQUEST_CHARS = 500;
@@ -33,7 +33,7 @@ export interface CatalogueEntry {
 
 export interface BuiltWorkout {
   name: string;
-  /** Why it's built this way, in a sentence, from GymPal. */
+  /** Why it's built this way, in a sentence, from Verity. */
   note: string | null;
   items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number }>;
 }
@@ -49,13 +49,13 @@ const plainLine = (value: string, most: number) =>
 /** The request, as typed: a sensible length, one paragraph. */
 export function cleanRequest(input: unknown): string {
   const text = typeof input === 'string' ? plainLine(input, MAX_REQUEST_CHARS) : '';
-  if (text.length < 3) throw new GymPalError(400, 'Describe the workout you want, like how long and which muscles.');
+  if (text.length < 3) throw new VerityError(400, 'Describe the workout you want, like how long and which muscles.');
   return text;
 }
 
 /** The exercises the app offers: ids and names it knows, each once, at most MAX_CATALOGUE. */
 export function cleanCatalogue(input: unknown): CatalogueEntry[] {
-  if (!Array.isArray(input)) throw new GymPalError(400, 'No exercises were sent. Try again.');
+  if (!Array.isArray(input)) throw new VerityError(400, 'No exercises were sent. Try again.');
   const seen = new Set<string>();
   const list: CatalogueEntry[] = [];
   for (const item of input.slice(0, MAX_CATALOGUE)) {
@@ -67,11 +67,11 @@ export function cleanCatalogue(input: unknown): CatalogueEntry[] {
     seen.add(id);
     list.push({ id, name: plainLine(name, 80), measure: measure === 'time' || measure === 'distance' ? measure : 'reps' });
   }
-  if (list.length === 0) throw new GymPalError(400, 'No exercises were sent. Try again.');
+  if (list.length === 0) throw new VerityError(400, 'No exercises were sent. Try again.');
   return list;
 }
 
-/** What GymPal is asked to do, after his guide: build one workout from the list, as JSON. */
+/** What Verity is asked to do, after his guide: build one workout from the list, as JSON. */
 export function workoutTask(catalogue: readonly CatalogueEntry[]): string {
   const lines = catalogue.map((entry) => `${entry.id} | ${entry.name}${entry.measure === 'time' ? ' (timed: reps as "30–45 s")' : entry.measure === 'distance' ? ' (distance: reps as "30–40 m")' : ''}`);
   return [
@@ -100,7 +100,7 @@ function readReps(value: unknown, measure: CatalogueEntry['measure']): string | 
 }
 
 /**
- * GymPal's answer, read as a workout: the first JSON object in it, every
+ * Verity's answer, read as a workout: the first JSON object in it, every
  * exercise on the list, numbers within bounds. Null when nothing usable
  * came back (the app asks the person to try again).
  */
@@ -133,10 +133,10 @@ export function readWorkout(answer: string, catalogue: readonly CatalogueEntry[]
   if (items.length === 0) return null;
   const name = typeof raw.name === 'string' ? plainLine(raw.name, 40) : '';
   const note = typeof raw.note === 'string' ? plainLine(raw.note, 240) : '';
-  return { name: name || 'GymPal’s workout', note: note || null, items };
+  return { name: name || 'Verity’s workout', note: note || null, items };
 }
 
-/** What GymPal is asked to do for a coach's note. */
+/** What Verity is asked to do for a coach's note. */
 export const NOTE_TASK = [
   'Write a short coach’s note on the workout they have just finished, which is under "What the person is looking at". Compare it with their recent training, in their log, when it is there.',
   'Two to four sentences, plain text, no headings or lists: one specific thing that went well (a heavier set, more reps, a new exercise, turning up at all), and one specific thing to aim for next time.',
@@ -150,6 +150,6 @@ export function cleanNote(answer: string): string {
     .replace(/[*#_`]+/g, '')
     .replace(/\n{2,}/g, '\n')
     .trim();
-  if (!text) throw new GymPalError(502, 'GymPal didn’t write a note this time. Try again.');
+  if (!text) throw new VerityError(502, 'Verity didn’t write a note this time. Try again.');
   return text.length > MAX_NOTE_CHARS ? `${text.slice(0, MAX_NOTE_CHARS).replace(/\s+\S*$/, '')}…` : text;
 }

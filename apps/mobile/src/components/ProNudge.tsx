@@ -84,7 +84,7 @@ export function ProNudge() {
   if (!shown) return null;
   const mode = navMode(nav, width, Platform.OS === 'web');
   const left = insets.left + sidebarInset(mode, pathname, true);
-  // Beside a docked sidebar the page's foot is free (GymPal's button is in the corner, past the card); on a phone, the top.
+  // Beside a docked sidebar the page's foot is free (Verity's button is in the corner, past the card); on a phone, the top.
   const atFoot = mode === 'docked';
   const place = atFoot ? { bottom: insets.bottom + space[5] } : { top: insets.top + space[3] };
   const line = trialDays ? `Try it free for ${trialDays} days. Gyms in every country, and no limit on saved gyms.` : 'Gyms in every country, no limit on saved gyms, and a chart for every exercise.';

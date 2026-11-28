@@ -12,7 +12,7 @@ import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
-import { AskGymPal } from '@/components/AskGymPal';
+import { AskVerity } from '@/components/AskVerity';
 import { ExerciseNote } from '@/components/ExerciseNote';
 import { ProgressChart } from '@/components/ProgressChart';
 import { useGlassRedraw } from '@/components/Redrawn';
@@ -182,8 +182,8 @@ export default function ExerciseProgressScreen() {
               You deleted this exercise. It’s kept here for your past workouts.
             </Txt>
           )}
-          <AskGymPal
-            title="Ask GymPal about this exercise"
+          <AskVerity
+            title="Ask Verity about this exercise"
             detail="Form, common mistakes, what to swap in"
             request={{
               question: `How do I do ${exercise.name.toLowerCase()} well?`,

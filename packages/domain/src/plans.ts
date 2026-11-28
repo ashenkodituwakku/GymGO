@@ -144,7 +144,7 @@ export const PRO_PRODUCT = {
 } as const;
 
 /**
- * GymGO Max: everything in Pro, with more from GymPal and a Max badge by
+ * GymGO Max: everything in Pro, with more from Verity and a Max badge by
  * your name where friends see it. Its own subscription at its own price; a
  * Max subscriber is Pro as well, so every Pro feature is theirs.
  */
@@ -157,7 +157,7 @@ export const MAX_PRICES: ProPrice[] = [
 
 export const MAX_PRODUCT = {
   name: 'GymGO Max',
-  description: 'Everything in GymGO Pro, plus AI workout building, coach notes and higher GymPal limits.',
+  description: 'Everything in GymGO Pro, plus Build with Verity, coach notes and higher Verity limits.',
 } as const;
 
 /** A price of Max's (not Pro's). */
@@ -165,9 +165,9 @@ export const isMaxLookupKey = (key: string | null | undefined): boolean => MAX_P
 
 /** What Max adds over Pro, for the Pro screen: only what's built. */
 export const MAX_FEATURES: Array<{ title: string; pro: string; max: string }> = [
-  { title: 'AI workout builder', pro: 'Not included', max: 'Describe a workout and GymPal builds it for you' },
+  { title: 'AI workout builder', pro: 'Ask Verity for one in the chat', max: 'In the chat, or on Build with Verity with your training log' },
   { title: 'AI coach notes', pro: 'Not included', max: 'Personal feedback after every workout' },
-  { title: 'Higher GymPal limits', pro: '100 messages a day', max: '300 messages a day and longer conversations' },
+  { title: 'Higher Verity limits', pro: '100 messages a day', max: '300 messages a day and longer conversations' },
   { title: 'Max badge', pro: 'Not included', max: 'Shown next to your name in the feed and comments' },
 ]
 
@@ -197,7 +197,7 @@ export const PRO_FEATURES: Array<{ title: string; free: string; pro: string; gro
   { title: 'Streak freeze', free: 'Not included', pro: '1 missed week a month', group: 'training' },
   { title: 'Lifetime stats', free: 'Not included', pro: 'All-time totals, ready to share', group: 'training' },
   { title: 'Head to head', free: 'Friends’ workouts and comments', pro: 'Compare lifts with friends', group: 'training' },
-  { title: 'GymPal', free: '20 messages a day', pro: '100 a day, using your training history', group: 'training' },
+  { title: 'Verity', free: '20 messages a day', pro: '100 a day, a stronger AI model, workouts built in the chat and answers using your training history', group: 'training' },
   { title: 'Themes', free: 'Indigo, light, dark and Dim', pro: '12 accents, 10 styles, map styles', group: 'yours' },
   { title: 'Profile ring', free: 'Profile picture', pro: 'Ring in your accent colour', group: 'yours' },
   { title: 'Celebrations', free: 'Confetti', pro: 'Fireworks, stars or emoji', group: 'yours' },

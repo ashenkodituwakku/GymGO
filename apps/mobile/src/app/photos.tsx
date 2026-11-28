@@ -57,7 +57,7 @@ export default function PhotosScreen() {
         <View style={styles.privacy}>
           <Icon name="lock" size={15} color={color.goodInk} />
           <Txt variant="footnote" color={color.goodInk} style={styles.flex}>
-            {`Stored only on this ${Platform.OS === 'web' ? 'computer, in this browser' : 'phone'}. They aren’t uploaded or added to your account, and GymPal can’t see them. ${
+            {`Stored only on this ${Platform.OS === 'web' ? 'computer, in this browser' : 'phone'}. They aren’t uploaded or added to your account, and Verity can’t see them. ${
               Platform.OS === 'web' ? 'Clearing this site’s data deletes them.' : 'Deleting GymGO deletes them.'
             }`}
           </Txt>

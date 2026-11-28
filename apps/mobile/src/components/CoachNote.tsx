@@ -1,9 +1,9 @@
 /**
- * GymPal's coach's note on the workout just finished (GymGO Max), on the
+ * Verity's coach's note on the workout just finished (GymGO Max), on the
  * workout summary: asked for with a tap, never on its own, as each one is a
- * question to GymPal. The server reads this workout and the ones before it
- * (never its gym or your note) and GymPal says what went well and what to
- * aim for next (apps/server/src/gymPalMax.ts).
+ * question to Verity. The server reads this workout and the ones before it
+ * (never its gym or your note) and Verity says what went well and what to
+ * aim for next (apps/server/src/verityMax.ts).
  *
  * Without Max, one quiet line says what it is and leads to the Pro page.
  */
@@ -26,7 +26,7 @@ export function CoachNote({ sessionId }: { sessionId: string }) {
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  // GymPal needs a server, and an account to ask as.
+  // Verity needs a server, and an account to ask as.
   if (apiBase() === null || account.state !== 'signed_in') return null;
 
   if (!billing.isMax) {
@@ -58,7 +58,7 @@ export function CoachNote({ sessionId }: { sessionId: string }) {
     setBusy(true);
     setProblem(null);
     try {
-      const answer = await api.gymPalNote(sessionId);
+      const answer = await api.verityNote(sessionId);
       setNote(answer.note);
       haptic.success();
     } catch (error) {
@@ -81,7 +81,7 @@ export function CoachNote({ sessionId }: { sessionId: string }) {
           <Txt variant="body">{note}</Txt>
         ) : (
           <Txt variant="footnote" color={color.labelSecondary}>
-            Get feedback on this workout based on your recent training. Uses 1 GymPal message.
+            Get feedback on this workout based on your recent training. Uses 1 Verity message.
           </Txt>
         )}
       </LiveLine>

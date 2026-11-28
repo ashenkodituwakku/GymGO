@@ -45,11 +45,15 @@ describe('your appearance', () => {
 });
 
 describe('your adjustments', () => {
-  it('keeps text size, bold text, corners, your own colour, the clock and GymPal’s side, and falls back for anything odd', () => {
-    const kept = parseChoice(JSON.stringify({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 725, clock24: true, gymPalSide: 'left', gymPalButton: 'hidden' }));
-    expect(kept).toMatchObject({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 5, clock24: true, gymPalSide: 'left', gymPalButton: 'hidden' });
-    const odd = parseChoice(JSON.stringify({ textSize: 'huge', bold: 'yes', corners: 'wavy', customHue: 'red', clock24: 1, gymPalSide: 'top', gymPalButton: 'floating' }));
-    expect(odd).toMatchObject({ textSize: 'default', bold: false, corners: 'standard', customHue: DEFAULT_CHOICE.customHue, clock24: false, gymPalSide: 'right', gymPalButton: 'tab' });
+  it('keeps text size, bold text, corners, your own colour, the clock and Verity’s side, and falls back for anything odd', () => {
+    const kept = parseChoice(JSON.stringify({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 725, clock24: true, veritySide: 'left', verityButton: 'hidden' }));
+    expect(kept).toMatchObject({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 5, clock24: true, veritySide: 'left', verityButton: 'hidden' });
+    const odd = parseChoice(JSON.stringify({ textSize: 'huge', bold: 'yes', corners: 'wavy', customHue: 'red', clock24: 1, veritySide: 'top', verityButton: 'floating' }));
+    expect(odd).toMatchObject({ textSize: 'default', bold: false, corners: 'standard', customHue: DEFAULT_CHOICE.customHue, clock24: false, veritySide: 'right', verityButton: 'corner' });
+    // GymPal's keys, from before the rename: a side and Hidden carry over; the old default tab becomes the button.
+    expect(parseChoice(JSON.stringify({ gymPalSide: 'left', gymPalButton: 'hidden' }))).toMatchObject({ veritySide: 'left', verityButton: 'hidden' });
+    expect(parseChoice(JSON.stringify({ gymPalButton: 'tab' }))).toMatchObject({ verityButton: 'corner' });
+    expect(parseChoice(JSON.stringify({ verityButton: 'tab' }))).toMatchObject({ verityButton: 'tab' });
     expect(parseChoice(JSON.stringify({ customHue: -30 })).customHue).toBe(330);
   });
 

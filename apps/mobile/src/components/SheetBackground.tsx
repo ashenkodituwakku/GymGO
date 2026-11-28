@@ -101,7 +101,7 @@ function FocusedWhileOpen({ children, holds }: { children: ReactNode; holds?: st
   const here = useRef<ViewInstance>(null);
   // Over a dimmed page (Filters), Tab past its last control went on to the page underneath: the map and its
   // buttons, out of sight behind the sheet. Focus that leaves comes back, to the first control going forwards
-  // or the last going backwards. A dialog opened over it (GymPal) keeps its own.
+  // or the last going backwards. A dialog opened over it (Verity) keeps its own.
   useEffect(() => {
     if (!holds || typeof document === 'undefined') return;
     const TABBABLE = 'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';

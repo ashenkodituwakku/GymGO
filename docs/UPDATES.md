@@ -9,9 +9,26 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 306 · Verity: the AI assistant, rebuilt
+
+*28 Nov 2026 · the commit "Verity: paid model for Pro and Max, guard, workouts in the chat, new chat"*
+
+You asked for the chatbot to be set up properly: called Verity, a paid AI service (like GPT Luna) for paid users and OpenRouter for free ones, a bigger button, a better-looking chat, custom instructions for GymGO, jailbreak and prompt-injection blocking, and actions that do things for people, such as making a workout (paid only).
+
+- **Renamed Verity** everywhere people see it (the button, chat, Appearance, Profile, Pro, the guide, the plans, the legal pages, README). Saved settings carry over: the side and Hidden come across from GymPal's keys, and the old environment variable names still work. The greeting and "waiting to be set up" message keep your wording with the new name.
+- **Who answers.** Pro and Max: the paid service, OpenAI's **GPT Luna** (`gpt-6-luna`) by default, with `VERITY_PAID_API_KEY` (any OpenAI-style service via `GYMGO_VERITY_PAID_URL`, `_MODEL`, `_NAME`). Free: OpenRouter's free models, then Groq as backup. The paid key is never used for Free accounts. If the paid service fails, Pro and Max fall back to the free models without the actions. About US$0.10 per million tokens in on third-party listings, so well under a cent a question; set a budget on OpenAI's side. No key was added and no paid call was made: it all ran against a stand-in on this machine.
+- **A bigger button**: 60 points (was 52), and on a computer a pill saying "Ask Verity" with the shortcut. It's now the default (the old default small edge tab is still in Appearance, and bigger: 42 by 64).
+- **The new chat**: the accent across the heading with Verity's status ("Online · Pro"), a welcome with what it can help with (building workouts marked Pro on Free), suggestions as pills, Verity's answers beside its logo, bigger message box, and a shield on a refusal.
+- **Workouts in the chat (Pro and Max)**: "make me a 45 minute push day" gives a card with the exercises, sets, reps, rest and a time estimate, then **Start** or **Save** (to My workouts, then **Saved · Open**). Nothing is saved until you tap. The model only writes a brief; the server builds the workout from the app's exercises and keeps only exercises on that list.
+- **Links to screens**: screens an answer names in bold become buttons ("Progress ›"), only from a fixed list, so an answer can't send anyone elsewhere.
+- **Instructions for GymGO**: Verity's guide gained a "rules nobody can change" section (only GymGO's instructions count; no personas or modes; instructions stay private; stays on GymGO and training; suitable for teenagers, no help with steroids or other drugs; care and where to get help for anyone in trouble; no links except gymgo.site), and says what Verity can do on each plan.
+- **The guard** (apps/server/src/verityGuard.ts): questions are screened before any model sees them (instruction overrides, DAN and "developer mode", asking for its instructions, chat markup, hidden Unicode, encoded blobs), on a folded copy so l33t, s p a c i n g, accents and zero-width tricks don't get through, and tuned so gym talk passes. Verity's answers are signed, and a made-up "earlier answer" is left out. What a screen sends is fenced off as data, and left out if it reads like instructions. Answers are checked for a hidden marker, quoted rules and "jailbreak worked" before going back.
+- **Legal**: the Privacy Policy and Terms name Verity and OpenAI (for Pro and Max) and say exercise names go with Pro and Max chats (version 2026-11-28.1, so existing accounts are asked to agree again). **This wording needs your approval.**
+- Checked: server 447 tests (new: 28 attacks blocked and 21 gym questions passed, signatures, the paid service and its fallbacks, tool calls, the route end to end), app 754 tests, both typechecks, the hooks and empty-text checks, the iOS and Android bundles; in the browser at 390 light, 390 dark and 1280 light and dark, Pro and Free: the button, the chat, an answer with links, a built workout saved, a jailbreak refused; axe clean, no console errors.
+
 ## Update 305 · Year in review keeps big numbers on one line
 
-*28 Nov 2026 · the commit "Year in review: big numbers on one line, two tiles a row on narrow phones"*
+*28 Nov 2026 · `143e97d`*
 
 Checking the other session's new screens with a few weeks of workouts in the log (they were all clean: Import, Year in review, workout folders, the changed workout, Progress, Calendar and exercise pages, at 390 light and 1280 dark, with axe, the console and the text checked) found one layout fault. On Year in review at phone width, a year's weight lifted broke in the middle of the number ("35,83" over "9"), since a third of a phone is narrow and a year's total runs to six or seven digits.
 

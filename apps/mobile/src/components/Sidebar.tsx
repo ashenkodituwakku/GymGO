@@ -239,7 +239,7 @@ export const FOLD_SHIFT = SIDEBAR_WIDTH - SIDEBAR_FOLDED;
 
 /*
  * Whether the map's sidebar is open from its capsule. Kept outside React's
- * tree so GymPal, drawn over the frame rather than in it, can keep clear of
+ * tree so Verity, drawn over the frame rather than in it, can keep clear of
  * it too. Arriving on any page starts it folded.
  */
 let unfolded = false;

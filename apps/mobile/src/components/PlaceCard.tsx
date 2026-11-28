@@ -36,7 +36,7 @@ import { LogoBadge, LogoCredit, useGymMark } from './BrandLogo';
 import { Glass } from './Glass';
 import { FADE_IN, FADE_OUT, Pressable, Pressy } from './motion';
 import { ActionButton, CloseButton, Fold, FoldGroup, GroupLine, InfoRow, RoundToggle, TIER_COLOUR, Txt, LiveLine } from './ui';
-import { AskGymPal } from './AskGymPal';
+import { AskVerity } from './AskVerity';
 import { JoinGym, MembershipBanner } from './JoinGym';
 import { LIMITED } from '@/lib/limited';
 
@@ -394,9 +394,9 @@ export function PlaceCard({
               </Txt>
             </View>
           ))}
-          <AskGymPal
+          <AskVerity
             flat
-            title="Ask GymPal to help with the call"
+            title="Ask Verity to help with the call"
             detail="What to ask and what the answers mean"
             request={{
               question: `Help me call ${location.name}. How should I ask these, and what should I listen for?`,

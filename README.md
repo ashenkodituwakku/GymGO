@@ -108,9 +108,9 @@ After that you can run:
   to GymGO's packages and starts the app with a clean cache. The launcher
   already does this by itself when it installs new packages or finds one
   missing, so you shouldn't often need it;
-- `gymgo -GymPal` takes out a GitHub token saved for GymPal by an earlier
+- `gymgo -GymPal` takes out a GitHub token saved for Verity by an earlier
   version (GitHub retired GitHub Models on 30 July 2026, so it does
-  nothing) and points to the OpenRouter steps under GymPal;
+  nothing) and points to the OpenRouter steps under Verity;
 - `gymgo -Tunnel` when the phone isn't on the same Wi-Fi;
 - `gymgo -NoBrowser` to start without opening a browser window;
 - `gymgo -NoDevAccount` to start without the ready-made Pro account.
@@ -182,9 +182,9 @@ echo 'alias gymgo="bash ~/GymGO/scripts/gymgo-mac.sh"' >> ~/.zshrc
 After that, `gymgo` starts everything, and `gymgo --xcode`, `gymgo --tunnel`
 and `gymgo --doctor` work as above.
 
-`gymgo --gympal` takes out a GitHub token saved for GymPal by an earlier
+`gymgo --gympal` takes out a GitHub token saved for Verity by an earlier
 version (GitHub retired GitHub Models on 30 July 2026) and points to the
-OpenRouter steps under GymPal.
+OpenRouter steps under Verity.
 
 **3. In Xcode:**
 
@@ -341,7 +341,7 @@ your accent glows behind them.
   **Account**: profile picture, name, email, password, Apple and Google,
   your data, sign out, delete), Training (Progress, My workouts, Plate calculator, 1-rep max, Interval timer), Pro, your
   gyms, Settings (Country, **Appearance**, Haptics, **Sounds**, **Location**,
-  **GymPal**, Demo mode), and where GymGO's facts come from.
+  **Verity**, Demo mode), and where GymGO's facts come from.
 - **Appearance**: Automatic (follows your phone), Light or Dark, for
   everyone, and dark in **Black** (true black, the default) or **Dim** (a
   soft blue-grey, easier in a lit room; the Standard look's, as the other
@@ -443,14 +443,15 @@ your accent glows behind them.
     Liquid Glass floating in from the screen's edges, as iPadOS 26 draws
     its sidebars (the tab bar's glass, as clear as your Liquid Glass level;
     a plain plate in a solid look or at 0%), every place with an icon from
-    the tab bar's set, the place you're on in a pill of your accent. GymPal's
+    the tab bar's set, the place you're on in a pill of your accent. Verity's
     button moves beside Menu, or clear of the docked sidebar.
-  - **GymPal's button** (everyone, while GymPal is on), from small screens showing where he waits: **Edge tab** (the
-    default: a small tab flush with the screen's edge, low down; tap it or
-    pull it in), **Corner** (his button in the bottom corner) or **Hidden**
-    (nothing on screen: on a phone, swipe in from that edge near the
-    bottom; on a computer, Ctrl + / or ⌘ /), on the right or the left. His
-    chat panel opens on the same side on a wide screen.
+  - **Verity's button** (everyone, while Verity is on), from small screens showing where it waits: **Button** (the
+    default: its logo in the bottom corner, or a pill saying Ask Verity on a
+    wide screen), **Edge tab** (a small tab flush with the screen's edge,
+    low down; tap it or pull it in) or **Hidden** (nothing on screen: on a
+    phone, swipe in from that edge near the bottom; on a computer, Ctrl + /
+    or ⌘ /), on the right or the left. Its chat panel opens on the same side
+    on a wide screen.
   - **Map** (Standard for everyone; the rest Pro): the style of Explore's
     map, from four tiles drawn in each style's own colours. **Standard**
     (OpenFreeMap's Liberty), **Muted** (Positron, pale greys so the pins
@@ -606,7 +607,7 @@ shadow under the feet, and a picked muscle glowing.
 **Progress photos** (Progress, or Profile → Training): pictures of
 yourself kept on the device only (files in the app's documents folder on a
 phone, the browser's Cache Storage on the web), never uploaded, not in your
-account, not shown to GymPal. Each is made 1,200 pixels across at most and
+account, not shown to Verity. Each is made 1,200 pixels across at most and
 saved afresh as a JPEG, without the original's details of where and on
 what it was taken. Hidden each time the screen opens until you tap **Show
 them**; **Then and now** puts the first beside the latest.
@@ -631,7 +632,7 @@ programme's days (`apps/mobile/src/lib/programmes.ts`). It shows the week
 offers as **Up next**. Every fourth week is easier: half the sets, about
 10% lighter. The rule for weight is shown to everyone (when every set
 reaches the top of its range, add 2.5 kg or 5 lb); with Pro, each exercise
-shows exactly what to lift next, as in a workout, and **Ask GymPal to
+shows exactly what to lift next, as in a workout, and **Ask Verity to
 adjust it** answers from your training log. **Swap** changes an exercise
 for the rest of the programme. The programme is kept on the device; its
 workouts go to your log.
@@ -692,7 +693,7 @@ workouts go to your log.
   in its own **RPE** column beside the reps, as a number, or a dash on a
   done set without one; tap it to change or clear it. A warm-up has none
   (making a rated set a warm-up drops it). Kept with the set, in the CSV
-  and in what GymPal sees when you let him use your log.
+  and in what Verity sees when you let it use your log.
 - **Notes on an exercise** (free): **Note** under an exercise in a
   workout, or **Add a note** on its page, pins a line or two to it ("seat
   on 4, grip just outside the rings"), shown in a tinted box each time you
@@ -1152,7 +1153,7 @@ to four it works second, what it needs (none is body weight), whether
 it's counted in reps or for a time, how to do it, and which of GymGO's
 moving icons it borrows (or a plain one). It's offered beside GymGO's
 wherever you pick an exercise, has its own page with records and history,
-counts in your muscle balance, recovery map and monthly report, and GymPal
+counts in your muscle balance, recovery map and monthly report, and Verity
 calls it by its name. Deleting one keeps its name on workouts you logged
 with it. It can't take one of GymGO's names.
 
@@ -1257,116 +1258,176 @@ only an **admin** sees and decides them:
 npx pnpm@10 --filter @gymgo/server make-admin you@example.com
 ```
 
-### GymPal, the AI assistant (free)
+### Verity, the AI assistant
 
-GymPal (called Verity until 28 October 2026) waits as a small tab on the
-right edge of every signed-in screen, low down (above the tab bar on the
-tabs; not during a workout, on the welcome tour or on screens that open as
-sheets). His logo is a speech bubble holding a dumbbell (redrawn 4
-November 2026). Tap the tab, or pull it in from the edge, and a chat opens;
-on a computer, **Ctrl + /** (⌘ / on a Mac) opens and closes it from
-anywhere, and Esc closes it. Appearance → **GymPal's button** puts him on
-the left, back in the corner as a button, or out of sight (a swipe in from
-the edge on a phone). The chat opens
-always starting with "Hi! I'm GymPal your personal assistant, ask me
-anything!". He answers questions about the app (where things are, what
-the labels mean, what Pro adds) and general training questions.
+Verity (called GymPal from 28 October to 28 November 2026) waits as a
+button in the bottom corner of every signed-in screen (above the tab bar on
+the tabs; on a computer, a pill that says **Ask Verity**; not during a
+workout, on the welcome tour or on screens that open as sheets). Its logo
+is a speech bubble holding a dumbbell. Tap it and a chat opens; on a
+computer, **Ctrl + /** (⌘ / on a Mac) opens and closes it from anywhere, and
+Esc closes it. Appearance → **Verity's button** puts it on the left, on the
+screen's edge as a small tab, or out of sight (a swipe in from the edge on a
+phone). The chat opens on "Hi! I'm Verity your personal assistant, ask me
+anything!", what it can help with, and two or three questions that fit the
+screen. It answers questions about the app (where things are, what the
+labels mean, what Pro adds) and general training questions, and with Pro or
+Max it **builds you a workout** right in the chat.
 
-His logo is `apps/mobile/assets/gympal/gympal.svg`: a white speech bubble
-holding a dumbbell, on a rounded tile of GymGO's blue-violet (with a
-512-pixel `gympal.png` beside it for anywhere an SVG won't do). The dumbbell
-lifts once as his tab appears, and in the chat as it opens and with each
-answer; otherwise nothing moves, and it keeps still with Reduce Motion. The
-app lays the logo's two parts (body, dumbbell) over each other to move the
-dumbbell: after changing the SVG, run `node scripts/gympal-logo.mjs` in
-`apps/mobile` to make them again.
-The chat stays while the app is open, **Start over** clears it, and nothing
-of it is stored, on the phone or the server.
+The chat (`apps/mobile/src/components/Verity.tsx`) has the accent across
+its heading with Verity's status ("Online · Pro"), Verity's answers beside
+its logo, and under an answer, buttons for the screens it names in bold
+("**Profile → Progress**" gives **Progress ›**; only screens GymGO knows,
+`apps/mobile/src/lib/verityLinks.ts`, so an answer can't send anyone
+anywhere else). A workout Verity builds shows as a card: its exercises,
+sets, reps and rest, then **Start** (the workout opens) or **Save** (to My
+workouts); nothing is saved until you tap. The chat stays while the app is
+open, **Start over** clears it, and nothing of it is stored, on the phone or
+the server.
 
-Answers come from a free AI model on **Groq** (groq.com) or **OpenRouter**
-(openrouter.ai), through the GymGO server: Groq first if its key is set,
-then OpenRouter if its key is, so GymPal can answer more questions a day
-than either gives free on its own. No free AI service is unlimited. (GitHub
-Models can't be used: GitHub retired it on 30 July 2026.) A model can't be taught the app once and for all, so the
-server sends GymPal's guide to GymGO with every question
-(`apps/server/src/gymPalGuide.ts`, written from this README and the screens):
-change it there when the app changes. The guide also holds the rules GymGO
-lives by: GymPal never states or guesses a real gym's prices, hours, entry
-rules, machines, reviews or busyness, and sends people to the gym's page,
-where each fact has its source; unknown is never "no"; it never invents
-deals or partnerships; and it gives general training ideas, not medical
-advice. The chat says GymPal is AI and can be wrong.
+Its logo is `apps/mobile/assets/verity/verity.svg` (with a 512-pixel
+`verity.png` beside it). The dumbbell lifts once as its button appears, and
+in the chat as it opens and with each answer; otherwise nothing moves, and
+it keeps still with Reduce Motion. The app lays the logo's two parts over
+each other to move the dumbbell: after changing the SVG, run
+`node scripts/verity-logo.mjs` in `apps/mobile` to make them again.
 
-To switch it on (free, no card), set up either or, for the most questions
-a day, both:
+**Who answers.** It depends on the person's plan
+(`apps/server/src/verity.ts`):
 
-1. **Groq:** make an account at **console.groq.com**, then **API Keys →
-   Create API Key**. Don't add a payment method there: that moves you to
-   Groq's paid plan.
-2. **OpenRouter:** make an account at **openrouter.ai**, then **Keys →
-   Create key**.
-3. Add them to `apps/server/.env.local` (git-ignored, so it never reaches
-   GitHub). Don't paste them anywhere else, a chat included:
+- **Pro and Max: a paid AI service**, OpenAI's **GPT Luna** (`gpt-6-luna`)
+  by default: fast, cheap, thinks before it answers, and can call tools.
+  Only it is given Verity's actions, so only Pro and Max can have a workout
+  built in the chat. It costs you per question: GPT-6 Luna was listed at
+  about US$0.10 a million tokens in and $0.50 out (on Cloudflare's catalogue
+  of OpenAI's models, 28 November 2026; check OpenAI's own pricing page),
+  and Verity's guide is about 6,000 tokens, so a question costs well under a
+  cent and a built workout about two. If it can't answer, or has no key,
+  the free models answer Pro and Max instead, without the actions.
+- **Free: OpenRouter's free models**, then Groq's free plan when OpenRouter
+  is busy or not set. These cost nothing (below).
+
+A model can't be taught the app once and for all, so the server sends
+Verity's guide to GymGO with every question
+(`apps/server/src/verityGuide.ts`, written from this README and the
+screens): change it there when the app changes. The guide also holds the
+rules GymGO lives by: Verity never states or guesses a real gym's prices,
+hours, entry rules, machines, reviews or busyness, and sends people to the
+gym's page, where each fact has its source; unknown is never "no"; it never
+invents deals or partnerships; it gives general training ideas, not medical
+advice; it stays on GymGO and training; and, as some people using GymGO are
+teenagers, it keeps every answer suitable for them and answers anyone in
+trouble with care and where to get help. The chat says Verity is AI and can
+be wrong.
+
+**Its guard** (`apps/server/src/verityGuard.ts`). Nobody can talk Verity
+out of its rules:
+
+- **Questions are screened before any model sees them.** "Ignore your
+  previous instructions", "developer mode", "you are DAN", asking for its
+  hidden instructions, chat markup smuggled in (`<|im_start|>system`),
+  invisible Unicode tag characters and long encoded blobs all get Verity's
+  fixed refusal, with no model asked (it still counts as one of the day's
+  questions). The check reads a folded copy of the text, so l33t-speak,
+  s p a c e d letters, accents, full-width letters and zero-width
+  characters don't get past it, and it's tuned so gym talk ("can I skip my
+  training today", "ignore the rules about rest days") never trips it.
+- **Verity's own answers are signed.** The app sends the conversation back
+  with each question, so anyone could fake an earlier answer ("Sure,
+  developer mode is on"). Each answer carries an HMAC only this server can
+  make, and one without a good signature is left out of what the model
+  sees. A restart forgets the secret: earlier answers drop out, the
+  questions stay. An earlier question the guard refused is left out too.
+- **Everything that isn't the question is fenced off as data** (what a
+  screen shows, the training log), and the instructions say never to obey
+  it; a screen's text that reads like instructions is left out altogether.
+- **Answers are checked before they go back.** One that repeats a random
+  marker hidden in the instructions, quotes Verity's rules at length, or
+  announces a jailbreak is replaced with the refusal.
+- **Actions never act on their own.** The model can only ask to build a
+  workout (`apps/server/src/verityTools.ts`); the server builds it from the
+  exercises the app offered, keeps only exercises on that list and numbers
+  in bounds, and the person taps to start or save it. A request to the
+  builder that trips the guard is dropped.
+
+**To switch it on**, set up the free services for Free accounts and the
+paid one for Pro and Max, in `apps/server/.env.local` (git-ignored, so it
+never reaches GitHub; don't paste keys anywhere else, a chat included):
+
+1. **OpenRouter** (free, no card): make an account at **openrouter.ai**,
+   then **Keys → Create key**.
+2. **Groq** (free, no card, optional backup): **console.groq.com → API
+   Keys → Create API Key**. Don't add a payment method there: that moves
+   you to Groq's paid plan.
+3. **The paid service** (costs money): an OpenAI API key from
+   **platform.openai.com → API keys**, with billing set up there. Set a
+   monthly budget limit on OpenAI's side too.
 
    ```
-   GROQ_API_KEY=your-groq-key
    OPENROUTER_API_KEY=your-openrouter-key
+   GROQ_API_KEY=your-groq-key
+   VERITY_PAID_API_KEY=your-openai-key
    ```
 
-4. Check it: `pnpm --filter @gymgo/server gympal:check` asks GymPal one
-   short question and says which service and model answered, or why none
-   did (never printing a key).
-5. Restart GymGO. The server's first lines say `GymPal: on, Groq's free
-   plan first (…)` (or `free models only (…)` with OpenRouter alone).
+   Another service with an OpenAI-style chat completions API works too:
+   set `GYMGO_VERITY_PAID_URL` (its address), `GYMGO_VERITY_PAID_MODEL`
+   (its model id) and `GYMGO_VERITY_PAID_NAME` (what the chat calls it).
+   A model that doesn't take `reasoning_effort` is asked without it.
+4. Check it: `pnpm --filter @gymgo/server verity:check` asks each service
+   that's set up one short question and says which model answered, or why
+   none did (never printing a key).
+5. Restart GymGO. The server's first lines say who answers Free and who
+   answers Pro and Max.
 
-Until then, GymPal is there all the same, and answers every question with
-"Sorry, we're waiting for GymPal to be set up. Check back soon!", sending
+Until then, Verity is there all the same, and answers every question with
+"Sorry, we're waiting for Verity to be set up. Check back soon!", sending
 nothing anywhere. Each question first asks the server again, so once the
-key is in, the next one gets a real answer, with no reload.
+key is in, the next one gets a real answer, with no reload. A Free account
+on a server with only the paid key gets that apology too: the paid service
+never answers Free accounts.
 
-**It can't cost money.** The server only ever asks models whose OpenRouter
-id ends in `:free`, and OpenRouter bills a fallback at the price of the
-model that answered, so a list of free ones stays free. By default
-it asks `google/gemma-4-31b-it:free`, then
+**The free services can't cost money.** The server only ever asks models
+whose OpenRouter id ends in `:free`, and OpenRouter bills a fallback at the
+price of the model that answered, so a list of free ones stays free. By
+default it asks `google/gemma-4-31b-it:free`, then
 `thinkingmachines/inkling-2-small:free`, then
 `nvidia/nemotron-3.5-super-vl:free`, three makers so one being busy doesn't
-stop GymPal (free on OpenRouter's list on 18 November 2026; free models come
-and go). When OpenRouter says no, the server's log (and `gympal:check`)
-shows its reason, such as "rate-limited upstream". Before asking, the server
-checks OpenRouter's public list of models every 6 hours and leaves out any
-that have gone (OpenRouter turns a whole question down over one missing
-model); with none of its own left, it asks up to three free models OpenRouter
-lists now, from different makers. Models that think before answering are
-asked to keep it short, and if one sends back nothing, the next is asked.
-`GYMGO_GYMPAL_MODELS` sets others, comma-separated; any that isn't free is
-left out, and the server says so. There's no free ChatGPT: every OpenAI
-model on OpenRouter is paid.
+stop Verity (free on OpenRouter's list on 18 November 2026; free models
+come and go). When OpenRouter says no, the server's log (and
+`verity:check`) shows its reason, such as "rate-limited upstream". Before
+asking, the server checks OpenRouter's public list of models every 6 hours
+and leaves out any that have gone; with none of its own left, it asks up to
+three free models OpenRouter lists now, from different makers.
+`GYMGO_VERITY_MODELS` sets others, comma-separated; any that isn't free is
+left out, and the server says so. (The names these had as Verity,
+`GYMGO_GYMPAL_MODELS` and `GYMGO_GYMPAL_GROQ_MODELS`, still work.)
+
+**OpenRouter's limits.** Its free models allow 20 questions a minute and **50
+a day for the whole account**, shared by everyone using your GymGO on Free
+(1,000 a day once $10 of credit has ever been bought there, which is yours
+to decide). Past that, Groq is asked if it's set.
 
 **Groq's limits.** Its free plan allows each model 30 questions a minute,
-1,000 a day and 200,000 tokens a day, for the whole account (checked on
-Groq's docs on 18 November 2026). GymPal's guide alone is about 5,000
-tokens and goes with every question, so the tokens run out first: roughly
-25 to 35 questions a day for each of its three models (`openai/gpt-oss-120b`,
-`openai/gpt-oss-20b`, then `qwen/qwen3.8-27b`, a preview Groq may withdraw;
-`GYMGO_GYMPAL_GROQ_MODELS` sets others), more if Groq's caching of the
-repeated guide applies. Past them Groq says no, and GymPal asks the next
-model, then OpenRouter. Groq says it doesn't keep what's sent by default.
+1,000 a day and 200,000 tokens a day (checked on Groq's docs on 18 November
+2026). Verity's guide goes with every question, so the tokens run out
+first: a few dozen questions a day for each of its three models
+(`openai/gpt-oss-120b`, `openai/gpt-oss-20b`, then `qwen/qwen3.8-27b`;
+`GYMGO_VERITY_GROQ_MODELS` sets others). Groq says it doesn't keep what's
+sent by default.
 
-**OpenRouter's limits.** Its free models allow 20 questions a minute and **50 a
-day for the whole account**, shared by everyone using your GymGO (1,000 a
-day once $10 of credit has ever been bought there, which is yours to
-decide). Past that, GymPal says he's had a lot of questions. GymGO also
-limits each person: 20 questions a day and 6 a minute on Free, 100 a day and
-10 a minute with Pro (`GYMPAL_PLANS` in `apps/server/src/gymPal.ts`).
+**GymGO's own limits** for each person: 20 questions a day and 6 a minute
+on Free, 100 a day and 10 a minute with Pro, 300 a day and 15 a minute with
+Max (`VERITY_PLANS` in `apps/server/src/verity.ts`). A built workout counts
+as one question.
 
-**Switching him off.** Profile → Settings → **GymPal** takes him out of the
-app on that device: no tab or button and no Ask GymPal rows,
-until it's switched on again.
+**Switching it off.** Profile → Settings → **Verity** takes it out of the
+app on that device: no button and no Ask Verity rows, until it's switched
+on again.
 
 **In the app's features.** The chat opens with two or three questions that
-fit the screen it opened on (`apps/mobile/src/lib/gymPalSuggestions.ts`):
+fit the screen it opened on (`apps/mobile/src/lib/veritySuggestions.ts`):
 "What is Tabata?" on the interval timer, "What should I ask a gym before I
-visit?" on a gym's page. And **Ask GymPal** rows open it with a question and
+visit?" on a gym's page. And **Ask Verity** rows open it with a question and
 a few lines about that screen, named in the chat ("About: this workout",
 with ✕ to take it back): on the workout you built (its exercises, sets,
 reps and rest, never the gym), each exercise's page (its cue, muscles and
@@ -1374,27 +1435,30 @@ kit), a gym's "When you call, ask" list (only the questions GymGO hasn't
 confirmed, so no fact about the gym is passed on), the templates, the Pro
 screen and Profile.
 
-**With Pro.** 100 questions a day instead of 20, a longer memory (the last
-30 messages, not 10), longer answers, and **Use my training log**: a switch
-in the chat, off to start, that lets GymPal see a summary the server makes
-of your latest 10 workouts (exercises, sets, reps, weights and how long ago;
-never their gyms or notes), so he can answer "What should I train today?"
-and "How is my training going?". On Free the switch shows locked and opens
-the Pro screen.
+**With Pro.** The paid model, 100 questions a day instead of 20, a longer
+memory (the last 30 messages, not 10), longer answers, workouts built in
+the chat, and **Use my training log**: a switch in the chat, off to start,
+that lets Verity see a summary the server makes of your latest 10 workouts
+(exercises, sets, reps, weights and how long ago; never their gyms or
+notes), so it can answer "What should I train today?" and "How is my
+training going?". On Free the switch, and the chat's "Building you a
+workout" line, show locked and open the Pro screen. **Max** adds 300
+questions a day, a longer memory still, **Build with Verity** (its own
+screen) and coach's notes.
 
-**Privacy.** What someone types, and the chat so far, goes to Groq or
-OpenRouter (whichever answers) and the model's provider to be answered;
-free models' providers may keep it and use it to improve their models. The
-note under the message box names the services. GymGO keeps none of it. The
-chat asks people to leave out personal details, and the Privacy Policy and
-Terms say all of this, the training log included (since version 2026-10-29;
-each new version, such as 2026-11-04's for the weather and 2026-11-18.2's
-naming Groq, shows existing accounts a card on Profile asking them to agree
-to it).
-On the website, which has no server behind it yet, GymPal always gives
-that apology; once the website is pointed at a GymGO server with the key
-(`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too,
-for people signed in.
+**Privacy.** What someone types, and the chat so far, goes to the AI
+service (OpenAI for Pro and Max; OpenRouter or Groq for Free) and the
+model's provider to be answered; free models' providers may keep it and use
+it to improve their models. With Pro or Max the names of GymGO's exercises
+and the person's own go too, to build workouts from. The note under the
+message box names the services. GymGO keeps none of it. The chat asks
+people to leave out personal details, and the Privacy Policy and Terms say
+all of this (version 2026-11-28.1 names Verity and OpenAI; each new version
+shows existing accounts a card on Profile asking them to agree to it).
+On the website, which has no server behind it yet, Verity always gives
+that apology; once the website is pointed at a GymGO server with the keys
+(`GYMGO_SERVER_URL`, in The website on Netlify), it answers there too, for
+people signed in.
 
 ### Report a bug
 
@@ -2116,7 +2180,7 @@ saved list always opens, wherever the gym is.
 | Warm-up sets | Mark any set as a warm-up; plates for any weight | A warm-up ramp to your weight, with the plates, on the plate calculator or added to a workout |
 | Gym notes | — | Your own notes on each gym, on your device |
 | Your plates | The usual set | The plates your gym has, for the sums and warm-ups |
-| Colour themes | Indigo; light, dark or Dim; the Standard and Minimal looks; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, GymPal's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, ten looks (Frost, Liquid, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
+| Colour themes | Indigo; light, dark or Dim; the Standard and Minimal looks; text size, bold text, reduce motion, the layout, 12- or 24-hour clock, Verity's button and side, the Standard map | Twelve accents (Rainbow and Camo too) or your own colour, ten looks (Frost, Liquid, Soft, Paper, Material, Neon, Terminal, 8-bit, Classic, Comic), corner styles, three more map styles (Muted, Classic, Deep blue) |
 | Interval timer | Tabata and EMOM | Your own work, rest and rounds; keep up to 10 |
 | 1-rep max | Your estimated max, and 90%, 80% and 70% | Every step from 100% to 50% with plates, and what you could lift for 2 to 12 reps |
 | Streak freeze | — | One missed week a month doesn't end your streak |
@@ -2124,7 +2188,7 @@ saved list always opens, wherever the gym is.
 | Celebrations | Confetti for a record or a goal met | Your pick: confetti, fireworks, gold stars or emoji |
 | Lifetime stats | — | Every kilo, rep and hour added up, your favourites, and what the weight compares to; shareable as a picture |
 | Arcade sounds | Marimba and bells | The workout and check-in sounds as chip tunes, picked in Appearance (the cards keep theirs) |
-| GymPal, the AI assistant | 20 questions a day | 100 a day, longer chats and answers, and (switched on in the chat) answers that know your training |
+| Verity, the AI assistant | 20 questions a day | 100 a day from a stronger paid model, longer chats and answers, workouts built in the chat, and (switched on in the chat) answers that know your training |
 
 Two plans, tax included: **Pro**, everything above, and **Max**, everything
 in Pro and more.
@@ -2134,10 +2198,10 @@ in Pro and more.
 | Monthly | A$3.99 | US$2.99 | A$9.99 | US$6.99 |
 | Yearly | A$29.99 (save 37%) | US$19.99 (save 44%) | A$79.99 (save 33%) | US$54.99 (save 34%) |
 
-**GymGO Max** (Updates 264 and 266) adds **Build with GymPal** (say what you'd
-like, "45 minutes, dumbbells only", and GymPal builds the workout from GymGO's
-exercises, ready to start), a **coach's note** from GymPal after each workout,
-GymPal at 300 questions a day with twice Pro's memory of a chat, and a **Max
+**GymGO Max** (Updates 264 and 266) adds **Build with Verity** (say what you'd
+like, "45 minutes, dumbbells only", and Verity builds the workout from GymGO's
+exercises, ready to start), a **coach's note** from Verity after each workout,
+Verity at 300 questions a day with twice Pro's memory of a chat, and a **Max
 badge** by your name where friends see it (the feed, comments, friends and
 challenges). A Pro subscriber switches to Max (or back) on Stripe's page
 for their subscription, Profile → Manage subscription, paying or being
@@ -2283,7 +2347,7 @@ Before you tell people about it, set who runs GymGO for the legal pages
 
 **gymgo.site follows it.** The website asks `https://app.gymgo.site` as each
 page opens: while your PC answers there, gymgo.site is the full GymGO
-(accounts, reviews, members' photos, GymPal), talking to your PC; while it
+(accounts, reviews, members' photos, Verity), talking to your PC; while it
 doesn't, gymgo.site is the limited version. So it needs the fixed address
 below: a quick tunnel's address is new each time, and gymgo.site can't find
 it, so with one gymgo.site stays the limited version. See "One website, two
@@ -2507,7 +2571,7 @@ whether it's on (`GET /api/health`, started in the page itself so the
 answer is ready by the time the app has downloaded; up to 3 seconds):
 
 - **It answers:** the full GymGO, talking to that server: accounts,
-  reviews, members' photos, Pro, GymPal. An account is optional, as on
+  reviews, members' photos, Pro, Verity. An account is optional, as on
   Netlify: anyone can look around, and sign in for what the server keeps.
 - **It doesn't** (off, asleep, or no answer in time): the limited version,
   with the gyms built in and its banner, asking the server nothing more. A

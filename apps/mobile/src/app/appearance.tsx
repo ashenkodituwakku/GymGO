@@ -20,7 +20,7 @@ import { loadAllLookFonts } from '@/lib/lookFonts';
 import Animated from 'react-native-reanimated';
 import { FADE_IN, Pressable } from '@/components/motion';
 import { Glass } from '@/components/Glass';
-import { GYMPAL_KEYS, GymPalMark } from '@/components/GymPal';
+import { VERITY_KEYS, VerityMark } from '@/components/Verity';
 import { Icon } from '@/components/Icon';
 import { PercentSlider } from '@/components/PercentSlider';
 import { PrimaryButton, SteadyTxt, Txt } from '@/components/ui';
@@ -66,7 +66,7 @@ import {
   type LookId,
   type TextSize,
 } from '@/lib/theme';
-import { setThemeChoice, useThemeChoice, type GymPalButton } from '@/lib/themePrefs';
+import { setThemeChoice, useThemeChoice, type VerityButton } from '@/lib/themePrefs';
 import { layoutFor, type NavLayout } from '@/lib/navLayout';
 import { FREE_MAP_STYLE, MAP_STYLES, mapStyle, mapStyleFor, type MapPalette, type MapStyleId } from '@/lib/mapStyles';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -96,13 +96,13 @@ const CLOCKS: Array<{ id: '12' | '24'; label: string; time: string; later: strin
   { id: '24', label: '24-hour', time: '19:00', later: 'until 21:30' },
 ];
 
-const GYMPAL_BUTTONS: Array<{ id: GymPalButton; label: string; blurb: string }> = [
+const VERITY_BUTTONS: Array<{ id: VerityButton; label: string; blurb: string }> = [
+  { id: 'corner', label: 'Button', blurb: 'A button in the corner' },
   { id: 'tab', label: 'Edge tab', blurb: 'A small tab on the edge' },
-  { id: 'corner', label: 'Corner', blurb: 'His button in the corner' },
   { id: 'hidden', label: 'Hidden', blurb: 'Nothing on screen' },
 ];
 
-const GYMPAL_SIDES: Array<{ id: 'left' | 'right'; label: string }> = [
+const VERITY_SIDES: Array<{ id: 'left' | 'right'; label: string }> = [
   { id: 'left', label: 'Left side' },
   { id: 'right', label: 'Right side' },
 ];
@@ -895,24 +895,24 @@ export default function AppearanceScreen() {
           {`Times read like ${timeLabel(19 * 60)}, for opening hours, visit times and reminders.`}
         </Txt>
 
-        {prefs.gymPal && (
+        {prefs.verity && (
           <>
             <View style={styles.accentHead}>
               <Txt variant="footnote" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.headCaps}>
-                GymPal’s button
+                Verity’s button
               </Txt>
             </View>
             {/* How he waits: each drawn on the side you've chosen. */}
             <View style={styles.modes} accessibilityRole="radiogroup">
-              {GYMPAL_BUTTONS.map((item) => {
-                const on = choice.gymPalButton === item.id;
+              {VERITY_BUTTONS.map((item) => {
+                const on = choice.verityButton === item.id;
                 return (
                   <Pressable
                     key={item.id}
                     onPress={() => {
                       if (on) return;
                       haptic.select();
-                      setThemeChoice({ gymPalButton: item.id });
+                      setThemeChoice({ verityButton: item.id });
                     }}
                     accessibilityRole="radio"
                     aria-checked={on}
@@ -920,7 +920,7 @@ export default function AppearanceScreen() {
                     style={styles.darkStyle}
                   >
                     <View style={[styles.preview, styles.previewWide, on && styles.previewOn]}>
-                      <GymPalPreview button={item.id} side={choice.gymPalSide} tone={scheme === 'dark' ? darkTone : 'light'} />
+                      <VerityPreview button={item.id} side={choice.veritySide} tone={scheme === 'dark' ? darkTone : 'light'} />
                     </View>
                     <View style={styles.darkText}>
                       <SteadyTxt on={on} variant="subhead">
@@ -937,23 +937,23 @@ export default function AppearanceScreen() {
             </View>
             {/* Which side: each drawn with the way he waits. */}
             <View style={[styles.modes, styles.sideRow]} accessibilityRole="radiogroup">
-              {GYMPAL_SIDES.map((item) => {
-                const on = choice.gymPalSide === item.id;
+              {VERITY_SIDES.map((item) => {
+                const on = choice.veritySide === item.id;
                 return (
                   <Pressable
                     key={item.id}
                     onPress={() => {
                       if (on) return;
                       haptic.select();
-                      setThemeChoice({ gymPalSide: item.id });
+                      setThemeChoice({ veritySide: item.id });
                     }}
                     accessibilityRole="radio"
                     aria-checked={on}
-                    accessibilityLabel={`GymPal on the ${item.id} side`}
+                    accessibilityLabel={`Verity on the ${item.id} side`}
                     style={styles.sideTile}
                   >
                     <View style={[styles.preview, styles.previewSide, on && styles.previewOn]}>
-                      <GymPalPreview button={choice.gymPalButton} side={item.id} tone={scheme === 'dark' ? darkTone : 'light'} />
+                      <VerityPreview button={choice.verityButton} side={item.id} tone={scheme === 'dark' ? darkTone : 'light'} />
                     </View>
                     <View style={styles.sideLabel}>
                       <Icon name={on ? 'done' : 'todo'} size={20} color={on ? color.brand : color.labelTertiary} />
@@ -966,7 +966,7 @@ export default function AppearanceScreen() {
               })}
             </View>
             <Txt variant="footnote" color={color.labelSecondary} style={styles.note}>
-              {gymPalHow(choice.gymPalButton, choice.gymPalSide)}
+              {verityHow(choice.verityButton, choice.veritySide)}
             </Txt>
           </>
         )}
@@ -976,13 +976,13 @@ export default function AppearanceScreen() {
   );
 }
 
-/** What each way of keeping GymPal does, and the other ways in. */
-function gymPalHow(button: GymPalButton, side: 'left' | 'right'): string {
-  const keys = Platform.OS === 'web' ? ` On a computer, ${GYMPAL_KEYS} also opens it.` : '';
-  const off = ' To turn GymPal off completely, go to Profile → Settings.';
+/** What each way of keeping Verity does, and the other ways in. */
+function verityHow(button: VerityButton, side: 'left' | 'right'): string {
+  const keys = Platform.OS === 'web' ? ` On a computer, ${VERITY_KEYS} also opens it.` : '';
+  const off = ' To turn Verity off completely, go to Profile → Settings.';
   if (button === 'tab') return `A small tab on the ${side} edge of the screen. Tap it or pull it in.${keys}${off}`;
-  if (button === 'corner') return `His button in the bottom ${side} corner.${keys}${off}`;
-  return `Nothing on screen.${Platform.OS === 'web' ? ` ${GYMPAL_KEYS} opens it` : ` Swipe in from the ${side} edge, near the bottom, to open it`}, or use Profile → Ask GymPal.${off}`;
+  if (button === 'corner') return `A button in the bottom ${side} corner.${keys}${off}`;
+  return `Nothing on screen.${Platform.OS === 'web' ? ` ${VERITY_KEYS} opens it` : ` Swipe in from the ${side} edge, near the bottom, to open it`}, or use Profile → Ask Verity.${off}`;
 }
 
 /** "Your own" among the accents: the colour you picked, or a rainbow ring before you have. */
@@ -1036,8 +1036,8 @@ function LayoutPreview({ layout, tone }: { layout: NavLayout; tone: keyof typeof
   );
 }
 
-/** A tiny screen with GymPal waiting on it: his tab on the edge, his button in the corner, or (hidden) only the strip you swipe in from. */
-function GymPalPreview({ button, side, tone }: { button: GymPalButton; side: 'left' | 'right'; tone: keyof typeof PREVIEW }) {
+/** A tiny screen with Verity waiting on it: its tab on the edge, its button in the corner, or (hidden) only the strip you swipe in from. */
+function VerityPreview({ button, side, tone }: { button: VerityButton; side: 'left' | 'right'; tone: keyof typeof PREVIEW }) {
   const p = PREVIEW[tone];
   const left = side === 'left';
   return (
@@ -1050,15 +1050,15 @@ function GymPalPreview({ button, side, tone }: { button: GymPalButton; side: 'le
         <View style={[styles.miniLine, { backgroundColor: p.text, width: '60%' }]} />
         <View style={[styles.miniLine, { backgroundColor: p.line, width: '40%' }]} />
       </View>
-      {/* As the app draws them: a light tab flush with the edge, holding his mark; in the corner, his mark itself. */}
+      {/* As the app draws them: a light tab flush with the edge, holding its mark; in the corner, its mark itself. */}
       {button === 'tab' && (
         <View style={[styles.palTab, left ? styles.palTabLeft : styles.palTabRight, { backgroundColor: p.card }]}>
-          <GymPalMark size={11} still />
+          <VerityMark size={11} still />
         </View>
       )}
       {button === 'corner' && (
         <View style={[styles.palCorner, left ? { left: 7 } : { right: 7 }]}>
-          <GymPalMark size={20} still />
+          <VerityMark size={20} still />
         </View>
       )}
       {button === 'hidden' && <View style={[styles.palStrip, left ? { left: 0 } : { right: 0 }, { backgroundColor: color.brand }]} />}
@@ -1265,7 +1265,7 @@ const styles = themed(() =>
     sizeFace: { alignSelf: 'stretch', height: 56, alignItems: 'center', justifyContent: 'center', borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
     // The clock's faces: a time as the app writes it.
     clockFace: { alignSelf: 'stretch', paddingVertical: space[3], alignItems: 'center', gap: 2, borderRadius: concentric(radius.lg, space[3]), borderCurve: 'continuous', backgroundColor: color.fill, borderWidth: 2, borderColor: 'transparent' },
-    // GymPal's button: where he waits on the tiny screens.
+    // Verity's button: where he waits on the tiny screens.
     palTab: { position: 'absolute', bottom: 10, width: 17, height: 30, alignItems: 'center', justifyContent: 'center', ...shadow.plate },
     palTabLeft: { left: 0, borderTopRightRadius: 9, borderBottomRightRadius: 9 },
     palTabRight: { right: 0, borderTopLeftRadius: 9, borderBottomLeftRadius: 9 },
@@ -1284,7 +1284,7 @@ const styles = themed(() =>
     miniMinor: { position: 'absolute', left: '64%', top: '-20%', width: 3, height: '140%', transform: [{ rotate: '20deg' }] },
     miniMajor: { position: 'absolute', left: '-20%', right: '-20%', top: '50%', height: 5, borderRadius: 2, transform: [{ rotate: '-12deg' }] },
     accentHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[4], marginTop: space[6], marginBottom: space[2] },
-    // Each section's name: a heading to jump between, written as words and drawn in capitals (VoiceOver spelt out "GYMPAL").
+    // Each section's name: a heading to jump between, written as words and drawn in capitals (VoiceOver spelt out "VERITY").
     headCaps: { textTransform: 'uppercase' },
     proTag: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 1, borderRadius: radius.pill, backgroundColor: color.brandTint },
     grid: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: space[3], paddingHorizontal: space[2], borderRadius: radius.lg, backgroundColor: color.plate, ...shadow.plate },

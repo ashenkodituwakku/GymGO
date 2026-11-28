@@ -101,9 +101,9 @@ async function request<T>(method: string, path: string, options: { token?: strin
   // Photos upload slowly; billing waits on Stripe; an area search may wait on the map service.
   // A bug report waits (a few seconds at most) for its email to go.
   const slow = (method === 'POST' && (path.endsWith('/photos') || path === '/api/bug-reports')) || path === '/api/me/avatar' || path.startsWith('/api/billing');
-  // GymPal's answer comes from a free AI model, which can take a while (the server gives it 45 seconds).
-  const thinking = method === 'POST' && path === '/api/gympal';
-  const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : thinking ? 50000 : slow || path.startsWith('/api/places') ? 30000 : 8000);
+  // Verity's answer comes from a free AI model, which can take a while (the server gives it 45 seconds).
+  const thinking = method === 'POST' && path === '/api/verity';
+  const timer = setTimeout(() => controller.abort(), path.startsWith('/api/area') ? 75000 : thinking ? 95000 : slow || path.startsWith('/api/places') ? 30000 : 8000);
   let response: Response;
   try {
     response = await fetch(`${base}${path}`, {
@@ -845,34 +845,47 @@ export const api = {
   moderate: (token: string, reviewId: string, body: { decision: 'publish' | 'reject'; reason?: string }) =>
     request<unknown>('POST', `/api/moderation/reviews/${encodeURIComponent(reviewId)}`, { token, body }),
   /**
-   * Whether GymPal, the chat, can answer on this server (it needs the owner's
-   * OpenRouter key), your plan's questions a day, and the AI service chats go
-   * to (the last two missing from older servers).
+   * Whether Verity, the chat, can answer you on this server (it needs the
+   * owner's keys), your plan's questions a day, the AI service your chats go
+   * to, and whether it can build workouts for you (Pro and Max, once the
+   * owner has set up the paid service).
    */
-  gymPal: () => request<{ on: boolean; pro?: boolean; perDay?: number; service?: string | null }>('GET', '/api/gympal'),
+  verity: () => request<{ on: boolean; pro?: boolean; perDay?: number; service?: string | null; actions?: boolean }>('GET', '/api/verity'),
   /**
-   * GymPal's answer to the last question in the conversation (the latest 10,
+   * Verity's answer to the last question in the conversation (the latest 10,
    * or 30 with Pro), with what the screen shows, and, for Pro with the switch
-   * on, a summary of your own training log the server makes.
+   * on, a summary of your own training log the server makes. Each answer
+   * comes signed (`sig`), to be sent back with it; `refused` marks Verity's
+   * fixed refusal, and `action` a workout it built (Pro and Max, from the
+   * `exercises` sent).
    */
-  askGymPal: (messages: ChatTurn[], extra: { context?: string | null; useLog?: boolean } = {}) =>
-    request<{ reply: string }>('POST', '/api/gympal', { body: { messages, ...(extra.context ? { context: extra.context } : {}), ...(extra.useLog ? { useLog: true } : {}) } }),
-  /** GymGO Max: a workout GymPal builds from your request, from the exercises sent (the server keeps only those). */
-  gymPalWorkout: (body: { request: string; exercises: Array<{ id: string; name: string; measure: 'reps' | 'time' | 'distance' }>; useLog?: boolean }) =>
-    request<{ workout: BuiltWorkout }>('POST', '/api/gympal/workout', { body }),
-  /** GymGO Max: GymPal's coach's note on a workout you logged, beside your recent ones. */
-  gymPalNote: (sessionId: string) => request<{ note: string }>('POST', '/api/gympal/note', { body: { sessionId } }),
+  askVerity: (
+    messages: ChatTurn[],
+    extra: { context?: string | null; useLog?: boolean; exercises?: Array<{ id: string; name: string; measure: 'reps' | 'time' | 'distance' }> | null } = {},
+  ) =>
+    request<{ reply: string; sig?: string; refused?: boolean; action?: VerityAction }>('POST', '/api/verity', {
+      body: { messages, ...(extra.context ? { context: extra.context } : {}), ...(extra.useLog ? { useLog: true } : {}), ...(extra.exercises?.length ? { exercises: extra.exercises } : {}) },
+    }),
+  /** GymGO Max: a workout Verity builds from your request, from the exercises sent (the server keeps only those). */
+  verityWorkout: (body: { request: string; exercises: Array<{ id: string; name: string; measure: 'reps' | 'time' | 'distance' }>; useLog?: boolean }) =>
+    request<{ workout: BuiltWorkout }>('POST', '/api/verity/workout', { body }),
+  /** GymGO Max: Verity's coach's note on a workout you logged, beside your recent ones. */
+  verityNote: (sessionId: string) => request<{ note: string }>('POST', '/api/verity/note', { body: { sessionId } }),
 };
 
-/** A workout GymPal built (GymGO Max). */
+/** A workout Verity built (GymGO Max). */
 export interface BuiltWorkout {
   name: string;
   note: string | null;
   items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number }>;
 }
 
-/** One message in a chat with GymPal. */
+/** One message in a chat with Verity: an answer goes back with the signature it came with. */
 export interface ChatTurn {
   role: 'user' | 'assistant';
   content: string;
+  sig?: string;
 }
+
+/** Something Verity did for you in the chat, to check and tap: a workout it built. */
+export type VerityAction = { type: 'workout'; workout: BuiltWorkout };

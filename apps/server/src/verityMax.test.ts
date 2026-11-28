@@ -3,8 +3,8 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from './app';
 import { openDb, type Db } from './db';
-import { DEFAULT_MODELS } from './gymPal';
-import { MAX_NOTE_CHARS, NOTE_TASK, cleanCatalogue, cleanNote, cleanRequest, readWorkout, workoutTask, type CatalogueEntry } from './gymPalMax';
+import { DEFAULT_MODELS } from './verity';
+import { MAX_NOTE_CHARS, NOTE_TASK, cleanCatalogue, cleanNote, cleanRequest, readWorkout, workoutTask, type CatalogueEntry } from './verityMax';
 
 const CATALOGUE: CatalogueEntry[] = [
   { id: 'bench-press', name: 'Barbell bench press', measure: 'reps' },
@@ -38,7 +38,7 @@ describe('reading what the app sends', () => {
     expect(() => cleanCatalogue([])).toThrow();
   });
 
-  it('tells GymPal the list, the shape and how timed and distance ones are counted', () => {
+  it('tells Verity the list, the shape and how timed and distance ones are counted', () => {
     const task = workoutTask(CATALOGUE);
     expect(task).toContain('JSON only');
     expect(task).toContain('bench-press | Barbell bench press');
@@ -47,7 +47,7 @@ describe('reading what the app sends', () => {
   });
 });
 
-describe('reading GymPal’s workout', () => {
+describe('reading Verity’s workout', () => {
   it('takes the JSON from inside an answer, keeping only exercises on the list with sensible numbers', () => {
     const answer = `Here you go!\n\`\`\`json\n${JSON.stringify({
       name: 'Upper body, 45 minutes, with a long name that goes on',
@@ -80,7 +80,7 @@ describe('reading GymPal’s workout', () => {
   });
 
   it('names a workout that came without one', () => {
-    expect(readWorkout('{"items": [{"id": "plank", "sets": 2, "reps": 40}]}', CATALOGUE)).toEqual({ name: 'GymPal’s workout', note: null, items: [{ exerciseId: 'plank', sets: 2, reps: '40 s', restSeconds: 90 }] });
+    expect(readWorkout('{"items": [{"id": "plank", "sets": 2, "reps": 40}]}', CATALOGUE)).toEqual({ name: 'Verity’s workout', note: null, items: [{ exerciseId: 'plank', sets: 2, reps: '40 s', restSeconds: 90 }] });
   });
 });
 
@@ -93,7 +93,7 @@ describe('the coach’s note', () => {
   });
 });
 
-describe('/api/gympal/workout and /api/gympal/note', () => {
+describe('/api/verity/workout and /api/verity/note', () => {
   let server: Server;
   let base: string;
   let db: Db;
@@ -111,7 +111,7 @@ describe('/api/gympal/workout and /api/gympal/note', () => {
 
   beforeAll(async () => {
     db = openDb(':memory:');
-    server = createServer(createApp({ db, attribution: 'test', signupsPerHour: 1000, gymPal: { key: 'test-key', fetchImpl } }));
+    server = createServer(createApp({ db, attribution: 'test', signupsPerHour: 1000, verity: { key: 'test-key', fetchImpl } }));
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   });
@@ -153,26 +153,26 @@ describe('/api/gympal/workout and /api/gympal/note', () => {
   it('are for Max: Free and Pro are told so, and nothing is asked of the models', async () => {
     for (const plan of ['free', 'pro'] as const) {
       const token = await signUp(plan);
-      const built = await call('POST', '/api/gympal/workout', { token, body: { request: 'Push day', exercises } });
+      const built = await call('POST', '/api/verity/workout', { token, body: { request: 'Push day', exercises } });
       expect(built.status).toBe(403);
       expect(built.body.code).toBe('max_required');
-      expect((await call('POST', '/api/gympal/note', { token, body: { sessionId: 'x' } })).body.code).toBe('max_required');
+      expect((await call('POST', '/api/verity/note', { token, body: { sessionId: 'x' } })).body.code).toBe('max_required');
     }
-    expect((await call('POST', '/api/gympal/workout', { body: { request: 'Push day', exercises } })).status).toBe(401);
+    expect((await call('POST', '/api/verity/workout', { body: { request: 'Push day', exercises } })).status).toBe(401);
     expect(asked).toHaveLength(0);
   });
 
   it('build a workout from the exercises the app offered, leaving out any it didn’t', async () => {
     const token = await signUp('max');
-    const built = await call('POST', '/api/gympal/workout', { token, body: { request: '40 minutes of pushing', exercises } });
+    const built = await call('POST', '/api/verity/workout', { token, body: { request: '40 minutes of pushing', exercises } });
     expect(built.status).toBe(200);
     expect(built.body.workout).toEqual({ name: 'Push, 40 minutes', note: 'Heavy press first.', items: [{ exerciseId: 'bench-press', sets: 4, reps: '6–8', restSeconds: 120 }] });
     const sent = asked.at(-1);
     expect(sent.messages.at(-1)).toEqual({ role: 'user', content: '40 minutes of pushing' });
     expect(sent.messages[0].content).toContain('db-row | Dumbbell row');
-    // No training log unless they said GymPal may see it.
+    // No training log unless they said Verity may see it.
     expect(sent.messages[0].content).not.toContain('Their own training log');
-    expect((await call('POST', '/api/gympal/workout', { token, body: { request: '', exercises } })).status).toBe(400);
+    expect((await call('POST', '/api/verity/workout', { token, body: { request: '', exercises } })).status).toBe(400);
   });
 
   it('write a coach’s note on your own workout, beside the ones before it, never its gym or note', async () => {
@@ -195,7 +195,7 @@ describe('/api/gympal/workout and /api/gympal/note', () => {
     await log('Push, last week', 60, 24 * 7);
     const latest = await log('Push today', 62.5, 1);
     const id = latest.body.session?.id ?? latest.body.id;
-    const note = await call('POST', '/api/gympal/note', { token, body: { sessionId: id } });
+    const note = await call('POST', '/api/verity/note', { token, body: { sessionId: id } });
     expect(note.status).toBe(200);
     expect(note.body.note).toContain('62.5 kg');
     const system = asked.at(-1).messages[0].content as string;
@@ -206,6 +206,6 @@ describe('/api/gympal/workout and /api/gympal/note', () => {
     expect(system).not.toContain('melbourne-secret-gym');
     // Someone else's workout, or none, isn't theirs to ask about.
     const other = await signUp('max');
-    expect((await call('POST', '/api/gympal/note', { token: other, body: { sessionId: id } })).status).toBe(404);
+    expect((await call('POST', '/api/verity/note', { token: other, body: { sessionId: id } })).status).toBe(404);
   });
 });

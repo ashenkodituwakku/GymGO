@@ -1,5 +1,5 @@
 /**
- * Whether Home is being customised (components/HomeEditor.tsx): GymPal's
+ * Whether Home is being customised (components/HomeEditor.tsx): Verity's
  * tab keeps out of the way meanwhile, as the editing bar sits where it does.
  */
 

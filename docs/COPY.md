@@ -40,7 +40,7 @@ own text did too often:
   plain sentence.
 - **Over-precise quirks** that read as written by a model: "he remembers
   twice as much of the chat". Write "Longer conversations".
-- **Personifying GymPal.** GymPal is "GymPal" (or "it"), not "he".
+- **Personifying Verity.** Verity is "Verity" (or "it"), not "he".
 - **Lists of exactly three by habit**, and every sentence the same length.
 - **Stock words**: journey, seamless, unlock, elevate, delve, crucial,
   vital, robust, leverage, effortless, empower, dive in, game-changer,
@@ -56,7 +56,7 @@ own text did too often:
   doesn't say it does).
 - **The legal pages** (packages/domain/src/legal.ts): the wording is the
   owner's to approve, with a new legal version.
-- **GymPal's greeting and "waiting to be set up" message**, and the
+- **Verity's greeting and "waiting to be set up" message**, and the
   BuildingBar, as the owner asked.
 - **Spelling**: Australian English (colour, metres, kilograms).
 - **Accessibility labels** follow the same voice, and still say everything

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { onGymPalRequest, openGymPal, type GymPalRequest } from './gymPalBus';
-import { LOG_QUESTIONS, suggestionsFor } from './gymPalSuggestions';
+import { onVerityRequest, openVerity, type VerityRequest } from './verityBus';
+import { LOG_QUESTIONS, suggestionsFor } from './veritySuggestions';
 
-describe('GymPal’s suggested questions', () => {
+describe('Verity’s suggested questions', () => {
   it('fit the screen the chat opens on', () => {
     expect(suggestionsFor('/timer')).toContain('What is Tabata?');
     expect(suggestionsFor('/gym/melbourne-1')[0]).toBe('What should I ask a gym before I visit?');
@@ -27,13 +27,13 @@ describe('GymPal’s suggested questions', () => {
   });
 });
 
-describe('opening GymPal from a screen', () => {
+describe('opening Verity from a screen', () => {
   it('reaches the chat, and stops when it stops listening', () => {
-    const heard: GymPalRequest[] = [];
-    const stop = onGymPalRequest((request) => heard.push(request));
-    openGymPal({ question: 'Talk me through this plan', context: 'Workout: Push day', about: 'this workout' });
+    const heard: VerityRequest[] = [];
+    const stop = onVerityRequest((request) => heard.push(request));
+    openVerity({ question: 'Talk me through this plan', context: 'Workout: Push day', about: 'this workout' });
     stop();
-    openGymPal({ question: 'Not heard' });
+    openVerity({ question: 'Not heard' });
     expect(heard).toEqual([{ question: 'Talk me through this plan', context: 'Workout: Push day', about: 'this workout' }]);
   });
 });

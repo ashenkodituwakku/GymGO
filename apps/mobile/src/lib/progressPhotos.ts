@@ -1,7 +1,7 @@
 /**
  * Progress photos: pictures of yourself, kept on this device only (the
  * files by lib/photoVault, the list here). Never uploaded, never in your
- * account, never shown to GymPal. Each is made 1,200 pixels across at most
+ * account, never shown to Verity. Each is made 1,200 pixels across at most
  * and saved afresh as a JPEG, which carries none of the original's
  * metadata (where and on what it was taken).
  */

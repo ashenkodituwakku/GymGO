@@ -1,7 +1,7 @@
 /**
- * Questions GymPal offers to start with, for the screen the chat opened on:
+ * Questions Verity offers to start with, for the screen the chat opened on:
  * one tap asks it. Each is something his guide to the app covers
- * (apps/server/src/gymPalGuide.ts) or a general training question, never a
+ * (apps/server/src/verityGuide.ts) or a general training question, never a
  * real gym's facts. With Pro and his training log switched on, he offers
  * the two questions that need it first.
  */

@@ -351,7 +351,7 @@ export function Row({
   expanded,
 }: {
   icon?: IconName;
-  /** In place of the icon's tile: GymPal's face, say, at the tile's size (ROW.tile). */
+  /** In place of the icon's tile: Verity's face, say, at the tile's size (ROW.tile). */
   leading?: ReactNode;
   tile?: string;
   title: string;

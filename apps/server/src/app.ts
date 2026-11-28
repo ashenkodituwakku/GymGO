@@ -139,10 +139,10 @@
  *   POST   /api/bug-reports               anyone: { description, topic?: 'bug' | 'copyright', replyTo?, context? } -> kept, and emailed to the team
  *   GET    /api/moderation/bug-reports    moderators: the latest bug reports, and whether each was emailed
  *   GET    /api/weather?south=&west=      { weather }: MET Norway's forecast for the middle of that block's own map square (weather.ts), the next 12 hours
- *   POST   /api/gympal/workout            Max: { request, exercises: [{ id, name, measure }], useLog? } -> { workout: { name, note, items } }, built by GymPal from those exercises only
- *   POST   /api/gympal/note               Max: { sessionId } -> { note }: GymPal's coach's note on a workout you logged, beside your recent ones
- *   GET    /api/gympal                    { on, pro, max, perDay, service }: whether GymPal, the chat, can answer on this server, your plan's questions a day, and the AI service chats go to
- *   POST   /api/gympal                    { messages: [{ role: 'user' | 'assistant', content }] } -> { reply }, from a free model through Groq or OpenRouter
+ *   POST   /api/verity/workout            Max: { request, exercises: [{ id, name, measure }], useLog? } -> { workout: { name, note, items } }, built by Verity from those exercises only
+ *   POST   /api/verity/note               Max: { sessionId } -> { note }: Verity's coach's note on a workout you logged, beside your recent ones
+ *   GET    /api/verity                    { on, pro, max, perDay, service, actions }: whether Verity, the chat, can answer you on this server, your plan's questions a day, the AI service your chats go to, and whether it can build workouts for you
+ *   POST   /api/verity                    { messages: [{ role, content, sig? }], context?, useLog?, exercises? } -> { reply, sig, refused?, action? }: Pro and Max from the paid service (with actions: a workout built from `exercises`), Free from the free models; behind the guard (verityGuard.ts)
  *   DELETE /api/moderation/member-reports/:kind/:gymId/:userId   moderators: remove one
  *
  * Every route that changes something re-checks permission here with the
@@ -234,8 +234,11 @@ import { MAX_AVATAR_BYTES, MAX_PHOTO_BYTES, PhotoStore, cleanPhoto, type PhotoTy
 import { IdentityError, IdentityVerifier, label, type Provider, type VerifiedIdentity } from './identity';
 import { BugReportError, BugReports, cleanBugReport } from './bugReports';
 import { serveWeb } from './web';
-import { GYMPAL_PLANS, GymPal, GymPalError, cleanChat, cleanContext, trainingSummary, type LoggedSession } from './gymPal';
-import { NOTE_TASK, cleanCatalogue, cleanNote, cleanRequest, readWorkout, workoutTask } from './gymPalMax';
+import { VERITY_PLANS, Verity, VerityError, cleanChat, cleanContext, trainingSummary, type LoggedSession } from './verity';
+import { REFUSAL, VerityGuard, refusalFor, screen } from './verityGuard';
+import { VERITY_RULES } from './verityGuide';
+import { PAID_TOOLS, workoutBrief } from './verityTools';
+import { NOTE_TASK, cleanCatalogue, cleanNote, cleanRequest, readWorkout, workoutTask, type BuiltWorkout } from './verityMax';
 import { Social, SocialError } from './social';
 import { OwnerError, Owners } from './owners';
 import { PerkError, Perks } from './perks';
@@ -304,8 +307,19 @@ export interface AppOptions {
    * Caddy in front (web.ts, scripts/online.mjs). None: the API only.
    */
   webDir?: string | null;
-  /** GymPal, the chat: the owner's OpenRouter key (none: off), the free models to ask, and a stand-in fetch for tests. */
-  gymPal?: { key: string | null; models?: string[]; checkModels?: boolean; groq?: { key: string | null; models?: string[] }; fetchImpl?: typeof fetch; log?: (line: string) => void };
+  /** Verity, the chat: the owner's OpenRouter key (none: off), the free models to ask, and a stand-in fetch for tests. */
+  verity?: {
+    key: string | null;
+    models?: string[];
+    checkModels?: boolean;
+    groq?: { key: string | null; models?: string[] };
+    /** The paid service for Pro and Max (VERITY_PAID_API_KEY and the rest). */
+    paid?: { key: string | null; url?: string | null; model?: string | null; name?: string | null };
+    /** Tests only: a fixed signing secret and marker for the guard. */
+    guard?: { secret?: Buffer; canary?: string };
+    fetchImpl?: typeof fetch;
+    log?: (line: string) => void;
+  };
   /** Gyms' Apple Maps listings through SerpApi (appleMaps.ts): off without a key. */
   appleMaps?: AppleMapsOptions;
   /** The weather on Home and the map, from MET Norway (weather.ts): on unless `on: false`. */
@@ -792,13 +806,25 @@ export function createApp(options: AppOptions) {
     now,
     ...options.weather,
   });
-  const gymPal = new GymPal({ key: options.gymPal?.key ?? null, models: options.gymPal?.models, checkModels: options.gymPal?.checkModels, groq: options.gymPal?.groq, fetchImpl: options.gymPal?.fetchImpl, referer: options.publicUrl ?? null, log: options.gymPal?.log });
-  // GymPal: plenty for real questions, and few enough that one person can't use up the free models' day for
-  // everyone; more with Pro, most with Max (gymPal.ts, GYMPAL_PLANS).
-  const gymPalLimiters = {
-    free: { minute: new AttemptLimiter(GYMPAL_PLANS.free.perMinute, 60_000), day: new AttemptLimiter(GYMPAL_PLANS.free.perDay, 24 * 60 * 60_000) },
-    pro: { minute: new AttemptLimiter(GYMPAL_PLANS.pro.perMinute, 60_000), day: new AttemptLimiter(GYMPAL_PLANS.pro.perDay, 24 * 60 * 60_000) },
-    max: { minute: new AttemptLimiter(GYMPAL_PLANS.max.perMinute, 60_000), day: new AttemptLimiter(GYMPAL_PLANS.max.perDay, 24 * 60 * 60_000) },
+  const verityLog = options.verity?.log ?? ((line: string) => console.warn(line));
+  const verity = new Verity({
+    key: options.verity?.key ?? null,
+    models: options.verity?.models,
+    checkModels: options.verity?.checkModels,
+    groq: options.verity?.groq,
+    paid: options.verity?.paid,
+    fetchImpl: options.verity?.fetchImpl,
+    referer: options.publicUrl ?? null,
+    log: verityLog,
+  });
+  // Signs Verity's answers and checks questions and answers (verityGuard.ts): one secret per run of the server.
+  const guard = new VerityGuard({ ...options.verity?.guard, rules: VERITY_RULES });
+  // Verity: plenty for real questions, and few enough that one person can't use up the free models' day for
+  // everyone; more with Pro, most with Max (verity.ts, VERITY_PLANS).
+  const verityLimiters = {
+    free: { minute: new AttemptLimiter(VERITY_PLANS.free.perMinute, 60_000), day: new AttemptLimiter(VERITY_PLANS.free.perDay, 24 * 60 * 60_000) },
+    pro: { minute: new AttemptLimiter(VERITY_PLANS.pro.perMinute, 60_000), day: new AttemptLimiter(VERITY_PLANS.pro.perDay, 24 * 60 * 60_000) },
+    max: { minute: new AttemptLimiter(VERITY_PLANS.max.perMinute, 60_000), day: new AttemptLimiter(VERITY_PLANS.max.perDay, 24 * 60 * 60_000) },
   };
   const retryEvery = options.bugReports?.retryEveryMs ?? 0;
   if (bugReports.emailing && retryEvery > 0) {
@@ -810,7 +836,7 @@ export function createApp(options: AppOptions) {
   const limiters = [
     loginLimiter, accountLoginLimiter, forgotLimiter, forgotEmailLimiter, resetLimiter, signupLimiter, photoLimiter, avatarLimiter,
     equipmentLimiter, friendLimiter, walletLimiter, commentLimiter, likeLimiter, commentReportLimiter, busyLimiter, redeemLimiter, priceLimiter, accessLimiter, statusLimiter, areaLimiter, iconLimiter, sitePhotoLimiter, placeLimiter, bugLimiter, weatherLimiter,
-    gymPalLimiters.free.minute, gymPalLimiters.free.day, gymPalLimiters.pro.minute, gymPalLimiters.pro.day,
+    verityLimiters.free.minute, verityLimiters.free.day, verityLimiters.pro.minute, verityLimiters.pro.day,
   ];
   /** How busy a gym is matters for an hour; a member's report is kept a day at most. */
   const forgetOldBusy = (at: Date) => db.prepare('delete from busy_reports where reported_at < ?').run(new Date(at.getTime() - BUSY_KEEP_MS).toISOString());
@@ -2838,25 +2864,33 @@ export function createApp(options: AppOptions) {
       }
     }
 
-    // --- GymPal -----------------------------------------------------------------
-    // The chat in the app's corner (gymPal.ts): nothing said is kept here.
-    if (method === 'GET' && path === '/api/gympal') {
+    // --- Verity -----------------------------------------------------------------
+    // The chat in the app's corner (verity.ts): nothing said is kept here.
+    if (method === 'GET' && path === '/api/verity') {
       const { account } = requireAccount(req);
       const pro = billing.isPro(account.id);
       const max = pro && billing.isMax(account.id);
-      return send(res, 200, { on: gymPal.on, pro, max, perDay: GYMPAL_PLANS[max ? 'max' : pro ? 'pro' : 'free'].perDay, service: gymPal.service });
+      return send(res, 200, {
+        on: verity.onFor(pro),
+        pro,
+        max,
+        perDay: VERITY_PLANS[max ? 'max' : pro ? 'pro' : 'free'].perDay,
+        service: verity.serviceFor(pro),
+        // Building workouts in the chat: Pro and Max, once the paid service is set up.
+        actions: pro && verity.paidOn,
+      });
     }
 
-    // GymPal's Max features (gymPalMax.ts): each asked for, each one of the day's questions.
-    if (method === 'POST' && (path === '/api/gympal/workout' || path === '/api/gympal/note')) {
+    // Verity's Max features (verityMax.ts): each asked for, each one of the day's questions.
+    if (method === 'POST' && (path === '/api/verity/workout' || path === '/api/verity/note')) {
       const { account } = requireAccount(req);
-      const building = path === '/api/gympal/workout';
-      if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t available on this server yet.', 'gympal_off');
-      if (!billing.isMax(account.id)) throw new HttpError(403, `${building ? 'Workouts built by GymPal are' : 'GymPal’s coach’s notes are'} part of GymGO Max.`, 'max_required');
+      const building = path === '/api/verity/workout';
+      if (!verity.onFor(true)) throw new HttpError(503, 'Verity isn’t available on this server yet.', 'verity_off');
+      if (!billing.isMax(account.id)) throw new HttpError(403, `${building ? 'Workouts built by Verity are' : 'Verity’s coach’s notes are'} part of GymGO Max.`, 'max_required');
       const at = now().getTime();
-      const limits = gymPalLimiters.max;
+      const limits = verityLimiters.max;
       if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'Too many questions at once. Wait a minute and try again.');
-      if (!limits.day.allow(account.id, at)) throw new HttpError(429, `You’ve used all ${GYMPAL_PLANS.max.perDay} questions for today. Try again tomorrow.`);
+      if (!limits.day.allow(account.id, at)) throw new HttpError(429, `You’ve used all ${VERITY_PLANS.max.perDay} questions for today. Try again tomorrow.`);
       const names = () => new Map(own.exercises(account.id).map((exercise) => [exercise.id, exercise.name]));
       const recent = (except: string | null) =>
         (db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where user_id = ? order by finished_at desc limit 13`).all(account.id) as TrainingRow[])
@@ -2868,11 +2902,11 @@ export function createApp(options: AppOptions) {
         if (building) {
           const request = cleanRequest(body?.request);
           const catalogue = cleanCatalogue(body?.exercises);
-          // Their log only when they've said GymPal may see it, as in the chat.
+          // Their log only when they've said Verity may see it, as in the chat.
           const log = body?.useLog === true ? trainingSummary(recent(null), now(), names()) : null;
-          const answer = await gymPal.ask([{ role: 'user', content: request }], { log, task: workoutTask(catalogue), replyTokens: 900 });
+          const answer = await verity.ask([{ role: 'user', content: request }], { log, task: workoutTask(catalogue), replyTokens: 900, paid: true, canary: guard.canary });
           const workout = readWorkout(answer, catalogue);
-          if (!workout) throw new HttpError(502, 'GymPal couldn’t build that workout. Try rewording your request.', 'gympal_unreadable');
+          if (!workout) throw new HttpError(502, 'Verity couldn’t build that workout. Try rewording your request.', 'verity_unreadable');
           return send(res, 200, { workout });
         }
         const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '';
@@ -2880,44 +2914,67 @@ export function createApp(options: AppOptions) {
         if (!row) throw new HttpError(404, 'No logged workout with that id.');
         // The workout itself, then the ones before it: asked for by the person, about their own training.
         const just = trainingSummary([trainingView(row) as LoggedSession], new Date(Date.parse(row.finished_at) + 60_000), names());
-        const answer = await gymPal.ask([{ role: 'user', content: 'Write my coach’s note on the workout I just finished.' }], {
+        const answer = await verity.ask([{ role: 'user', content: 'Write my coach’s note on the workout I just finished.' }], {
           context: `The workout they just finished:\n${just}`,
           log: trainingSummary(recent(row.id), now(), names()),
           task: NOTE_TASK,
           replyTokens: 500,
+          paid: true,
+          canary: guard.canary,
         });
         return send(res, 200, { note: cleanNote(answer) });
       } catch (error) {
-        if (error instanceof GymPalError) throw new HttpError(error.status, error.message, error.code);
+        if (error instanceof VerityError) throw new HttpError(error.status, error.message, error.code);
         throw error;
       }
     }
 
-    if (method === 'POST' && path === '/api/gympal') {
+    if (method === 'POST' && path === '/api/verity') {
       const { account } = requireAccount(req);
-      // Off, nothing is counted against anyone.
-      if (!gymPal.on) throw new HttpError(503, 'GymPal isn’t available on this server yet.', 'gympal_off');
       const pro = billing.isPro(account.id);
+      // Off for this plan, nothing is counted against anyone.
+      if (!verity.onFor(pro)) throw new HttpError(503, 'Verity isn’t available on this server yet.', 'verity_off');
       const tier = pro && billing.isMax(account.id) ? 'max' : pro ? 'pro' : 'free';
-      const plan = GYMPAL_PLANS[tier];
+      const plan = VERITY_PLANS[tier];
       try {
-        // A conversation can be longer than most requests: Max's 60 messages, GymPal's answers among them.
+        // A conversation can be longer than most requests: Max's 60 messages, Verity's answers among them, and the exercises.
         const body = (await readJson(req, 256 * 1024)) as Record<string, unknown> | null;
-        const messages = cleanChat(body, plan);
-        const context = cleanContext(body);
+        // Only answers this server signed go back to the model; made-up ones are left out.
+        const messages = cleanChat(body, plan, (content, sig) => guard.verifyReply(content, sig));
+        let context = cleanContext(body);
         const useLog = body?.useLog === true;
         if (useLog && !pro) throw new HttpError(403, 'Answers based on your training are part of GymGO Pro.', 'pro_required');
         const at = now().getTime();
-        const limits = gymPalLimiters[tier];
+        const limits = verityLimiters[tier];
         if (!limits.minute.allow(account.id, at)) throw new HttpError(429, 'Too many questions at once. Wait a minute and try again.');
         if (!limits.day.allow(account.id, at)) {
           throw tier === 'max'
             ? new HttpError(429, `You’ve used all ${plan.perDay} questions for today. Try again tomorrow.`)
             : tier === 'pro'
-              ? new HttpError(429, `You’ve used all ${plan.perDay} questions for today. Max includes ${GYMPAL_PLANS.max.perDay} a day.`, 'gympal_limit')
-              : new HttpError(429, `You’ve used all ${plan.perDay} questions for today. Pro includes ${GYMPAL_PLANS.pro.perDay} a day.`, 'gympal_limit');
+              ? new HttpError(429, `You’ve used all ${plan.perDay} questions for today. Max includes ${VERITY_PLANS.max.perDay} a day.`, 'verity_limit')
+              : new HttpError(429, `You’ve used all ${plan.perDay} questions for today. Pro includes ${VERITY_PLANS.pro.perDay} a day.`, 'verity_limit');
         }
-        // Their latest sessions, only when they've said GymPal may see them.
+        // The guard, before any model is asked (counted all the same, so trying costs the day's questions).
+        const verdict = screen(messages.at(-1)!.content);
+        const answerWith = (reply: string, extra: Record<string, unknown> = {}) => send(res, 200, { reply, sig: guard.signReply(reply), ...extra });
+        if (!verdict.ok) {
+          verityLog(`[verity] Turned a question down before asking (${verdict.threat}).`);
+          return answerWith(refusalFor(verdict.threat), { refused: true });
+        }
+        if (context && !screen(context).ok) {
+          verityLog('[verity] Left out what a screen sent: it read like instructions.');
+          context = null;
+        }
+        // The exercises the app offers, for building a workout: Pro and Max, with the paid service.
+        let catalogue: ReturnType<typeof cleanCatalogue> | null = null;
+        if (pro && verity.paidOn && Array.isArray(body?.exercises)) {
+          try {
+            catalogue = cleanCatalogue(body.exercises);
+          } catch {
+            catalogue = null;
+          }
+        }
+        // Their latest sessions, only when they've said Verity may see them.
         const log = useLog
           ? trainingSummary(
               (db.prepare(`select ${TRAINING_COLUMNS} from training_sessions where user_id = ? order by finished_at desc limit 12`).all(account.id) as TrainingRow[]).map(
@@ -2927,9 +2984,32 @@ export function createApp(options: AppOptions) {
               new Map(own.exercises(account.id).map((exercise) => [exercise.id, exercise.name])),
             )
           : null;
-        return send(res, 200, { reply: await gymPal.ask(messages, { context, log, replyTokens: plan.replyTokens }) });
+        const answer = await verity.converse(messages, { context, log, replyTokens: plan.replyTokens, paid: pro, tools: catalogue ? PAID_TOOLS : undefined, canary: guard.canary });
+        let reply = answer.text;
+        let action: { type: 'workout'; workout: BuiltWorkout } | null = null;
+        if (answer.paid && catalogue && answer.calls.length) {
+          // It asked to build a workout: built from the app's exercises, checked, and shown as a card they tap.
+          const brief = workoutBrief(answer.calls);
+          if (brief) {
+            try {
+              const built = readWorkout(await verity.ask([{ role: 'user', content: brief }], { log, task: workoutTask(catalogue), replyTokens: 900, paid: true, canary: guard.canary }), catalogue);
+              if (built && guard.checkReply(`${built.name}\n${built.note ?? ''}`) === null) action = { type: 'workout', workout: built };
+            } catch (error) {
+              if (!(error instanceof VerityError)) throw error;
+            }
+          }
+          reply = action ? (reply ?? 'Here’s your workout. Check it over, then save it or start it.') : 'I couldn’t build that one. Try telling me how long you have, and which muscles or kit.';
+        }
+        if (!reply) throw new HttpError(502, 'Verity didn’t have an answer. Try asking another way.');
+        // And after: an answer that gives away its instructions, or says a jailbreak worked, doesn't go back.
+        const leak = guard.checkReply(reply);
+        if (leak) {
+          verityLog(`[verity] Held back an answer (${leak}).`);
+          return answerWith(REFUSAL, { refused: true });
+        }
+        return answerWith(reply, action ? { action } : {});
       } catch (error) {
-        if (error instanceof GymPalError) throw new HttpError(error.status, error.message, error.code);
+        if (error instanceof VerityError) throw new HttpError(error.status, error.message, error.code);
         throw error;
       }
     }

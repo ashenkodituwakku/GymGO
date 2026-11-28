@@ -3,7 +3,7 @@
  *
  * Never a keyboard stop. In a browser a Pressable is always given a tab
  * stop (React Native Web), so a backdrop made of one was the first thing a
- * dialog's focus trap landed on, ringed from corner to corner (GymPal, the
+ * dialog's focus trap landed on, ringed from corner to corner (Verity, the
  * sort and time choices), and Tab stopped on it, where Enter closed the
  * dialog. Here it's a plain view that answers a tap. Escape and the Close
  * button are the keyboard's way out. Phones keep the Pressable they had.

@@ -33,18 +33,37 @@ export const BACKUP_DIR = process.env.GYMGO_BACKUP_DIR?.trim() || null;
 export const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY?.trim() || null;
 /**
  * Optional. The owner's OpenRouter API key (openrouter.ai, free to make),
- * for GymPal, the chat in the app's corner. It holds a secret: keep it in
- * .env.local, never in git. Without it, the chat says GymPal isn’t switched on.
+ * for Verity, the chat in the app's corner: Free accounts' answers come from
+ * OpenRouter's free models. It holds a secret: keep it in .env.local, never
+ * in git. Without it (and without GROQ_API_KEY), Free accounts' chat says
+ * Verity isn’t switched on.
  */
 export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || null;
 /**
  * Optional. The owner's Groq API key (console.groq.com, free, no card), for
- * GymPal: asked before OpenRouter. It holds a secret: keep it in .env.local,
- * never in git.
+ * Verity's free answers: asked when OpenRouter is busy or not set. It holds
+ * a secret: keep it in .env.local, never in git.
  */
 export const GROQ_API_KEY = process.env.GROQ_API_KEY?.trim() || null;
-/** Optional. Which Groq models GymPal asks, comma-separated, tried in turn (gymPal.ts has the default). */
-export const GYMPAL_GROQ_MODELS = (process.env.GYMGO_GYMPAL_GROQ_MODELS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+/** A comma-separated list from the environment, under its name since Verity or the name it had as GymPal. */
+const listOf = (name: string, older: string) => (process.env[name] ?? process.env[older] ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+/** Optional. Which Groq models Verity asks, comma-separated, tried in turn (verity.ts has the default). */
+export const VERITY_GROQ_MODELS = listOf('GYMGO_VERITY_GROQ_MODELS', 'GYMGO_GYMPAL_GROQ_MODELS');
+/**
+ * Optional. The owner's key for Verity's paid AI service, which answers Pro
+ * and Max accounts and is the only one given Verity's actions (building a
+ * workout). Any service with an OpenAI-style chat completions API: OpenAI
+ * itself by default. It holds a secret and costs money per question: keep
+ * it in .env.local, never in git. Without it, Pro and Max are answered by
+ * the free models, without the actions.
+ */
+export const VERITY_PAID_API_KEY = process.env.VERITY_PAID_API_KEY?.trim() || null;
+/** Optional. The paid service's chat completions address (verity.ts has OpenAI's). */
+export const VERITY_PAID_URL = process.env.GYMGO_VERITY_PAID_URL?.trim() || null;
+/** Optional. The paid service's model id (verity.ts has the default, OpenAI's GPT Luna). */
+export const VERITY_PAID_MODEL = process.env.GYMGO_VERITY_PAID_MODEL?.trim() || null;
+/** Optional. The paid service's name, as the chat tells people where it goes ("OpenAI" unless set). */
+export const VERITY_PAID_NAME = process.env.GYMGO_VERITY_PAID_NAME?.trim() || null;
 /**
  * Whether a GitHub token for GitHub Models is still set (an update on 18 Nov
  * 2026 asked for one, before it turned out GitHub had retired GitHub Models
@@ -65,11 +84,11 @@ export const SERPAPI_DAILY_LIMIT = (() => {
   return Number.isInteger(raw) && raw >= 0 ? raw : undefined;
 })();
 /**
- * Optional. Which models GymPal asks, comma-separated OpenRouter ids, tried
+ * Optional. Which models Verity asks, comma-separated OpenRouter ids, tried
  * in turn. Only free ones (ending ":free") are ever used; any other is left
- * out, so GymPal can't cost money. By default, three free ones (gymPal.ts).
+ * out, so Verity can't cost money. By default, three free ones (verity.ts).
  */
-export const GYMPAL_MODELS = (process.env.GYMGO_GYMPAL_MODELS ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+export const VERITY_MODELS = listOf('GYMGO_VERITY_MODELS', 'GYMGO_GYMPAL_MODELS');
 /**
  * Optional. Stripe, for GymGO Pro. Use test-mode keys (sk_test_…) until
  * you're ready to take real money. Without a key, Pro shows as "not on sale".

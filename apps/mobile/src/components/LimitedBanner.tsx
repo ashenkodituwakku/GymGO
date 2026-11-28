@@ -80,7 +80,7 @@ function SwitchBanner() {
   const insets = useSafeAreaInsets();
   const toFull = LIMITED;
   const text = toFull
-    ? 'The full version of GymGO is live, with accounts, reviews, member photos and GymPal.'
+    ? 'The full version of GymGO is live, with accounts, reviews, member photos and Verity.'
     : 'GymGO’s server has gone offline. Until it’s back, the limited version works without it.';
   const label = toFull ? 'Switch to the full version' : 'Switch to the limited version';
   return (

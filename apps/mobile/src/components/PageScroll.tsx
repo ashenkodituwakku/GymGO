@@ -33,7 +33,7 @@ import { useThemeChoice } from '@/lib/themePrefs';
 import { ambientGlow, color } from '@/lib/theme';
 import { usePageGroundDrawn } from './pageGround';
 
-/** GymPal's button on a page (GymPal.tsx: BUTTON 52, EDGE 16) and a little air over it. */
+/** Verity's button on a page (Verity.tsx: BUTTON 52, EDGE 16) and a little air over it. */
 const PAL_ROOM = 52 + 16 + 12;
 
 type Props = ScrollViewProps & {
@@ -47,9 +47,9 @@ export const PageScroll = forwardRef(function PageScroll(
   { gap = 32, extraBottom = 0, contentContainerStyle, onLayout, onScroll, onContentSizeChange, scrollEventThrottle, style, ...props }: Props,
   forwarded: ForwardedRef<ScrollViewInstance>,
 ) {
-  // GymPal's button (the tab on the edge, or the corner one) sits over a page's bottom corner,
+  // Verity's button (the tab on the edge, or the corner one) sits over a page's bottom corner,
   // 52 points tall and 16 up: the last row scrolls clear of it rather than ending under it.
-  const palButton = useThemeChoice().gymPalButton !== 'hidden';
+  const palButton = useThemeChoice().verityButton !== 'hidden';
   const screenBottom = useScreenBottom(palButton ? Math.max(gap, PAL_ROOM) : gap);
   const { measureRef, onLayout: measure, overhang } = useOverhang();
   const memory = useContext(ScrollMemory);

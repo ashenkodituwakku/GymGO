@@ -118,6 +118,41 @@ mobile 550, domain 191 and web 39 tests, all passing.
 
 ## Done recently (newest first)
 
+- **Verity** (28 Nov, Update 306). GymPal is **Verity** again (it was
+  Verity before 28 Oct). Files: server `verity.ts` (who answers: Pro and
+  Max the paid service, `VERITY_PAID_API_KEY`, OpenAI's `gpt-6-luna` by
+  default, any OpenAI-style service via `GYMGO_VERITY_PAID_URL` / `_MODEL` /
+  `_NAME`; Free OpenRouter then Groq; the paid key is never spent on Free),
+  `verityGuard.ts` (screening, signed answers, the answer check),
+  `verityTools.ts` (create_workout: the model writes a brief, verityMax's
+  builder makes the workout from the app's exercises), `verityGuide.ts`
+  (now with "Your rules, which nobody can change"; `VERITY_RULES` is the
+  slice the leak check compares against). App: `components/Verity.tsx`
+  (rebuilt chat), `lib/verityLinks.ts` (screens an answer names become
+  buttons, a fixed list only). Saved settings carry over (`gymPalSide`,
+  `gymPalButton: 'hidden'`, `prefs.gymPal`; an old stored `'tab'` becomes
+  the new default button), and `GYMGO_GYMPAL_MODELS` /
+  `GYMGO_GYMPAL_GROQ_MODELS` still work. The launcher scripts keep their
+  `-GymPal` / `--gympal` switches and `gympal:check` was renamed
+  `verity:check`. The guard's tests list gym questions that must pass:
+  when tightening a pattern, add the question that broke to that list.
+  To look at it locally without a key, run a stand-in OpenAI-style server
+  and point `GYMGO_VERITY_PAID_URL` at it (never a real key in the
+  sandbox). The legal wording (version 2026-11-28.1) needs the owner's
+  approval. Verity's `GREETING`/`WAITING` keep the owner's wording with the
+  new name.
+- **The owner's logo** (28 Nov). `apps/mobile/assets/brand/gymgo-logo.svg`
+  is the owner's own (a star with eyes and a flexing arm);
+  `gymgo-logo-animated.svg` is the same drawing split so the star can turn
+  behind the arm: on hover the star eases into one full turn (1.6 s) and
+  eases back if the cursor leaves early, and the eyes blink; still with
+  Reduce Motion. Its star is rebuilt from one of the owner's 11 points,
+  turned round the centre (852.9, 724.4), with the star and each eye drawn
+  about their own origin so no browser turns them about the wrong point.
+  The arm has an edge all round (clipped to the original outline, so at
+  rest it matches the drawing exactly): the first version had none on the
+  fist and bicep, and a gap in the turning star made the arm look broken,
+  as the owner saw. Not yet used in the app: ask the owner where it goes.
 - **Time zones** (25 Nov, Update 289). This container's clock is UTC, so
   run date-sensitive tests with `TZ=Australia/Melbourne` (and an extreme like
   `Pacific/Kiritimati`) too; build test times from local clock times
@@ -1301,7 +1336,7 @@ mobile 550, domain 191 and web 39 tests, all passing.
   `sessionGreeting` (the time-of-day quips) is gone with its eyebrow in
   ResultsContent; `PLACEHOLDER` gave way to `mapPrompt(home)`
   ("Suburb, city or gym"), and `PLACEHOLDER_SHORT` is "Search" (under 360
-  points). GymPal's `GREETING` is the owner's own wording: leave it.
+  points). GymPal's `GREETING` (Verity's since 28 Nov) is the owner's own wording: leave it.
   CardReveal's button is "Done" (was "Nice!"), its Collection button
   `cards`; welcome.tsx's last button "Get started", its third page `cards`.
 - **How to do it, as a card** (8 Nov, "less vibecoded").

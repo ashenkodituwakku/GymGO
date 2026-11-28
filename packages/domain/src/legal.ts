@@ -15,9 +15,9 @@
  */
 
 /** Bumped whenever the terms or privacy policy change in a way people should see. */
-export const LEGAL_VERSION = '2026-11-18.2';
-/** The date, as the documents show it (18 November's second version names Groq). */
-export const LEGAL_UPDATED = '18 November 2026';
+export const LEGAL_VERSION = '2026-11-28.1';
+/** The date, as the documents show it (28 November's names Verity, GymPal's new name, and OpenAI, which answers Pro and Max). */
+export const LEGAL_UPDATED = '28 November 2026';
 
 export type LegalDocId = 'terms' | 'privacy' | 'refunds' | 'community';
 export const LEGAL_DOC_IDS: readonly LegalDocId[] = ['terms', 'privacy', 'refunds', 'community'];
@@ -112,7 +112,7 @@ function terms(op: LegalOperator): LegalSection[] {
       blocks: [
         'GymGO shows what it can find about gyms: opening hours, prices, entry rules and equipment from gyms’ own websites, OpenStreetMap and members, each with its source and when it was checked. Gyms change things without telling anyone, so information can be out of date or wrong, and GymGO says “unknown” rather than guess.',
         'Always check with the gym before you rely on something that matters to you, such as being let in or what a visit costs. Gyms make their own decisions about who they let in and what they charge, and GymGO isn’t part of any gym unless it says so.',
-        'GymPal, the assistant in the corner of the app, answers with AI. It can be wrong, and what it says isn’t medical, legal or financial advice: a gym’s own page in GymGO shows what GymGO knows about it, with where each fact came from.',
+        'Verity, the assistant in the corner of the app, answers with AI. It can be wrong, and what it says isn’t medical, legal or financial advice: a gym’s own page in GymGO shows what GymGO knows about it, with where each fact came from.',
         'Someone who runs a gym can claim it. Only claim a gym you own or are allowed to speak for, and give honest details: we check before approving, and remove an owner who misleads anyone. What a verified owner sends (visitor hours, a casual price) is checked by a moderator and shown as from the gym; it doesn’t make GymGO part of that gym.',
       ],
     },
@@ -172,7 +172,7 @@ function terms(op: LegalOperator): LegalSection[] {
     {
       heading: 'Other services',
       blocks: [
-        'GymGO uses other companies’ services, whose own terms also apply when you use them through GymGO: Stripe for payments, Apple and Google if you sign in with them, Google’s map, Street View and photos when you choose to show them, OpenStreetMap, OpenFreeMap and Apple Maps for maps and place data, MET Norway for the weather, and Groq and OpenRouter and the AI model providers they use to answer what you ask GymPal. We aren’t responsible for those services or for websites GymGO links to, such as gyms’ own.',
+        'GymGO uses other companies’ services, whose own terms also apply when you use them through GymGO: Stripe for payments, Apple and Google if you sign in with them, Google’s map, Street View and photos when you choose to show them, OpenStreetMap, OpenFreeMap and Apple Maps for maps and place data, MET Norway for the weather, and OpenAI (for GymGO Pro and Max), Groq and OpenRouter and the AI model providers they use to answer what you ask Verity. We aren’t responsible for those services or for websites GymGO links to, such as gyms’ own.',
       ],
     },
     {
@@ -246,7 +246,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'If you let GymGO use your location, it’s used on your device to find gyms near you and measure how far they are. It is never sent to GymGO or anyone else. Outside the cities GymGO carries, the app asks the server for the gyms in the map squares around you (about 30 km across, the same for everyone in them), never your position.',
             'When you search an area or type a town, the server looks it up on OpenStreetMap’s services (Overpass and Photon). It sends them the area or the name, not anything about you.',
             'The weather on Home and the map is asked for the same way: the app asks the server for the weather of the map squares around where you’re searching (the same for everyone in them, never your position), and the server asks MET Norway, Norway’s national weather service (api.met.no), for the forecast at the middle of your square. MET Norway sees GymGO’s server and that point, not you.',
-            'If you chat with GymPal, the assistant, what you type and the chat so far go through GymGO’s server to Groq (groq.com) or OpenRouter (openrouter.ai), whichever answers, and the provider of the AI model that answers. The note under GymPal’s message box names the services. When you ask GymPal from a screen (Ask GymPal on a workout, an exercise, a gym’s questions to ask), a few lines about what that screen shows go too, and the chat says what he was told. With GymGO Pro, if you switch on Use my training log, a summary of your latest workouts goes as well: the exercises, sets, reps and weights, and when; never the gyms they were at or your notes. It’s off until you switch it on. GymGO doesn’t keep the chat: it’s gone when you close the app or tap Start over. Groq, OpenRouter and the model’s provider may keep what you send under their own policies, and providers of free AI models may use it to improve them, so leave out personal details.',
+            'If you chat with Verity, the assistant, what you type and the chat so far go through GymGO’s server to an AI service to be answered: with GymGO Pro or Max, OpenAI (openai.com), or Groq or OpenRouter if it can’t answer; on Free, OpenRouter (openrouter.ai) or Groq (groq.com), whichever answers; and the provider of the AI model that answers. The note under Verity’s message box names the services. When you ask Verity from a screen (Ask Verity on a workout, an exercise, a gym’s questions to ask), a few lines about what that screen shows go too, and the chat says what it was told. With Pro or Max, the names of GymGO’s exercises and your own go too, so that when you ask Verity to make a workout it builds it from them; a workout it makes is only saved if you tap Save. With GymGO Pro, if you switch on Use my training log, a summary of your latest workouts goes as well: the exercises, sets, reps and weights, and when; never the gyms they were at or your notes. It’s off until you switch it on. GymGO doesn’t keep the chat: it’s gone when you close the app or tap Start over. OpenAI, Groq, OpenRouter and the model’s provider may keep what you send under their own policies, and providers of free AI models may use it to improve them, so leave out personal details.',
             'Like any website, the server sees your device’s IP address with each request. It uses it to send the answer back and, for about an hour at most, to slow down anyone sending too many requests. It isn’t written to the database or any log.',
           ],
         },
@@ -294,7 +294,7 @@ function privacy(op: LegalOperator): LegalSection[] {
             'Friends you accept see your display name, profile picture, the cards in your collection with their visit counts, and your totals, never the days you went; and the invites between you. If you join the public leaderboard, people signed in to GymGO see your display name, profile picture and how many gyms and visits you have, until you leave it.',
             'Companies that work for us, only as needed to provide GymGO: the provider that hosts our server and its backups, our email provider, and Stripe for payments. They may not use your information for anything else.',
             'Apple or Google, if you sign in with them, and Google itself if you choose to show its map, Street View or photos on a gym’s page; nothing loads from Google until you do.',
-            'Groq or OpenRouter (whichever answers) and the AI model’s provider, for what you send GymPal (your questions, what a screen shows, and with Pro your training log if you switch it on), as above.',
+            'OpenAI (with Pro and Max), Groq or OpenRouter (whichever answers) and the AI model’s provider, for what you send Verity (your questions, what a screen shows, with Pro your training log if you switch it on, and with Pro or Max the names of exercises to build workouts from), as above.',
             'Map providers (OpenFreeMap, or Apple Maps on iPhone) see your device’s IP address and the part of the map you’re looking at, as any map does.',
             'MET Norway, for the weather: only the middle of a map square, from GymGO’s server, as above.',
             'Anyone the law requires us to tell, or when it’s needed to protect someone’s safety or GymGO from fraud or attack.',

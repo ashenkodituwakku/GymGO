@@ -11,7 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Redrawn, useThemeVersion } from '@/components/Redrawn';
 import { WebBack } from '@/components/WebBack';
 import { WebsiteBanner } from '@/components/LimitedBanner';
-import { GymPal } from '@/components/GymPal';
+import { Verity } from '@/components/Verity';
 import { ClearOfSidebar, SidebarFrame } from '@/components/Sidebar';
 import { Txt } from '@/components/ui';
 import { LIMITED } from '@/lib/limited';
@@ -441,8 +441,8 @@ function ThemedStack() {
             <Stack.Screen name="report-bug" options={{ ...MODAL, headerShown: true, title: 'Report a bug' }} />
           </Stack>
       </SidebarFrame>
-      {/* GymPal, the AI assistant, in the corner of every signed-in screen, and the website's (which waits to be set up). */}
-      {signedIn && prefs.gymPal && <GymPal />}
+      {/* Verity, the AI assistant, in the corner of every signed-in screen, and the website's (which waits to be set up). */}
+      {signedIn && prefs.verity && <Verity />}
       {/* A free account's occasional reminder about Pro, on Home (components/ProNudge.tsx). */}
       {signedIn && <ProNudge />}
       {!!veilColour && <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: veilColour }, veilStyle, { pointerEvents: 'none' }]} />}

@@ -13,7 +13,7 @@ import { StyleSheet, View } from 'react-native';
 import { Pressable } from '@/components/motion';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
 import { Icon } from '@/components/Icon';
-import { AskGymPal } from '@/components/AskGymPal';
+import { AskVerity } from '@/components/AskVerity';
 import { PageScroll } from '@/components/PageScroll';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { Card, Chip, PrimaryButton, Txt } from '@/components/ui';
@@ -135,8 +135,8 @@ export default function TemplatesScreen() {
           onStart={(index) => start(template, index)}
         />
       ))}
-      <AskGymPal
-        title="Not sure which? Ask GymPal"
+      <AskVerity
+        title="Not sure which? Ask Verity"
         detail="Which suits you, and how to start"
         request={{
           question: 'Which of these templates should I start with?',

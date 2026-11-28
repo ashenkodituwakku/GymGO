@@ -70,8 +70,8 @@ export interface Prefs {
   sounds: boolean;
   /** Where you are, for gyms near you, checking in and saying how busy a gym is (lib/location.ts). Off: GymGO never asks. */
   location: boolean;
-  /** GymPal, the AI assistant: his button in the corner and the Ask GymPal rows (components/GymPal.tsx). */
-  gymPal: boolean;
+  /** Verity, the AI assistant: its button in the corner and the Ask Verity rows (components/Verity.tsx). */
+  verity: boolean;
   /**
    * Demo mode: only the invented demo gyms, for trying every edge case.
    * Off, only real gyms show. Never both, since the demo sits on real
@@ -126,7 +126,7 @@ export interface Lookup {
 }
 
 /** Why the Pro screen opened, so it can say so. */
-export type ProReason = 'saved' | 'compare' | 'workouts' | 'exercises' | 'splits' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds' | 'gympal' | 'headToHead' | 'max';
+export type ProReason = 'saved' | 'compare' | 'workouts' | 'exercises' | 'splits' | 'worldwide' | 'progress' | 'themes' | 'balance' | 'warmup' | 'notes' | 'plates' | 'timers' | 'strength' | 'freeze' | 'celebrations' | 'lifetime' | 'sounds' | 'verity' | 'headToHead' | 'max';
 
 type AppState = {
   data: ReturnType<typeof useGymData>;
@@ -215,7 +215,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, location: true, gymPal: true, demo: false, country: null, weeklyGoal: null, goal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK, rpe: false });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, location: true, verity: true, demo: false, country: null, weeklyGoal: null, goal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK, rpe: false });
   const [prefsReady, setPrefsReady] = useState(false);
   // Arcade with Pro, Marimba without: a lapsed Pro hears Marimba again, the pick kept for when it's back.
   useEffect(() => setSoundPack(soundPackFor(prefs.soundPack, billing.isPro)), [prefs.soundPack, billing.isPro]);
@@ -235,7 +235,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setCompare((current) => (current.length ? current : stored));
       compareLoaded.current = true;
     });
-    void loadJson<Partial<Prefs>>(PREFS_KEY, {}).then((value) => {
+    void loadJson<Partial<Prefs> & { gymPal?: boolean }>(PREFS_KEY, {}).then((value) => {
       const country = typeof value.country === 'string' && /^[A-Z]{2}$/.test(value.country) ? value.country : null;
       const goal = typeof value.weeklyGoal === 'number' && Number.isInteger(value.weeklyGoal) && value.weeklyGoal >= 1 && value.weeklyGoal <= 7 ? value.weeklyGoal : null;
       const trainingGoal = GOALS.some((item) => item.id === value.goal) ? (value.goal as Goal) : null;
@@ -243,7 +243,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
       // The limited website shows real gyms only, whatever was kept (lib/limited.ts).
-      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, location: value.location !== false, gymPal: value.gymPal !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, goal: trainingGoal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack), rpe: value.rpe === true };
+      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, location: value.location !== false, verity: (value.verity ?? value.gymPal) !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, goal: trainingGoal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack), rpe: value.rpe === true };
       setHapticsEnabled(next.haptics);
       setSoundsEnabled(next.sounds);
       setLocationAllowed(next.location);

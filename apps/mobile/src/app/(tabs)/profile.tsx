@@ -16,8 +16,8 @@ import { useGlassRedraw } from '@/components/Redrawn';
 import { ServerAwayCard } from '@/components/ServerAwayCard';
 import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
 import { Group, ROW, Row, TILE, TabScreen } from '@/components/ios';
-import { GymPalMark } from '@/components/GymPal';
-import { openGymPal } from '@/lib/gymPalBus';
+import { VerityMark } from '@/components/Verity';
+import { openVerity } from '@/lib/verityBus';
 import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
 import { ApiError, api } from '@/lib/api';
 import { holdPendingSignIn } from '@/lib/ageGate';
@@ -296,10 +296,10 @@ export default function Profile() {
           toggle={{ value: prefs.location, onChange: (value) => setPref('location', value) }}
         />
         <Row
-          leading={<GymPalMark size={ROW.tile} still />}
-          title="GymPal"
-          subtitle={prefs.gymPal ? 'GymGO’s AI assistant, and Ask GymPal on screens' : 'Off'}
-          toggle={{ value: prefs.gymPal, onChange: (value) => setPref('gymPal', value) }}
+          leading={<VerityMark size={ROW.tile} still />}
+          title="Verity"
+          subtitle={prefs.verity ? 'GymGO’s AI assistant, and Ask Verity on screens' : 'Off'}
+          toggle={{ value: prefs.verity, onChange: (value) => setPref('verity', value) }}
         />
         <Row
           icon="globe"
@@ -346,12 +346,12 @@ export default function Profile() {
             MIT License.
           </Explainer>
         )}
-        {prefs.gymPal && (
+        {prefs.verity && (
           <Row
-            leading={<GymPalMark size={ROW.tile} still />}
-            title="Ask GymPal"
+            leading={<VerityMark size={ROW.tile} still />}
+            title="Ask Verity"
             subtitle="Questions about GymGO, workouts or training"
-            onPress={() => openGymPal()}
+            onPress={() => openVerity()}
           />
         )}
         {/* A report goes to the server, which the limited website hasn't got. */}

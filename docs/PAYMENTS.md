@@ -120,7 +120,7 @@ nothing.
 2. **An app at developer.paypal.com** → Apps & Credentials: create an app
    (sandbox first). Copy its **Client ID** and **Secret** into
    `apps/server/.env.local` (git-ignored, so it never reaches GitHub), as
-   GymPal's keys are (README → GymPal). Don't paste them anywhere else, a
+   Verity's keys are (README → Verity). Don't paste them anywhere else, a
    chat included:
    - `PAYPAL_CLIENT_ID`
    - `PAYPAL_CLIENT_SECRET`
@@ -211,8 +211,8 @@ The owner's tiers: **Free**, **Pro** (everything Pro had) and **Max**
   month or A$79.99 a year; US$6.99 or US$54.99. Its own Stripe product,
   "GymGO Max" (metadata `gymgo: max`), prices `gymgo_max_*`.
 - **What Max adds** (`MAX_FEATURES`, only what's built): **Build with
-  GymPal** (a workout from what you say, ready to start), a **coach's note**
-  after each workout, GymPal at 300 questions a day (Pro 100, Free 20) with
+  Verity** (a workout from what you say, ready to start), a **coach's note**
+  after each workout, Verity at 300 questions a day (Pro 100, Free 20) with
   twice Pro's memory of a chat, and a Max badge by your name in the feed,
   comments, friends and challenges (Updates 264 and 266).
 - **Switching.** A Pro subscriber switches to Max (or back, or monthly to
@@ -224,7 +224,7 @@ The owner's tiers: **Free**, **Pro** (everything Pro had) and **Max**
 - **Duo is gone**: no price, no routes, nothing on the Pro page. Anyone who
   had subscribed to Duo keeps Pro until they cancel; their partner's place
   is gone. The setup script takes the Duo product off sale.
-- **GymPal's limit is per person, and OpenRouter's free models have their
+- **Verity's limit is per person, and OpenRouter's free models have their
   own daily limit for the whole account** (50 a day, or 1,000 once $10 of
   credit is bought there). A few busy Max subscribers could use that up.
   Before selling Max widely, think about OpenRouter credit or a paid model
@@ -244,7 +244,7 @@ The owner's tiers: **Free**, **Pro** (everything Pro had) and **Max**
    is yours to approve, with a new legal version so everyone agrees again.
    What would change:
    - Terms → Pro: "Pro Duo is the same subscription for two…" becomes:
-     "GymGO Max is everything in Pro, with more from GymPal and a Max badge
+     "GymGO Max is everything in Pro, with more from Verity and a Max badge
      shown by your name to your friends, at its own price. You can switch
      between Pro and Max on Stripe's page for your subscription; the
      difference for the time left is charged or credited."

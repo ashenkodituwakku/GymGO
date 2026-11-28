@@ -37,19 +37,23 @@ import {
   SMTP_URL,
   OPENROUTER_API_KEY,
   GROQ_API_KEY,
-  GYMPAL_GROQ_MODELS,
+  VERITY_PAID_API_KEY,
+  VERITY_PAID_URL,
+  VERITY_PAID_MODEL,
+  VERITY_PAID_NAME,
+  VERITY_GROQ_MODELS,
   LEFTOVER_GITHUB_MODELS_TOKEN,
   SERPAPI_API_KEY,
   SERPAPI_DAILY_LIMIT,
   WEATHER,
-  GYMPAL_MODELS,
+  VERITY_MODELS,
   WEB_DIR,
 } from './config';
 import { senderFor, smtpMailer } from './mail';
 import { scheduleBackups } from './backup';
 import { openDb, seedGyms } from './db';
 import { devAccountRefusal, ensureDevProAccount, retireDevProAccount } from './devAccount';
-import { DEFAULT_GROQ_MODELS, DEFAULT_MODELS, freeModels } from './gymPal';
+import { DEFAULT_GROQ_MODELS, DEFAULT_MODELS, DEFAULT_PAID_MODEL, DEFAULT_PAID_NAME, freeModels } from './verity';
 
 const db = openDb(DB_PATH);
 seedGyms(db, GYM_RECORDS);
@@ -98,7 +102,13 @@ const server = createServer(
     signIn: { google: GOOGLE_SIGN_IN, apple: APPLE_SIGN_IN_IDS },
     bugReports: { send: bugMail, to: BUG_REPORT_TO, retryEveryMs: 15 * 60_000 },
     legal: { copyrightAgent: COPYRIGHT_AGENT, operator: LEGAL_OPERATOR },
-    gymPal: { key: OPENROUTER_API_KEY, models: GYMPAL_MODELS, checkModels: true, groq: { key: GROQ_API_KEY, models: GYMPAL_GROQ_MODELS } },
+    verity: {
+      key: OPENROUTER_API_KEY,
+      models: VERITY_MODELS,
+      checkModels: true,
+      groq: { key: GROQ_API_KEY, models: VERITY_GROQ_MODELS },
+      paid: { key: VERITY_PAID_API_KEY, url: VERITY_PAID_URL, model: VERITY_PAID_MODEL, name: VERITY_PAID_NAME },
+    },
     appleMaps: { key: SERPAPI_API_KEY, perDay: SERPAPI_DAILY_LIMIT },
     weather: { on: WEATHER, log: (line) => console.log(line) },
     webDir: WEB_DIR,
@@ -213,20 +223,25 @@ server.listen(PORT, HOST, () => {
         : '[server] Legal pages: /terms, /privacy, /refunds, /community (no GYMGO_CONTACT_EMAIL set; they point to Report a bug)',
   );
   // Which models, never the keys; and any OpenRouter ones that aren't free, which are never asked.
-  const chat = freeModels(GYMPAL_MODELS.length ? GYMPAL_MODELS : DEFAULT_MODELS);
+  const chat = freeModels(VERITY_MODELS.length ? VERITY_MODELS : DEFAULT_MODELS);
   const openRouterModels = (chat.models.length ? chat.models : DEFAULT_MODELS).join(', ');
-  const groqModels = (GYMPAL_GROQ_MODELS.length ? GYMPAL_GROQ_MODELS : DEFAULT_GROQ_MODELS).join(', ');
+  const groqModels = (VERITY_GROQ_MODELS.length ? VERITY_GROQ_MODELS : DEFAULT_GROQ_MODELS).join(', ');
+  const freeLine = OPENROUTER_API_KEY
+    ? `OpenRouter's free models (${openRouterModels})${GROQ_API_KEY ? `, then Groq's free plan (${groqModels})` : ''}`
+    : GROQ_API_KEY
+      ? `Groq's free plan (${groqModels})`
+      : null;
+  console.log(`[server] Verity, Free: ${freeLine ? `on, ${freeLine}` : 'off (no OPENROUTER_API_KEY or GROQ_API_KEY set; see README)'}`);
+  // Which paid model, never the key.
   console.log(
-    GROQ_API_KEY
-      ? `[server] GymPal: on, Groq's free plan first (${groqModels})${OPENROUTER_API_KEY ? `, then OpenRouter's free models (${openRouterModels})` : ''}`
-      : OPENROUTER_API_KEY
-        ? `[server] GymPal: on, free models only (${openRouterModels})`
-        : '[server] GymPal: off (no GROQ_API_KEY or OPENROUTER_API_KEY set; see README)',
+    VERITY_PAID_API_KEY
+      ? `[server] Verity, Pro and Max: ${VERITY_PAID_NAME ?? DEFAULT_PAID_NAME} (${VERITY_PAID_MODEL ?? DEFAULT_PAID_MODEL}), with workout building; it bills your account per question`
+      : `[server] Verity, Pro and Max: ${freeLine ? 'the free models, without workout building' : 'off'} (no VERITY_PAID_API_KEY set; see README)`,
   );
   if (LEFTOVER_GITHUB_MODELS_TOKEN) {
-    console.log('[server] GymPal: GITHUB_MODELS_TOKEN does nothing. GitHub retired GitHub Models on 30 July 2026. Delete that line from apps/server/.env.local and revoke the token on github.com (Settings > Developer settings > Personal access tokens).');
+    console.log('[server] Verity: GITHUB_MODELS_TOKEN does nothing. GitHub retired GitHub Models on 30 July 2026. Delete that line from apps/server/.env.local and revoke the token on github.com (Settings > Developer settings > Personal access tokens).');
   }
-  if (chat.ignored.length) console.log(`[server] GymPal: left out ${chat.ignored.join(', ')}, as they aren't free (only ids ending :free are used)`);
+  if (chat.ignored.length) console.log(`[server] Verity: left out ${chat.ignored.join(', ')}, as they aren't free (only ids ending :free are used)`);
   console.log(
     GOOGLE_PLACES_API_KEY
       ? '[server] Google Maps details: on (using your GOOGLE_PLACES_API_KEY; Google may bill your account)'

@@ -152,7 +152,7 @@ describe('gift Pro', () => {
 });
 
 describe('Max', () => {
-  it('is Pro with more: its own price, GymPal’s higher limit, a badge friends see, and no second subscription', async () => {
+  it('is Pro with more: its own price, Verity’s higher limit, a badge friends see, and no second subscription', async () => {
     const payer = await person('Maxine');
     const friend = await person('Friend');
     expect((await call('POST', '/api/friends', { token: payer.token, body: { code: friend.code } })).status).toBe(200);
@@ -183,7 +183,7 @@ describe('Max', () => {
     sessions.set(sessionId, { ...sessions.get(sessionId)!, subscription: sub.id });
     await call('GET', `/api/billing/return?result=success&session_id=${sessionId}&to=${encodeURIComponent('gymgo://pro')}`);
     expect((await call('GET', '/api/billing', { token: payer.token })).body).toMatchObject({ plan: 'pro', max: true, grant: null });
-    expect((await call('GET', '/api/gympal', { token: payer.token })).body).toMatchObject({ pro: true, max: true, perDay: 300 });
+    expect((await call('GET', '/api/verity', { token: payer.token })).body).toMatchObject({ pro: true, max: true, perDay: 300 });
     expect(await badge()).toBe(true);
 
     // Max to Pro is a change on Stripe's page for the subscription, never a second subscription.
@@ -197,7 +197,7 @@ describe('Max', () => {
     subscriptions.set(sub.id, { ...sub, items: { data: [{ ...sub.items.data[0]!, price: prices[1]! }] } });
     await call('POST', '/api/billing/sync', { token: payer.token });
     expect((await call('GET', '/api/billing', { token: payer.token })).body).toMatchObject({ plan: 'pro', max: false });
-    expect((await call('GET', '/api/gympal', { token: payer.token })).body).toMatchObject({ max: false, perDay: 100 });
+    expect((await call('GET', '/api/verity', { token: payer.token })).body).toMatchObject({ max: false, perDay: 100 });
     expect(await badge()).toBe(false);
 
     // Duo is gone.

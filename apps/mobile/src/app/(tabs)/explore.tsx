@@ -707,8 +707,8 @@ function MapScreen() {
     useCallback(() => {
       if (Platform.OS !== 'web') return;
       const onKey = (event: KeyboardEvent) => {
-        // Not an Escape meant for a dialog over this tab (GymPal, the sort and time choices): one Escape
-        // closed GymPal and Filters under it together. Those don't mark their Escape as handled, so it's
+        // Not an Escape meant for a dialog over this tab (Verity, the sort and time choices): one Escape
+        // closed Verity and Filters under it together. Those don't mark their Escape as handled, so it's
         // where the key was pressed that tells.
         const inDialog = (event.target as HTMLElement | null)?.closest?.('[aria-modal="true"]');
         if (event.key === 'Escape' && !event.defaultPrevented && !inDialog && escape.current()) event.preventDefault();

@@ -440,7 +440,7 @@ function SmallLink({ label, onPress, spoken }: { label: string; onPress: () => v
 const styles = themed(() =>
   StyleSheet.create({
     page: { flex: 1, backgroundColor: color.groupedBackground },
-    // Room at the foot for GymPal's button, so it never sits over Post.
+    // Room at the foot for Verity's button, so it never sits over Post.
     content: { padding: space[4], gap: space[3], paddingBottom: space[8] * 3, width: '100%', maxWidth: 640, alignSelf: 'center' },
     gone: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space[3], padding: space[6], backgroundColor: color.groupedBackground },
     centre: { textAlign: 'center' },

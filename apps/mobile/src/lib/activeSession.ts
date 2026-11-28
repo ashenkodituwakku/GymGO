@@ -38,6 +38,8 @@ export interface ActiveSession {
   restTotal: number;
   /** When you last changed anything (a set, a weight, the rest), for when it ended. */
   lastActiveAt?: string;
+  /** The saved workout's notes, shown at the top while you train it. */
+  note?: string;
 }
 
 let current: ActiveSession | null = null;
@@ -78,10 +80,12 @@ export function startSession(plan: {
   gymName: string | null;
   unit: WeightUnit;
   items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number; group?: string }>;
+  note?: string | null;
 }): void {
   loaded = true;
   current = {
     name: plan.name,
+    ...(plan.note ? { note: plan.note } : {}),
     workoutId: plan.workoutId,
     gymId: plan.gymId,
     gymName: plan.gymName,

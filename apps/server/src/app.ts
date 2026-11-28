@@ -469,6 +469,13 @@ function cleanWorkoutPlan(input: unknown) {
     const group = typeof item.group === 'string' && /^[A-L]$/.test(item.group) ? item.group : null;
     return { exerciseId, sets, reps, restSeconds, uses: texts(item.uses, 4, 40), confirmed: item.confirmed === true, ...(group ? { group } : {}) };
   });
+  // Your notes on it (seat heights, cues, how to progress): shown when you train it. Blank is none.
+  let note: string | null = null;
+  if (plan.note !== undefined && plan.note !== null) {
+    if (typeof plan.note !== 'string') throw new HttpError(400, 'A workout’s notes are text.');
+    note = plan.note.replace(/\r\n?/g, '\n').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim() || null;
+    if (note && note.length > MAX_WORKOUT_NOTE) throw new HttpError(400, `Keep a workout’s notes to ${MAX_WORKOUT_NOTE} characters.`);
+  }
   return {
     version: 1,
     muscles: texts(plan.muscles, 15, 30),
@@ -476,8 +483,12 @@ function cleanWorkoutPlan(input: unknown) {
     gymName: text(plan.gymName, 120),
     items: cleanItems,
     uncovered: texts(plan.uncovered, 15, 30),
+    ...(note ? { note } : {}),
   };
 }
+
+/** Longest note on a saved workout. */
+export const MAX_WORKOUT_NOTE = 500;
 
 /** Sessions kept per account: years of training; the cap only stops a runaway script. */
 export const MAX_TRAINING_SESSIONS = 5000;

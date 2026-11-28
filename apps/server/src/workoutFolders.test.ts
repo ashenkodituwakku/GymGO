@@ -107,6 +107,24 @@ describe('folders for saved workouts', () => {
     expect(((await call('GET', '/api/workouts', me.token)).body!.workouts as unknown[]).length).toBe(2);
   });
 
+  it('keeps your notes on a workout, tidied, and changes them when it’s changed', async () => {
+    const me = await signUp();
+    pro(me.id);
+    const made = await call('POST', '/api/workouts', me.token, { name: 'Legs', plan: { ...plan('back-squat'), note: '  Seat on 4.\r\n\r\n\r\nPause at the bottom.  ' } });
+    expect(made.status).toBe(201);
+    expect(made.body!.workout.plan.note).toBe('Seat on 4.\n\nPause at the bottom.');
+    const id = made.body!.workout.id as string;
+    const changed = await call('PATCH', `/api/workouts/${id}`, me.token, { name: 'Legs', plan: { ...plan('back-squat'), note: 'Seat on 5.' } });
+    expect(changed.status).toBe(200);
+    const listed = (await call('GET', '/api/workouts', me.token)).body!.workouts as Array<{ id: string; plan: { note?: string } }>;
+    expect(listed.find((each) => each.id === id)!.plan.note).toBe('Seat on 5.');
+    // Blank is none; too long, or not text, is turned down.
+    const blank = await call('POST', '/api/workouts', me.token, { name: 'Arms', plan: { ...plan('db-curl'), note: '   ' } });
+    expect(blank.body!.workout.plan.note).toBeUndefined();
+    expect((await call('POST', '/api/workouts', me.token, { name: 'Long', plan: { ...plan('db-curl'), note: 'x'.repeat(501) } })).status).toBe(400);
+    expect((await call('POST', '/api/workouts', me.token, { name: 'Odd', plan: { ...plan('db-curl'), note: 5 } })).status).toBe(400);
+  });
+
   it('takes a folder name of up to 40 characters, or none', () => {
     expect(cleanFolder('  Week   A ')).toBe('Week A');
     expect(cleanFolder('')).toBeNull();

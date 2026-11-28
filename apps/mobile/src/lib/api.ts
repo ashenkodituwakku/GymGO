@@ -556,6 +556,8 @@ export interface SavedWorkoutPlan {
   /** `group`: its superset or circuit, a letter shared with its neighbours (lib/supersets.ts). */
   items: Array<{ exerciseId: string; sets: number; reps: string; restSeconds: number; uses: string[]; confirmed: boolean; group?: string }>;
   uncovered: string[];
+  /** Your notes on it (seat heights, cues), shown when you train it; up to 500 characters. */
+  note?: string | null;
 }
 
 export interface SavedWorkout {

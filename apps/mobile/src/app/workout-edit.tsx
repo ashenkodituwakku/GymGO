@@ -33,6 +33,8 @@ import { unitFor } from '@/lib/training';
 interface Draft {
   name: string;
   items: PlanItem[];
+  /** Your notes on it, shown while you train it. */
+  note: string;
 }
 
 export default function WorkoutEditScreen() {
@@ -63,7 +65,7 @@ export default function WorkoutEditScreen() {
           const found = workouts.find((each) => each.id === id);
           if (!found) return setSaved('missing');
           setSaved(found);
-          const filled = { name: found.name, items: found.plan.items.map(({ exerciseId, sets, reps, restSeconds, group }) => ({ exerciseId, sets, reps, restSeconds, ...(group ? { group } : {}) })) };
+          const filled = { name: found.name, note: found.plan.note ?? '', items: found.plan.items.map(({ exerciseId, sets, reps, restSeconds, group }) => ({ exerciseId, sets, reps, restSeconds, ...(group ? { group } : {}) })) };
           setGym({ id: found.gymId, name: found.plan.gymName });
           setDraft(filled);
           setOriginal(JSON.stringify(filled));
@@ -72,7 +74,7 @@ export default function WorkoutEditScreen() {
       return;
     }
     const handed = takePlan();
-    const filled = handed ? { name: handed.name, items: handed.items } : { name: '', items: [] };
+    const filled = handed ? { name: handed.name, note: '', items: handed.items } : { name: '', note: '', items: [] };
     if (handed) setGym({ id: handed.gymId, name: handed.gymName });
     setDraft(filled);
     setOriginal(JSON.stringify(filled));
@@ -132,7 +134,7 @@ export default function WorkoutEditScreen() {
     // Starting is what it was made for: leaving for the workout doesn't ask.
     setLeaving(true);
     stopAsking();
-    startSession({ name: draft.name.trim() || 'Your workout', workoutId: saved && saved !== 'missing' ? saved.id : null, gymId: gym.id, gymName: gym.name, unit: unitFor(prefs.country), items });
+    startSession({ name: draft.name.trim() || 'Your workout', workoutId: saved && saved !== 'missing' ? saved.id : null, gymId: gym.id, gymName: gym.name, unit: unitFor(prefs.country), items, note: draft.note.trim() || null });
     router.replace('/train');
   };
 
@@ -145,7 +147,8 @@ export default function WorkoutEditScreen() {
     }
     const items = checked();
     if (!items) return;
-    const plan = { muscles: [], goal: null, gymName: gym.name, items: items.map((item) => ({ ...item, uses: [], confirmed: false })), uncovered: [] };
+    const note = draft.note.trim();
+    const plan = { muscles: [], goal: null, gymName: gym.name, items: items.map((item) => ({ ...item, uses: [], confirmed: false })), uncovered: [], ...(note ? { note } : {}) };
     setSaving(true);
     try {
       const kept = saved && saved !== 'missing' ? await api.editWorkout(token, saved.id, { name, plan }) : await api.saveWorkout(token, { name, gymId: gym.id, plan });
@@ -175,6 +178,17 @@ export default function WorkoutEditScreen() {
       </View>
       <Card style={styles.nameCard}>
         <TextField label="Name" inSheet={false} value={draft.name} onChangeText={(name) => setDraft({ ...draft, name })} maxLength={80} placeholder="Push day, Upper body…" />
+        {/* Shown at the top while you train it. */}
+        <TextField
+          label="Notes"
+          inSheet={false}
+          value={draft.note}
+          onChangeText={(note) => setDraft({ ...draft, note })}
+          maxLength={500}
+          multiline
+          placeholder="Seat heights, cues, how to progress…"
+          style={styles.noteField}
+        />
         {gym.name && (
           <Txt variant="footnote" color={color.labelSecondary}>
             {`For ${gym.name}.`}
@@ -216,6 +230,7 @@ const styles = themed(() =>
     content: { padding: space[4], paddingBottom: space[8], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
     intro: { gap: space[1] },
     nameCard: { gap: space[2] },
+    noteField: { minHeight: 72, textAlignVertical: 'top' },
     actions: { gap: space[2], marginTop: space[2] },
     center: { textAlign: 'center' },
   }),

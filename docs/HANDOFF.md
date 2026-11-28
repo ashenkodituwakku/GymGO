@@ -384,6 +384,15 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Workout notes** (28 Nov, Update 303). Server: cleanWorkoutPlan keeps
+  `note` (string, tidied, 1 to MAX_WORKOUT_NOTE = 500 characters; blank is
+  none; other types 400), on POST and PATCH /api/workouts; tested in
+  workoutFolders.test.ts. App: SavedWorkoutPlan.note; workout-edit.tsx's
+  Draft has `note` (Notes TextField, multiline); startSession takes
+  `note` into ActiveSession.note (startSavedWorkout passes plan.note);
+  components/PlanNote.tsx on workouts/[id].tsx and under train.tsx's
+  SetsBar. Planned plans spread the plan, so Duplicate and
+  routineFromSession keep the note.
 - **Import workouts** (28 Nov, Update 302). lib/importLog.ts:
   `parseCsv` (quotes, `;` or `,` by the header line), `readDate` (local
   "2024-01-06 10:31:00", "6 Jan 2024, 10:31", or with a zone),

@@ -1129,7 +1129,8 @@ fewer sets, a new order) and the summary offers **Update Push to match**
 (Pro), saying what would change first.
 
 **Make your own** (the builder, or My workouts): a workout from scratch.
-Name it, add exercises with the picker (GymGO's and your own), then set
+Name it, give it **notes** if you like (seat heights, cues: they show on
+its page and at the top of the workout while you train it), add exercises with the picker (GymGO's and your own), then set
 each one's sets (− and +), reps ("8", "8–10" or "30 s"; anything else is
 said under it) and rest, move them up and down, and make supersets. A
 built plan's **Change** opens it there to do the same. **Start workout**

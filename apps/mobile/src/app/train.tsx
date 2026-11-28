@@ -31,6 +31,7 @@ import { againPlan, emptyWorkoutName } from '@/lib/again';
 import { addedPlan, agoLabel, daysAgo, recentExercises } from '@/lib/exerciseLibrary';
 import { AddExercise, ExercisePicker } from '@/components/AddExercise';
 import { MuscleBars } from '@/components/MuscleSplit';
+import { PlanNote } from '@/components/PlanNote';
 import { friendWorkoutPlan, muscleSplit } from '@/lib/feed';
 import { ApiError, api, apiBase, type SavedWorkout } from '@/lib/api';
 import { CoachNote } from '@/components/CoachNote';
@@ -676,6 +677,8 @@ export default function TrainScreen() {
             <Icon name="chevron" size={11} color={color.labelTertiary} />
           </Pressy>
           <SetsBar done={ticked} planned={planned} />
+          {/* The saved workout's notes, as you wrote them (components/PlanNote.tsx). */}
+          {session.note ? <PlanNote note={session.note} style={styles.planNote} /> : null}
         </View>
 
         {!typedAnyWeight && (
@@ -2105,6 +2108,7 @@ const styles = themed(() => StyleSheet.create({
   page: { flex: 1, backgroundColor: color.groupedBackground },
   content: { padding: space[4], gap: space[3], width: '100%', maxWidth: 640, alignSelf: 'center' },
   intro: { gap: 2, marginBottom: space[1] },
+  planNote: { marginTop: space[2] },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   titleText: { flexShrink: 1 },
   renameButton: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },

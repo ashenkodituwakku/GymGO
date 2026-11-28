@@ -4,6 +4,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Share, StyleSheet, View } from 'react-native';
 import { ExerciseCard } from '@/components/ExerciseCard';
+import { PlanNote } from '@/components/PlanNote';
 import { PlanSummary } from '@/components/PlanSummary';
 import { useGlassRedraw } from '@/components/Redrawn';
 import { PrimaryButton, Txt, LiveLine } from '@/components/ui';
@@ -131,6 +132,7 @@ export default function SavedWorkoutScreen() {
             .join(' · ')}
           items={workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, restSeconds: item.restSeconds, cardio: item.exercise.cardio }))}
         />
+        {saved.plan.note ? <PlanNote note={saved.plan.note} /> : null}
         {workout.items.map((item, index) => (
           <ExerciseCard
             key={`${item.exercise.id}-${index}`}

@@ -9,6 +9,21 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 303 · Notes on a saved workout
+
+*28 Nov 2026 · the commit "Notes on a saved workout, shown while you train it"*
+
+You asked for more Hevy features. This one is its routine notes, in GymGO's own look:
+
+- **Notes** on a saved workout: a box under its name when you make one or change it (My workouts → Change this workout, or Make your own). Seat heights, cues, how to progress: up to 500 characters, line breaks kept.
+- They show on the workout's page under its summary, and **at the top of the workout while you train it** ("Your notes", under the progress bar), so the seat height is there when you need it.
+- Clearing the box removes them. Duplicate and Update to match keep them; a friend's workout you save has none.
+- The server keeps them with the workout's plan, tidied (spaces and runs of blank lines), and turns down notes over 500 characters or that aren't text.
+- Checked:
+  - domain 205, server 380 (1 new: notes kept, tidied, changed, cleared, and too-long or non-text ones turned down) and app 750 tests, typecheck, lint and the empty-text scan;
+  - in a browser at 390 light: a workout made with two lines of notes showing them on its page; Change this workout with the notes filled in, changed and saved; Start workout showing the new notes at the top; clearing them leaving none. The test workout was deleted afterwards.
+- Not checked: a real phone.
+
 ## Update 302 · Import your workouts from another app
 
 *28 Nov 2026 · the commit "Import workouts from another app's CSV export, or GymGO's own"*

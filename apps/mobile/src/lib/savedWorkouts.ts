@@ -28,6 +28,7 @@ export function startSavedWorkout(saved: SavedWorkout, unit: WeightUnit): void {
     gymName: saved.plan.gymName,
     unit,
     items: workout.items.map((item) => ({ exerciseId: item.exercise.id, sets: item.sets, reps: item.reps, restSeconds: item.restSeconds, group: item.group })),
+    note: saved.plan.note ?? null,
   });
 }
 

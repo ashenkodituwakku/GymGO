@@ -11,7 +11,7 @@ next number here as part of the update itself.
 
 ## Update 306 · Verity: the AI assistant, rebuilt
 
-*28 Nov 2026 · the commit "Verity: paid model for Pro and Max, guard, workouts in the chat, new chat"*
+*28 Nov 2026 · `3f9d54c`, and the owner's logo in `3d8e29a`*
 
 You asked for the chatbot to be set up properly: called Verity, a paid AI service (like GPT Luna) for paid users and OpenRouter for free ones, a bigger button, a better-looking chat, custom instructions for GymGO, jailbreak and prompt-injection blocking, and actions that do things for people, such as making a workout (paid only).
 

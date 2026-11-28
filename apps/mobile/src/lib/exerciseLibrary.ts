@@ -169,6 +169,40 @@ export function replacementsFor(query: string, inWorkout: readonly string[], rep
   return [...open].sort((a, b) => score(b) - score(a)).slice(0, limit);
 }
 
+/** One you've done lately, with how it went last time. */
+export interface RecentExercise {
+  exercise: Exercise;
+  /** Its working sets last time, in that workout's unit, and when. */
+  sets: TrainingSession['exercises'][number]['sets'];
+  unit: TrainingSession['unit'];
+  date: string;
+}
+
+/**
+ * The exercises you've logged most recently, newest first, each once, for
+ * the top of the exercise picker. Ones already in the workout, ones GymGO
+ * no longer lists and your own you've deleted are left out.
+ */
+export function recentExercises(sessions: readonly TrainingSession[], inWorkout: readonly string[], limit = 5, exercises: Exercise[] = EXERCISES): RecentExercise[] {
+  const present = new Set(inWorkout);
+  const seen = new Set<string>();
+  const out: RecentExercise[] = [];
+  const newest = [...sessions].sort((a, b) => (a.finishedAt < b.finishedAt ? 1 : a.finishedAt > b.finishedAt ? -1 : 0));
+  for (const session of newest) {
+    for (const logged of session.exercises) {
+      if (out.length >= limit) return out;
+      if (seen.has(logged.exerciseId) || present.has(logged.exerciseId)) continue;
+      const sets = workingSets(logged.sets);
+      if (!sets.length) continue;
+      seen.add(logged.exerciseId);
+      const exercise = exercises.find((each) => each.id === logged.exerciseId) ?? exerciseById(logged.exerciseId);
+      if (!exercise || exercise.own?.archived) continue;
+      out.push({ exercise, sets, unit: session.unit, date: session.finishedAt });
+    }
+  }
+  return out;
+}
+
 /** How an added exercise is planned: the builder's usual sets, reps and rest; a finisher once, as its cue says. */
 export function addedPlan(exercise: Exercise): { sets: number; reps: string; restSeconds: number } {
   if (exercise.cardio) return { sets: 1, reps: 'see cue', restSeconds: 0 };

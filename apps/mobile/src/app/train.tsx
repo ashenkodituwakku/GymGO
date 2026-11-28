@@ -28,10 +28,10 @@ import { useExerciseNote } from '@/lib/exerciseNotes';
 import { leadExercise } from '@/lib/exerciseGlyphs';
 import { endSession, startSession, updateSession, useActiveSession, type ActiveItem } from '@/lib/activeSession';
 import { againPlan, emptyWorkoutName } from '@/lib/again';
-import { addedPlan, agoLabel, daysAgo } from '@/lib/exerciseLibrary';
+import { addedPlan, agoLabel, daysAgo, recentExercises } from '@/lib/exerciseLibrary';
 import { AddExercise, ExercisePicker } from '@/components/AddExercise';
 import { MuscleBars } from '@/components/MuscleSplit';
-import { muscleSplit } from '@/lib/feed';
+import { friendWorkoutPlan, muscleSplit } from '@/lib/feed';
 import { ApiError, api, apiBase, type SavedWorkout } from '@/lib/api';
 import { CoachNote } from '@/components/CoachNote';
 import { MaxBadge } from '@/components/MaxBadge';
@@ -451,6 +451,8 @@ export default function TrainScreen() {
   );
   // Adding one mid-workout: it joins the end, planned as the builder would plan it.
   const inWorkout = useMemo(() => session?.items.map((item) => item.exerciseId) ?? [], [session?.items]);
+  // What you've done lately, at the top of the exercise picker.
+  const recent = useMemo(() => recentExercises(log.sessions, inWorkout), [log.sessions, inWorkout]);
   const addExercise = useCallback((exercise: Exercise) => {
     const plan = addedPlan(exercise);
     updateSession((current) => ({
@@ -736,7 +738,7 @@ export default function TrainScreen() {
         )}
 
         {/* Started empty: the picker's already open. */}
-        <AddExercise inWorkout={inWorkout} onAdd={addExercise} startOpen={session.items.length === 0} />
+        <AddExercise inWorkout={inWorkout} onAdd={addExercise} startOpen={session.items.length === 0} recent={recent} />
 
         <View style={styles.finish}>
           {finishAnyway && unticked > 0 && (
@@ -1732,8 +1734,27 @@ function Summary({
   onProgress: () => void;
 }) {
   const { session, records, compared } = result;
-  const { prefs, billing, account } = useApp();
+  const { prefs, billing, account, openPro } = useApp();
   const router = useRouter();
+  // Not from My workouts: kept there to do again (Pro), then into a folder.
+  const [kept, setKept] = useState<{ state: 'idle' | 'saving' | 'saved'; id: string | null }>({ state: 'idle', id: null });
+  const keep = async () => {
+    const token = account.token;
+    if (kept.state !== 'idle' || !token) return;
+    if (!billing.isPro) return openPro('workouts');
+    // A template's day keeps its own name ("Push"), not the template's after it.
+    const saving = friendWorkoutPlan({ ...session, name: workoutTitle(session.name).title }, { keepOwn: true });
+    if (!saving) return;
+    setKept({ state: 'saving', id: null });
+    try {
+      const { workout } = await api.saveWorkout(token, { name: saving.name, gymId: null, plan: saving.plan });
+      haptic.success();
+      setKept({ state: 'saved', id: workout.id });
+    } catch {
+      setKept({ state: 'idle', id: null });
+      setShared('Couldn’t save it. Try again.');
+    }
+  };
   // Started from one of My workouts and done differently: an offer to change it to match (Pro, as changing it is).
   const [routine, setRoutine] = useState<{ saved: SavedWorkout; line: string; state: 'idle' | 'saving' | 'done' } | null>(null);
   useEffect(() => {
@@ -1908,6 +1929,19 @@ function Summary({
             // The workout as a picture, as a training app shares it (app/share-workout.tsx).
             { id: 'picture', icon: 'photo' as IconName, title: 'Share as a picture', go: () => router.push({ pathname: '/share-workout', params: { id: session.id } }), busy: false },
             { id: 'workout', icon: 'share' as IconName, title: 'Share this workout', go: () => void share(), busy: false },
+            // Not from My workouts: keep it there, to do again (Pro); once kept, into a folder.
+            ...(!session.workoutId && account.token
+              ? [
+                  {
+                    id: 'keep',
+                    icon: (kept.state === 'saved' ? 'check' : 'save') as IconName,
+                    title: kept.state === 'saved' ? 'Saved to My workouts' : kept.state === 'saving' ? 'Saving…' : billing.isPro ? 'Save to my workouts' : 'Save to my workouts · Pro',
+                    line: kept.state === 'saved' ? 'Add it to a folder' : undefined,
+                    go: () => (kept.state === 'saved' && kept.id ? router.push({ pathname: '/workout-folder', params: { id: kept.id } }) : void keep()),
+                    busy: kept.state === 'saving',
+                  },
+                ]
+              : []),
             // Done differently from the saved workout it started from: change that to match (lib/routineUpdate.ts).
             ...(routine
               ? [

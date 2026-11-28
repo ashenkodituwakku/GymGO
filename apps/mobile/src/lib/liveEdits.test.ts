@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ActiveItem } from './activeSession';
-import { replacementsFor } from './exerciseLibrary';
+import { recentExercises, replacementsFor } from './exerciseLibrary';
 import { canMove, moveExercise, removeExercise, removeSet, replaceExercise } from './liveEdits';
 import { exerciseById } from './workout';
 
@@ -95,5 +95,37 @@ describe('replacing an exercise', () => {
     expect(found.map((one) => one.id)).not.toContain('bench-press');
     for (const one of found) expect(one.primary).toContain('chest');
     expect(replacementsFor('squat', [], 'bench-press').every((one) => /squat/i.test(one.name) || one.primary.includes('quadriceps') || one.primary.includes('gluteal'))).toBe(true);
+  });
+});
+
+describe('recent exercises for the picker', () => {
+  const done = (id: string, finishedAt: string, exercises: Array<[string, number]>) => ({
+    id,
+    name: 'Workout',
+    unit: 'kg' as const,
+    startedAt: finishedAt,
+    finishedAt,
+    workoutId: null,
+    gymId: null,
+    exercises: exercises.map(([exerciseId, weight]) => ({ exerciseId, sets: [{ weight, reps: 8 }] })),
+  });
+
+  it('lists what you did lately, newest first, each once, leaving out ones already in', () => {
+    const recent = recentExercises(
+      [
+        done('a', '2026-11-20T10:00:00Z', [['bench-press', 60], ['goblet-squat', 20]]),
+        done('b', '2026-11-25T10:00:00Z', [['push-up', 0], ['bench-press', 65]]),
+        done('c', '2026-11-22T10:00:00Z', [['no-such-move', 10], ['plank', 0]]),
+      ],
+      ['push-up'],
+    );
+    expect(recent.map((one) => one.exercise.id)).toEqual(['bench-press', 'plank', 'goblet-squat']);
+    expect(recent[0]!.sets[0]!.weight).toBe(65);
+    expect(recent[0]!.date).toBe('2026-11-25T10:00:00Z');
+  });
+
+  it('keeps to the limit', () => {
+    const recent = recentExercises([done('a', '2026-11-20T10:00:00Z', [['bench-press', 60], ['goblet-squat', 20], ['plank', 0]])], [], 2);
+    expect(recent).toHaveLength(2);
   });
 });

@@ -799,7 +799,11 @@ saved to your account when you finish, so logging needs a (free) account.
 
 **Empty workout** (the Workout screen) starts one with nothing planned,
 named for the time of day ("Evening workout"), with the exercise picker
-open; add exercises as you go and rename it with the pencil. In Progress
+open; add exercises as you go and rename it with the pencil. **Add an
+exercise** lists your **recent** exercises first, with how each went last
+time, before moves for the muscles you're training. A workout that didn't
+come from My workouts can be kept there from the finish screen (**Save to
+my workouts**, Pro), then put in a folder. In Progress
 → History, a trophy on a workout counts the records it broke, and
 **Open** shows its own page: every set, the muscles it worked, **Do it
 again** (the same exercises and sets, at the same gym) and **Save to my

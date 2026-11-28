@@ -13,7 +13,8 @@
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type ViewInstance } from 'react-native';
-import { addableExercises, kitShort, kitText, replacementsFor } from '@/lib/exerciseLibrary';
+import { addableExercises, kitShort, kitText, replacementsFor, type RecentExercise } from '@/lib/exerciseLibrary';
+import { setsSummary } from '@/lib/training';
 import { haptic } from '@/lib/haptics';
 import { FIELD_FRAME, color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { useApp } from '@/lib/app-state';
@@ -24,7 +25,18 @@ import { Icon } from './Icon';
 import { Pressable } from './motion';
 import { Input, PrimaryButton, Txt } from './ui';
 
-export function AddExercise({ inWorkout, onAdd, startOpen = false }: { inWorkout: string[]; onAdd: (exercise: Exercise) => void; startOpen?: boolean }) {
+export function AddExercise({
+  inWorkout,
+  onAdd,
+  startOpen = false,
+  recent = [],
+}: {
+  inWorkout: string[];
+  onAdd: (exercise: Exercise) => void;
+  startOpen?: boolean;
+  /** What you've done lately, offered first (lib/exerciseLibrary.ts recentExercises). */
+  recent?: RecentExercise[];
+}) {
   const [open, setOpen] = useState(startOpen);
   // Closing hands keyboard focus back to the button that opened it, rather than to the page.
   const button = useRef<ViewInstance>(null);
@@ -47,19 +59,22 @@ export function AddExercise({ inWorkout, onAdd, startOpen = false }: { inWorkout
       />
     );
   }
-  return <ExercisePicker inWorkout={inWorkout} onPick={onAdd} onClose={close} />;
+  return <ExercisePicker inWorkout={inWorkout} recent={recent} onPick={onAdd} onClose={close} />;
 }
 
 /** The picker itself: adding to the workout, or, with `replacing`, putting one in that exercise's place. */
 export function ExercisePicker({
   inWorkout,
   replacing,
+  recent = [],
   onPick,
   onClose,
 }: {
   inWorkout: string[];
   /** The exercise being replaced, if this is Replace exercise. */
   replacing?: string;
+  /** Adding with nothing typed: what you've done lately, first, with how it went. */
+  recent?: RecentExercise[];
   onPick: (exercise: Exercise) => void;
   onClose: () => void;
 }) {
@@ -74,10 +89,39 @@ export function ExercisePicker({
     [query, inWorkout, replacing, pool],
   );
   const oldName = replacing ? exerciseName(replacing) : null;
+  // Recent first while browsing to add; the suggestions under them leave those out.
+  const lately = !replacing && !query.trim() ? recent : [];
+  const lateIds = new Set(lately.map((item) => item.exercise.id));
+  const suggested = found.filter((exercise) => !lateIds.has(exercise.id));
   const close = () => {
     setQuery('');
     onClose();
   };
+  /** One to pick: its picture, name, and its kit (or, for one done lately, how it went last time). */
+  const pickRow = (exercise: Exercise, index: number, last?: string) => (
+    <Pressable
+      key={exercise.id}
+      onPress={() => {
+        haptic.success();
+        onPick(exercise);
+        close();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${oldName ? 'Use' : 'Add'} ${exercise.name}. ${last ? `Last time ${last}` : kitText(exercise)}`}
+      style={({ pressed }) => [styles.row, index > 0 && styles.line, pressed && { backgroundColor: color.fill }]}
+    >
+      <ExerciseTile exerciseId={exercise.id} size={36} />
+      <View style={styles.flex}>
+        <Txt variant="subhead" style={face('semibold')} numberOfLines={2}>
+          {exercise.name}
+        </Txt>
+        <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
+          {last ?? kitShort(exercise)}
+        </Txt>
+      </View>
+      <Icon name={oldName ? 'shuffle' : 'plus'} size={16} color={color.brand} />
+    </Pressable>
+  );
 
   return (
     <View style={styles.card}>
@@ -109,6 +153,18 @@ export function ExercisePicker({
           style={styles.input}
         />
       </View>
+      {lately.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary}>
+            RECENT
+          </Txt>
+          <View>
+            {lately.map((item, index) =>
+              pickRow(item.exercise, index, `${setsSummary(item.sets, item.unit)} · ${new Date(item.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`),
+            )}
+          </View>
+        </>
+      )}
       <Txt variant="eyebrow" color={color.labelSecondary}>
         {query.trim() ? (found.length ? 'MATCHES' : 'NO MATCHES') : oldName ? 'FOR THE SAME MUSCLES' : 'FOR THE MUSCLES YOU’RE TRAINING'}
       </Txt>
@@ -117,32 +173,7 @@ export function ExercisePicker({
           No exercise matches. Try fewer letters, or a muscle, like “back”.
         </Txt>
       )}
-      <View>
-        {found.map((exercise, index) => (
-          <Pressable
-            key={exercise.id}
-            onPress={() => {
-              haptic.success();
-              onPick(exercise);
-              close();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`${oldName ? 'Use' : 'Add'} ${exercise.name}. ${kitText(exercise)}`}
-            style={({ pressed }) => [styles.row, index > 0 && styles.line, pressed && { backgroundColor: color.fill }]}
-          >
-            <ExerciseTile exerciseId={exercise.id} size={36} />
-            <View style={styles.flex}>
-              <Txt variant="subhead" style={face('semibold')} numberOfLines={2}>
-                {exercise.name}
-              </Txt>
-              <Txt variant="caption" color={color.labelSecondary} numberOfLines={1}>
-                {kitShort(exercise)}
-              </Txt>
-            </View>
-            <Icon name={oldName ? 'shuffle' : 'plus'} size={16} color={color.brand} />
-          </Pressable>
-        ))}
-      </View>
+      <View>{suggested.map((exercise, index) => pickRow(exercise, index))}</View>
       <Pressable
         onPress={() => {
           haptic.select();

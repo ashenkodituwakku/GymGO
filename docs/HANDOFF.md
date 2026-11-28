@@ -384,6 +384,14 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Recent exercises, Save from the finish screen** (28 Nov, Update 300).
+  exerciseLibrary.ts `recentExercises` (newest first, once each, not in
+  the workout; tested in liveEdits.test.ts); TrainScreen passes `recent`
+  to AddExercise, and ExercisePicker shows it as RECENT (only when adding
+  with nothing typed) with a shared `pickRow`. Summary's `keep` saves
+  friendWorkoutPlan(session with workoutTitle's title, keepOwn) through
+  api.saveWorkout, then links to workout-folder; only for sessions with no
+  workoutId and a token.
 - **Cardio metres, record history, muscles worked** (28 Nov, Update 299).
   workout.ts `tracksDistance` (cardio on rower, treadmill or air bike).
   train.tsx: `distanceToo` adds a METRES input after the stopwatch and

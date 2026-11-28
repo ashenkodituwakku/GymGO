@@ -9,6 +9,19 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 300 · Recent exercises first, and Save from the finish screen
+
+*28 Nov 2026 · the commit "Recent exercises first when adding one, Save to my workouts from the finish screen"*
+
+You asked for more polish and Hevy features. Two more, in GymGO's own look:
+
+- **Recent exercises first** (Add an exercise, in a workout). With nothing typed, the picker now starts with **RECENT**: the last five exercises you've logged that aren't in this workout, newest first, each showing how it went last time ("80 kg × 5 · 24 Nov"). The moves for the muscles you're training follow, without repeating those. Typing a search shows matches only. Ones GymGO no longer lists, and your own you've deleted, are left out. Replace exercise still leads with the same muscles.
+- **Save to my workouts from the finish screen** (Pro). A workout that didn't come from My workouts (an empty one, a template's day, one built from muscles) can be kept there straight away, as you did it: the exercises with working sets and how many, under its own name (a template's day as "Push", without the template's name after it). Once saved, the row offers **Add it to a folder**. Without Pro it says so and opens Pro. A workout started from My workouts still gets Update to match instead.
+- Checked:
+  - domain 205, server 379 and app 739 tests (2 new for the recent list), typecheck, lint and the empty-text scan;
+  - in a browser at 390 light: Recent listing back squat, farmer's carry and plank with last time's sets, hidden while searching, and adding back squat from it; a finished workout saved from the finish screen as "Recent check" with bench press (back squat had no sets, so it wasn't saved), then Add it to a folder opening the folder page. The test workout and session were deleted afterwards.
+- Not checked: a real phone.
+
 ## Update 299 · Metres on cardio machines, record history, and the muscles you worked
 
 *28 Nov 2026 · the commit "Metres beside the time on cardio machines, record history on an exercise, muscles worked on the finish screen"*

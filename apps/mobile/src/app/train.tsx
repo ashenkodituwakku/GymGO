@@ -73,6 +73,7 @@ import {
   toKg,
   unitFor,
   volumeKg,
+  bestPace,
   stepWarmUps,
   warmUpSets,
   weightFor,
@@ -98,7 +99,7 @@ import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWork
 import { changeLine, routineChange, routineFromSession } from '@/lib/routineUpdate';
 import { canMove, moveExercise, removeExercise, removeSet, replaceExercise } from '@/lib/liveEdits';
 import { useTrainingLog } from '@/lib/useTraining';
-import { TYPICAL_KIT, exerciseName, knownKit, setMeasure, swapFor, tracksDistance, warmUpKit, type Exercise, type Kit, exerciseById } from '@/lib/workout';
+import { TYPICAL_KIT, exerciseName, knownKit, paceMetres, setMeasure, swapFor, tracksDistance, warmUpKit, type Exercise, type Kit, exerciseById } from '@/lib/workout';
 import { groupName, groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
 import { GroupControls, groupTag, joinableNext } from '@/components/GroupControls';
 import { SwapButton } from '@/components/ExerciseCard';
@@ -493,6 +494,7 @@ export default function TrainScreen() {
       if (!item) return;
       const name = exerciseName(item.exerciseId);
       if (action === 'replace') return setReplacing(index);
+      if (action === 'history') return openHowTo(item.exerciseId);
       haptic.select();
       // A picker open for another exercise would now point at the wrong one.
       setReplacing(null);
@@ -505,7 +507,7 @@ export default function TrainScreen() {
       const group = groupOf(items, index);
       say(`${moved.group && group ? `${groupName(group)}, with ${name},` : name} moved to ${moved.at + 1} of ${items.length}`);
     },
-    [say],
+    [say, openHowTo],
   );
   const openMenu = useCallback(
     (index: number) => {
@@ -785,7 +787,7 @@ export default function TrainScreen() {
 
 // --- An exercise's menu ------------------------------------------------------------
 
-type MenuAction = 'up' | 'down' | 'replace' | 'remove';
+type MenuAction = 'up' | 'down' | 'replace' | 'history' | 'remove';
 
 /** What its ⋯ menu offers: only what can be done to it now. */
 function menuActions(items: ActiveItem[], index: number): Array<SheetAction<MenuAction>> {
@@ -797,6 +799,8 @@ function menuActions(items: ActiveItem[], index: number): Array<SheetAction<Menu
     ...(canMove(items, index, 'down') ? [{ key: 'down' as const, label: 'Move down' }] : []),
     // Another in its place starts blank, so not once a set is ticked (Swap's rule too).
     ...(ticked ? [] : [{ key: 'replace' as const, label: 'Replace exercise' }]),
+    // Its page: every time you've done it, its records, how to do it (the picture opens it too).
+    { key: 'history' as const, label: 'See history' },
     // The last one stays: Discard workout is for ending it.
     ...(items.length > 1 ? [{ key: 'remove' as const, label: 'Remove exercise', destructive: true }] : []),
   ];
@@ -1072,6 +1076,8 @@ const ExerciseLog = memo(function ExerciseLog({
 
   return (
     <View style={styles.card}>
+      {/* In a superset or circuit: a line down its edge, so the group reads as one at a glance. */}
+      {group && <View style={styles.groupRail} aria-hidden />}
       {region}
       <View style={styles.cardHead}>
         {/* Turns green once every set is ticked; a tap opens how to do it. */}
@@ -1892,6 +1898,16 @@ function Summary({
                   <Txt variant="footnote" color={color.labelSecondary}>
                     {setsSummary(logged.sets, unit)}
                   </Txt>
+                  {/* A rower's split or a treadmill's pace, from its quickest set. */}
+                  {(() => {
+                    const per = paceMetres(logged.exerciseId);
+                    const pace = per ? bestPace(logged.sets, per) : null;
+                    return pace ? (
+                      <Txt variant="footnote" color={color.labelSecondary}>
+                        {`Best pace ${pace.label}`}
+                      </Txt>
+                    ) : null;
+                  })()}
                   {/* The records it set, here rather than in a list of their own that said it all again. */}
                   {records.some((record) => record.exerciseId === logged.exerciseId) && (
                     <View style={styles.didRecord}>
@@ -2112,6 +2128,7 @@ const styles = themed(() => StyleSheet.create({
   unitRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   unitSwitch: { width: 140 },
   card: { backgroundColor: color.plate, borderRadius: radius.xl, borderCurve: 'continuous', padding: space[4], gap: space[2], ...shadow.plate },
+  groupRail: { position: 'absolute', left: 0, top: space[4], bottom: space[4], width: 4, borderTopRightRadius: 2, borderBottomRightRadius: 2, backgroundColor: color.brand },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginBottom: space[1] },
   moreButton: { alignSelf: 'flex-start', width: 36, height: 36, marginRight: -space[2], marginTop: -space[1], borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space[2], rowGap: space[1], marginTop: 2 },

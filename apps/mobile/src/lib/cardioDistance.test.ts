@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkEdits, draftsOf } from './sessionEdit';
-import { draftToLogged, setsSummary } from './training';
-import { tracksDistance } from './workout';
+import { bestPace, draftToLogged, setsSummary } from './training';
+import { paceMetres, tracksDistance } from './workout';
 
 describe('cardio machines with a distance', () => {
   it('knows which exercises can say how far as well as how long', () => {
@@ -52,5 +52,26 @@ describe('cardio machines with a distance', () => {
     expect(back.ok && back.exercises[0]!.sets[0]).toEqual({ weight: null, reps: 0, seconds: 52, metres: 250 });
     const wrong = checkEdits([{ ...drafts[0]!, sets: [{ ...drafts[0]!.sets[0]!, distance: 'lots' }] }], 'kg');
     expect(wrong.ok).toBe(false);
+  });
+});
+
+describe('pace on a cardio machine', () => {
+  it('says a rower’s per 500 m and a treadmill’s per km', () => {
+    expect(paceMetres('row-intervals')).toBe(500);
+    expect(paceMetres('treadmill-sprints')).toBe(1000);
+    expect(paceMetres('bike-intervals')).toBe(1000);
+    expect(paceMetres('plank')).toBeNull();
+  });
+
+  it('finds the best pace among sets with both a time and a distance', () => {
+    const sets = [
+      { weight: null, reps: 0, seconds: 52, metres: 250 },
+      { weight: null, reps: 0, seconds: 50, metres: 250 },
+      { weight: null, reps: 0, seconds: 40 },
+      { weight: null, reps: 0, seconds: 30, metres: 200, kind: 'warmup' as const },
+    ];
+    expect(bestPace(sets, 500)).toEqual({ secondsPer: 100, label: '1:40 /500 m' });
+    expect(bestPace([{ weight: null, reps: 0, seconds: 1500, metres: 5000 }], 1000)?.label).toBe('5:00 /km');
+    expect(bestPace([{ weight: null, reps: 0, seconds: 60 }], 500)).toBeNull();
   });
 });

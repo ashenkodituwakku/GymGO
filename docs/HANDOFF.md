@@ -384,6 +384,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Pace, superset rail, See history** (28 Nov, Update 301).
+  workout.ts `paceMetres` (null unless tracksDistance; rower 500, else
+  1000); training.ts `bestPace` and `paceLabel` (tested in
+  cardioDistance.test.ts), used in the Summary's What you did rows and
+  progress/[exercise].tsx's Best pace Fact. train.tsx: `styles.groupRail`
+  on ExerciseLog's card when `group`; MenuAction 'history' calls
+  `openHowTo` (in onMenuAction's deps).
 - **Recent exercises, Save from the finish screen** (28 Nov, Update 300).
   exerciseLibrary.ts `recentExercises` (newest first, once each, not in
   the workout; tested in liveEdits.test.ts); TrainScreen passes `recent`

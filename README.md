@@ -650,7 +650,8 @@ workouts go to your log.
   **Swap** the known kit allows; **Start it here** starts the workout at
   that gym with the swaps you chose.
 - **An exercise's menu.** The ⋯ on an exercise in a workout in progress
-  can **Move up** or **Move down** (a superset moves as one), **Replace
+  can **Move up** or **Move down** (a superset moves as one, and a line
+  down its cards' edge shows the group), **See history**, **Replace
   exercise** with any other (moves for the same muscles first; only before
   a set is ticked) or **Remove exercise** (it says first if ticked sets go
   with it). The pencil beside the workout's name renames it, except a
@@ -676,7 +677,9 @@ workouts go to your log.
   and ticks it. With a target (last time's, the set above's or the plan's)
   the stopwatch counts down to it, beeps at 3, 2 and 1, buzzes at zero and
   then counts on in green. On a rower, treadmill or air bike the **metres**
-  can go beside the time ("250 m in 0:52"), or be left blank. A farmer's carry is logged by the weight carried and
+  can go beside the time ("250 m in 0:52"), or be left blank; the finish
+  screen and the exercise's page then give the **best pace** (a rower's
+  split per 500 m, a treadmill's or bike's per km). A farmer's carry is logged by the weight carried and
   **metres**. A blank one stands for last time's at the same place, else
   the set above, else the plan. They have their own records (**Longest
   yet**, **Furthest yet**) and chart, add nothing to the weight lifted, and

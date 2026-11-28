@@ -24,6 +24,7 @@ import { RECORD_WORD, recordHistory } from '@/lib/records';
 import {
   EXERCISE_METRICS,
   TIMED_METRICS,
+  bestPace,
   distanceLabel,
   exerciseSeries,
   exerciseTotals,
@@ -40,7 +41,7 @@ import {
 import { useOwnTraining } from '@/lib/ownTraining';
 import { useTrainingLog } from '@/lib/useTraining';
 import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
-import { KIT_LABEL, exerciseName, muscleLabel, exerciseById, setMeasure, tracksDistance } from '@/lib/workout';
+import { KIT_LABEL, exerciseName, muscleLabel, exerciseById, paceMetres, setMeasure, tracksDistance } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { MuscleFigures } from '@/components/MuscleFigures';
 import { PageScroll } from '@/components/PageScroll';
@@ -93,6 +94,9 @@ export default function ExerciseProgressScreen() {
   const done = log.sessions.filter((session) => session.exercises.some((item) => item.exerciseId === exerciseId));
   // Over the whole log: sets, reps, weight lifted, and when you last did it.
   const totals = useMemo(() => exerciseTotals(log.sessions, exerciseId), [log.sessions, exerciseId]);
+  // A rower's best split, or a treadmill's or bike's best pace, over every session.
+  const per = paceMetres(exerciseId);
+  const pace = useMemo(() => (per ? bestPace(done.flatMap((session) => session.exercises.filter((item) => item.exerciseId === exerciseId).flatMap((item) => item.sets)), per) : null), [per, done, exerciseId]);
   const swaps = useMemo(() => (exercise ? alternativesFor(exercise) : []), [exercise]);
 
   if (!exercise && done.length === 0 && log.status !== 'loading') {
@@ -221,6 +225,7 @@ export default function ExerciseProgressScreen() {
           {/* By the clock or the tape: the longest or furthest set. */}
           {record.longestSeconds !== null && <Fact label="Longest" value={secondsLabel(record.longestSeconds)} detail="in one set" />}
           {record.furthestMetres !== null && <Fact label="Furthest" value={distanceLabel(record.furthestMetres)} detail="in one set" />}
+          {pace && <Fact label="Best pace" value={pace.label.split(' /')[0]!} detail={`per ${per === 500 ? '500 m' : 'km'}`} />}
           <Fact label="Sessions" value={String(record.sessions)} detail={totals.last ? `last ${dayLabel(totals.last)}` : undefined} />
           {totals.sets > 0 && (
             <Fact

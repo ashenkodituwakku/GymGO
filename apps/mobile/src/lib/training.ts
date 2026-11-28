@@ -408,6 +408,23 @@ export function exerciseTotals(sessions: readonly TrainingSession[], exerciseId:
   return { sets, reps, volumeKg: volume, last };
 }
 
+/**
+ * The best pace in some sets with both a time and a distance, per 500 m
+ * or per km: "1:44 /500 m", "5:12 /km". Null when no set has both.
+ */
+export function bestPace(sets: readonly LoggedSet[], per: 500 | 1000): { secondsPer: number; label: string } | null {
+  let best: number | null = null;
+  for (const set of workingSets(sets)) {
+    if (!set.seconds || !set.metres) continue;
+    const secondsPer = (set.seconds * per) / set.metres;
+    if (best === null || secondsPer < best) best = secondsPer;
+  }
+  return best === null ? null : { secondsPer: best, label: paceLabel(best, per) };
+}
+
+/** "1:44 /500 m", "5:12 /km". */
+export const paceLabel = (secondsPer: number, per: 500 | 1000) => `${clockLabel(Math.round(secondsPer))} /${per === 500 ? '500\u00a0m' : 'km'}`;
+
 // --- Over time -------------------------------------------------------------------
 
 /** What an exercise's chart can follow over time. */

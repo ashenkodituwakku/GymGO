@@ -165,6 +165,12 @@ export function tracksDistance(exerciseId: string): boolean {
   return !!exercise?.cardio && exercise.needs.some((option) => option.some((kit) => DISTANCE_MACHINES.includes(kit)));
 }
 
+/** How a cardio machine's pace is said: a rower's per 500 m (its split), a treadmill's or bike's per km; null for others. */
+export function paceMetres(exerciseId: string): 500 | 1000 | null {
+  if (!tracksDistance(exerciseId)) return null;
+  return exerciseById(exerciseId)!.needs.some((option) => option.includes('rower')) ? 500 : 1000;
+}
+
 /** Machines whose stack or plates warm up in steps (lib/training.ts stepWarmUps). */
 const STACKS: readonly Kit[] = ['cable_station', 'lat_pulldown', 'leg_press', 'hack_squat', 'smith_machine'];
 

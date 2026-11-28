@@ -9,6 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 301 · Pace on cardio machines, supersets you can see, and History in the menu
+
+*28 Nov 2026 · the commit "Best pace on cardio machines, a rail on superset cards, See history in the exercise menu"*
+
+You asked for more polish and Hevy features. Three more, in GymGO's own look:
+
+- **Best pace on cardio machines.** With metres beside the time (Update 299), the finish screen says the quickest set's pace under the exercise ("Best pace 1:40 /500 m"), and the exercise's page has a **Best pace** tile over every session. A rower's is its split per 500 m; a treadmill's or air bike's is per km. Warm-ups don't count, and a set with only a time is left out.
+- **Supersets you can see.** Each exercise in a superset or circuit has a line in your accent down the left edge of its card, so the group reads as one while you scroll. The label still says "Superset A (1/2)" for a screen reader and at a glance.
+- **See history in the exercise menu.** The ⋯ menu now has **See history**, which opens the exercise's page (every time you've done it, its records, how to do it). Tapping the exercise's picture still does the same, but it wasn't something you'd find.
+- Checked:
+  - domain 205, server 379 and app 741 tests (2 new: which machines take which pace, and the best pace from mixed sets), typecheck, lint and the empty-text scan;
+  - in a browser at 390 light: the rail on Push-up and Goblet squat in Superset A; the menu reading Move down, Replace exercise, See history, Remove exercise, with See history opening Push-up's page; two rower sets (250 m in 0:52 and 0:50) giving "Best pace 1:40 /500 m" on the finish screen and the tile on Rower intervals' page. The test workout was deleted afterwards.
+- Not checked: a real phone.
+
 ## Update 300 · Recent exercises first, and Save from the finish screen
 
 *28 Nov 2026 · the commit "Recent exercises first when adding one, Save to my workouts from the finish screen"*

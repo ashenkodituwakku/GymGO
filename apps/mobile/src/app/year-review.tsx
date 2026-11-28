@@ -9,7 +9,7 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { CountUp } from '@/components/CountUp';
 import { ExerciseTile } from '@/components/ExerciseGlyph';
@@ -38,6 +38,7 @@ export default function YearReviewScreen() {
   const year = typeof asked === 'string' && /^\d{4}$/.test(asked) ? Number(asked) : new Date().getFullYear();
   usePageTitle(`${year} in review`);
   const router = useRouter();
+  const narrow = useWindowDimensions().width < 360;
   const { account, prefs } = useApp();
   const log = useTrainingLog(account.token);
   const unit = unitFor(prefs.country);
@@ -110,8 +111,9 @@ export default function YearReviewScreen() {
 
       <Animated.View entering={arrive(1)} style={styles.figures}>
         {figures.map((figure) => (
-          <View key={figure.id} style={styles.figure} accessible accessibilityLabel={`${figure.value.toLocaleString('en')} ${figure.label}`}>
-            <CountUp id={`year.${year}.${figure.id}`} value={figure.value} variant="title" style={[face('bold'), styles.tabular]} />
+          <View key={figure.id} style={[styles.figure, narrow && styles.figureHalf]} accessible accessibilityLabel={`${figure.value.toLocaleString('en-AU')} ${figure.label}`}>
+            {/* A year's weight runs to six or seven digits, which broke over two lines in a third of a phone: shortened ("35.8k"), the label saying it all. */}
+            <CountUp id={`year.${year}.${figure.id}`} value={figure.value} variant="title" compact={figure.id === 'lifted'} style={[face('bold'), styles.tabular]} />
             <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
               {figure.label}
             </Txt>
@@ -257,6 +259,8 @@ const styles = themed(() =>
     button: { alignSelf: 'stretch', gap: space[2] },
     intro: { gap: 2 },
     figures: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+    // Two to a row on the narrowest phones (under 360 points), where a third was too tight for a number and its label.
+    figureHalf: { flexBasis: '45%' },
     figure: { flexGrow: 1, flexBasis: '30%', gap: 2, padding: space[3], borderRadius: radius.lg, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     card: { gap: space[3], padding: space[4], borderRadius: radius.xl, borderCurve: 'continuous', backgroundColor: color.plate, ...shadow.plate },
     bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 140 },

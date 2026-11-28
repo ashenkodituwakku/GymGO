@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 305 · Year in review keeps big numbers on one line
+
+*28 Nov 2026 · the commit "Year in review: big numbers on one line, two tiles a row on narrow phones"*
+
+Checking the other session's new screens with a few weeks of workouts in the log (they were all clean: Import, Year in review, workout folders, the changed workout, Progress, Calendar and exercise pages, at 390 light and 1280 dark, with axe, the console and the text checked) found one layout fault. On Year in review at phone width, a year's weight lifted broke in the middle of the number ("35,83" over "9"), since a third of a phone is narrow and a year's total runs to six or seven digits.
+
+- Weight lifted is shortened in its tile: "35.8k", "135k", "1.2M" (lib/numbers.ts `compactNumber`, tested). The tile still reads the whole number to a screen reader ("35,839 kg lifted").
+- Under 360 points wide the tiles go two to a row, so "days trained" stays on one line too.
+- Counting-up figures (`CountUp`) now write numbers the Australian way whatever the browser's language, as the rest of the app does.
+- Checked: 1 new app test, app tests and a typecheck, the hooks check; Year in review at 390 (three a row, "35.8k") and 320 (two a row).
+
 ## Update 304 · The Calendar doesn't say "No workouts" when it couldn't load them
 
-*28 Nov 2026 · the commit "The Calendar says it couldn't load, not 'No workouts'"*
+*28 Nov 2026 · `d2205c7`*
 
 With GymGO's server out of reach, the Calendar showed the error line and then an empty month saying "No workouts" and "Each day you train fills in here.", as if you had never trained.
 

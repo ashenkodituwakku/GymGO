@@ -10,6 +10,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
+import { compactNumber } from '@/lib/numbers';
 import { useCalm } from './motion';
 import { Txt } from './ui';
 
@@ -25,6 +26,7 @@ export function CountUp({
   variant = 'title',
   color,
   style,
+  compact = false,
 }: {
   /** Names the figure (say 'collection.gyms'), so it knows what it last showed. */
   id: string;
@@ -32,6 +34,8 @@ export function CountUp({
   variant?: 'title' | 'figure' | 'largeTitle' | 'title2';
   color?: string;
   style?: StyleProp<TextStyle>;
+  /** Shorten big numbers ("35.8k") for a narrow tile; its label should say the whole number. */
+  compact?: boolean;
 }) {
   const calm = useCalm();
   const from = shown.get(id) ?? 0;
@@ -59,7 +63,7 @@ export function CountUp({
 
   return (
     <Txt variant={variant} color={color} style={[{ fontVariant: ['tabular-nums'] }, style]}>
-      {now.toLocaleString()}
+      {compact ? compactNumber(now) : now.toLocaleString('en-AU')}
     </Txt>
   );
 }

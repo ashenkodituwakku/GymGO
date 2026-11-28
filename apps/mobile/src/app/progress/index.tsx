@@ -433,6 +433,8 @@ export default function ProgressScreen() {
         {known && log.sessions.length > 0 && (
           <Row icon="download" tile={TILE.blue} title="Export your log" subtitle="A CSV file of every set" onPress={() => void downloadTrainingCsv(log.sessions).catch(() => undefined)} />
         )}
+        {/* From another workout app's export, or GymGO's own (app/import.tsx). */}
+        {account.token && <Row icon="refresh" tile={TILE.indigo} title="Import workouts" subtitle="From another app’s CSV file" onPress={() => router.push('/import')} />}
       </Group>
     </PageScroll>
   );

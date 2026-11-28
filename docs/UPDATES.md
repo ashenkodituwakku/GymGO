@@ -9,6 +9,24 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 302 · Import your workouts from another app
+
+*28 Nov 2026 · the commit "Import workouts from another app's CSV export, or GymGO's own"*
+
+You asked for more Hevy features. This one is for people moving to GymGO: **Import workouts** (Progress → Import workouts).
+
+- Choose the CSV file your other workout app exports. Three layouts are recognised by their headings: one with `exercise_title`, `start_time` and `weight_kg` (or `weight_lbs`) columns, one with `Exercise Name`, `Set Order` and `Duration`, and GymGO's own export. Commas or semicolons both work.
+- Nothing is saved until you've seen it: how many workouts, the first and last date, how many exercises, how many are already in your log, and any left out (no sets to log, or dated after today).
+- **Each exercise is matched to GymGO's by name**, and the list shows what each became: "Bench Press (Barbell)" is Barbell bench press, "Squat (Barbell)" Barbell back squat, "Lat Pulldown (Cable)" Lat pulldown, "Pull Up" Pull-up. One it can't match, or where two are equally close, keeps its own name ("Zercher Carry"), so nothing is lost and its records and charts still work.
+- Sets keep their weight, reps, warm-up, drop set or failure, RPE, and a hold's time or a carry's or row's distance. A file whose weights don't say their unit asks kg or lb.
+- **Import** logs the workouts one at a time, with a count as it goes. Workouts already in your log are left out, and the server keeps one sent twice as one, so trying again after a dropped connection adds nothing twice. When it's done: "3 workouts imported" and See your progress.
+- Choosing a file works in a browser. The phone apps say to open GymGO at gymgo.site on a computer; a file picker for them needs a native module and a new app build, so it's left for then.
+- The screens don't name other apps; the layouts are only recognised.
+- Checked:
+  - domain 205, server 379 and app 750 tests (9 new: CSV quoting and semicolons, the dates exports use, name matching for a dozen common names and an unknown one, all three layouts, workouts left out, and ones already in your log), typecheck, lint and the empty-text scan;
+  - in a browser at 390 light: Progress → Import workouts; a CSV that isn't a workout log refused; a three-workout file previewed with seven exercises (six matched, Zercher Carry kept as its own) and imported; the same file again saying every workout is already in your log; a file without a unit asking kg or lb. The imported test workouts were deleted afterwards.
+- Not checked: a real export from another app (the tests use files written to their published layouts), and a phone.
+
 ## Update 301 · Pace on cardio machines, supersets you can see, and History in the menu
 
 *28 Nov 2026 · the commit "Best pace on cardio machines, a rail on superset cards, See history in the exercise menu"*

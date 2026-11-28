@@ -740,6 +740,14 @@ workouts go to your log.
   time you log something is a starting point, not a record. A broken record
   gets confetti (none with Reduce Motion on) and a **record card** to share
   as a picture: the exercise, the set and the day.
+- **Import workouts** (Progress): bring your log from another workout app
+  as the CSV file it exports, or from GymGO's own export. The file is read
+  on your device and shown first: how many workouts, from when to when,
+  and what each exercise became ("Bench Press (Barbell)" is Barbell bench
+  press; one GymGO doesn't list keeps its own name). Workouts already in
+  your log are left out, so choosing the same file twice adds nothing. A
+  file that doesn't say its weights' unit asks which it is. Choosing a
+  file works in a browser; the phone apps say to use gymgo.site.
 - **Export your log** (Progress): a CSV with a row for every set (its
   type, ordinary, warm-up, drop set or failure, and its RPE), for
   Excel, Numbers or Google Sheets; on a phone it's a real file for the share

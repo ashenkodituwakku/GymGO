@@ -384,6 +384,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Import workouts** (28 Nov, Update 302). lib/importLog.ts:
+  `parseCsv` (quotes, `;` or `,` by the header line), `readDate` (local
+  "2024-01-06 10:31:00", "6 Jan 2024, 10:31", or with a zone),
+  `matchExercise` (same words in any order, else at most one extra word,
+  else without KIT_WORDS, else ALIASES; ties left alone; unmatched become
+  a slug id the server takes and exerciseName reads), `readExport`
+  (formats 'columns', 'named', 'gymgo'; GymGO's export only has the
+  finish, so its start is an hour earlier) and `newSessions` (by start
+  minute, or finish minute for GymGO's own). app/import.tsx uses a DOM
+  file input (web only) and api.logTraining one at a time. Registered in
+  _layout; route types regenerated. Linked from Progress beside Export.
 - **Pace, superset rail, See history** (28 Nov, Update 301).
   workout.ts `paceMetres` (null unless tracksDistance; rower 500, else
   1000); training.ts `bestPace` and `paceLabel` (tested in

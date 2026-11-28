@@ -675,7 +675,8 @@ workouts go to your log.
   a **stopwatch** on that set and tap again to stop, which puts its time in
   and ticks it. With a target (last time's, the set above's or the plan's)
   the stopwatch counts down to it, beeps at 3, 2 and 1, buzzes at zero and
-  then counts on in green. A farmer's carry is logged by the weight carried and
+  then counts on in green. On a rower, treadmill or air bike the **metres**
+  can go beside the time ("250 m in 0:52"), or be left blank. A farmer's carry is logged by the weight carried and
   **metres**. A blank one stands for last time's at the same place, else
   the set above, else the plan. They have their own records (**Longest
   yet**, **Furthest yet**) and chart, add nothing to the weight lifted, and
@@ -729,8 +730,10 @@ workouts go to your log.
   lifted for each number of reps up to 20, leaving out any a heavier set
   for more reps has beaten (100 kg × 5 makes 95 kg × 3 no record). Its
   tiles also count every set, rep and kilogram you've done of it and say
-  when you last did it, and each line of **Every time** names the workout
-  and opens it. Only against your own earlier sessions: the first
+  when you last did it, each line of **Every time** names the workout and
+  opens it, and **Record history** lists each record it's broken, newest
+  first, with the set and the workout. The finish screen shows the
+  **muscles worked**, as a workout's own page does. Only against your own earlier sessions: the first
   time you log something is a starting point, not a record. A broken record
   gets confetti (none with Reduce Motion on) and a **record card** to share
   as a picture: the exercise, the set and the day.

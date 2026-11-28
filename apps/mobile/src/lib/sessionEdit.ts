@@ -23,7 +23,7 @@ import {
   type TrainingSession,
   type WeightUnit,
 } from './training';
-import { exerciseName, setMeasure } from './workout';
+import { exerciseName, setMeasure, tracksDistance } from './workout';
 
 export interface EditedExercise {
   exerciseId: string;
@@ -35,7 +35,8 @@ export interface EditedExercise {
 /** How a logged exercise was measured: by its sets (a time or distance), else by what GymGO knows of it. */
 function loggedMeasure(exerciseId: string, sets: readonly LoggedSet[]): SetMeasure {
   const timed = sets.find(isTimedSet);
-  if (timed) return timed.metres ? 'distance' : 'time';
+  // A rower's or treadmill's sets are times, with their metres beside them.
+  if (timed) return timed.metres && !(timed.seconds && tracksDistance(exerciseId)) ? 'distance' : 'time';
   return sets.some((set) => set.reps > 0) ? 'reps' : setMeasure(exerciseId);
 }
 
@@ -75,7 +76,9 @@ export function checkEdits(drafts: readonly EditedExercise[], unit: WeightUnit):
         // A time, or a distance (with a time if it had one); any weight added or carried.
         const typedTime = (set.time ?? '').trim();
         const seconds = typedTime ? parseTime(typedTime) : undefined;
-        const metres = draft.measure === 'distance' ? parseDistance(set.distance ?? '') : undefined;
+        const typedDistance = (set.distance ?? '').trim();
+        const metres = draft.measure === 'distance' || typedDistance ? parseDistance(typedDistance) : undefined;
+        if (draft.measure === 'time' && typedDistance && metres === undefined) return { ok: false, problem: `${where}: type how far it was in metres, or leave it blank.` };
         if (draft.measure === 'time' && seconds === undefined) return { ok: false, problem: `${where}: type how long it took (1:30, or 90 for 90 seconds), or remove the set.` };
         if (draft.measure === 'distance' && metres === undefined) return { ok: false, problem: `${where}: type how far it was in metres, or remove the set.` };
         if (typedTime && seconds === undefined) return { ok: false, problem: `${where}: that time doesn’t read as minutes and seconds.` };

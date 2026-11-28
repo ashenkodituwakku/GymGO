@@ -153,6 +153,18 @@ export interface Exercise {
 
 const BODY: Kit[][] = [[]];
 
+/** Cardio machines with a distance on their screen. */
+const DISTANCE_MACHINES: readonly Kit[] = ['rower', 'treadmill', 'assault_bike'];
+
+/**
+ * Cardio on a machine that shows the distance (a rower, treadmill or air
+ * bike): its sets can say how far as well as how long ("250 m in 0:52").
+ */
+export function tracksDistance(exerciseId: string): boolean {
+  const exercise = exerciseById(exerciseId);
+  return !!exercise?.cardio && exercise.needs.some((option) => option.some((kit) => DISTANCE_MACHINES.includes(kit)));
+}
+
 /** Machines whose stack or plates warm up in steps (lib/training.ts stepWarmUps). */
 const STACKS: readonly Kit[] = ['cable_station', 'lat_pulldown', 'leg_press', 'hack_squat', 'smith_machine'];
 

@@ -34,6 +34,7 @@ import { RECORD_WORD, recordSet } from '@/lib/records';
 import { formatWeight, isDoneSet, isTimedSet, setLine, setTags, unitFor, type LoggedSet, type NewRecord, type WeightUnit } from '@/lib/training';
 import { color, face, radius, space, themed } from '@/lib/theme';
 import { MaxBadge } from '@/components/MaxBadge';
+import { MuscleBars } from '@/components/MuscleSplit';
 
 const MAX_COMMENT = 300;
 
@@ -274,19 +275,7 @@ export default function FeedWorkoutScreen() {
               <Txt variant="headline" accessibilityRole="header">
                 Muscle split
               </Txt>
-              {split.slice(0, 6).map((part) => (
-                <View key={part.muscle} style={styles.splitRow} accessible accessibilityLabel={`${part.label}: ${Math.round(part.share * 100)}% of the sets`}>
-                  <Txt variant="subhead" style={styles.splitLabel} numberOfLines={1}>
-                    {part.label}
-                  </Txt>
-                  <View style={styles.splitTrack}>
-                    <View style={[styles.splitFill, { width: `${Math.max(4, Math.round(part.share * 100))}%` }]} />
-                  </View>
-                  <Txt variant="footnote" color={color.labelSecondary} style={styles.splitShare}>
-                    {`${Math.round(part.share * 100)}%`}
-                  </Txt>
-                </View>
-              ))}
+              <MuscleBars split={split} />
             </Card>
           )}
 
@@ -463,11 +452,6 @@ const styles = themed(() =>
     likeButtonOn: { backgroundColor: color.dangerTint },
     exercise: { gap: space[3] },
     split: { gap: space[2] },
-    splitRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-    splitLabel: { width: 92 },
-    splitTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: color.fill, overflow: 'hidden' },
-    splitFill: { height: '100%', borderRadius: 4, backgroundColor: color.brand },
-    splitShare: { width: 40, textAlign: 'right', fontVariant: ['tabular-nums'] },
     exerciseHead: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
     glyph: { width: 48, height: 48, borderRadius: radius.md, borderCurve: 'continuous', backgroundColor: color.fill, alignItems: 'center', justifyContent: 'center' },
     records: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },

@@ -20,6 +20,7 @@ import { Chip, PrimaryButton, Txt } from '@/components/ui';
 import { ListSkeleton } from '@/components/Skeleton';
 import { useApp } from '@/lib/app-state';
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
+import { RECORD_WORD, recordHistory } from '@/lib/records';
 import {
   EXERCISE_METRICS,
   TIMED_METRICS,
@@ -39,7 +40,7 @@ import {
 import { useOwnTraining } from '@/lib/ownTraining';
 import { useTrainingLog } from '@/lib/useTraining';
 import { alternativesFor, kitText } from '@/lib/exerciseLibrary';
-import { KIT_LABEL, exerciseName, muscleLabel, exerciseById, setMeasure } from '@/lib/workout';
+import { KIT_LABEL, exerciseName, muscleLabel, exerciseById, setMeasure, tracksDistance } from '@/lib/workout';
 import { usePageTitle } from '@/lib/pageTitle';
 import { MuscleFigures } from '@/components/MuscleFigures';
 import { PageScroll } from '@/components/PageScroll';
@@ -73,14 +74,18 @@ export default function ExerciseProgressScreen() {
   const [picked, setPicked] = useState<ExerciseMetric | null>(null);
   // A plank's chart is its longest set, a carry's its furthest; nothing else of a weight's applies.
   const measure = setMeasure(exerciseId);
-  const metrics = measure === 'reps' ? EXERCISE_METRICS : TIMED_METRICS.filter((item) => item.id === (measure === 'time' ? 'longest' : 'furthest'));
+  // A rower's or treadmill's sets can have metres beside their time: both charts, once there's a distance.
+  const both = measure === 'time' && tracksDistance(exerciseId) && record?.furthestMetres != null;
+  const metrics = measure === 'reps' ? EXERCISE_METRICS : TIMED_METRICS.filter((item) => both || item.id === (measure === 'time' ? 'longest' : 'furthest'));
   // Until you pick one, the 1-rep max; for an exercise you've only done at body weight, the reps, as the rest have nothing to show.
   const metric: ExerciseMetric =
-    measure === 'time' ? 'longest' : measure === 'distance' ? 'furthest' : (picked ?? (record && record.heaviestKg === null && record.mostReps !== null ? 'reps' : 'e1rm'));
+    measure === 'time' ? (both && picked === 'furthest' ? 'furthest' : 'longest') : measure === 'distance' ? 'furthest' : (picked ?? (record && record.heaviestKg === null && record.mostReps !== null ? 'reps' : 'e1rm'));
   const [noting, setNoting] = useState(false);
   const series = useMemo(() => exerciseSeries(log.sessions, exerciseId, metric), [log.sessions, exerciseId, metric]);
   const shownMetric = [...EXERCISE_METRICS, ...TIMED_METRICS].find((item) => item.id === metric)!;
   const reps = useMemo(() => repRecords(log.sessions, exerciseId), [log.sessions, exerciseId]);
+  // Each record it's broken, newest first (lib/records.ts).
+  const moments = useMemo(() => recordHistory(log.sessions, exerciseId), [log.sessions, exerciseId]);
   /** A big weight with its thousands marked, in your unit: "4,250 kg". */
   const tonnage = (kg: number) => `${Math.round(fromKg(kg, unit)).toLocaleString()}\u00a0${unit}`;
   /** A weight from a record, in your unit, to a tenth. */
@@ -290,6 +295,42 @@ export default function ExerciseProgressScreen() {
         </>
       )}
 
+      {moments.length > 0 && (
+        <>
+          <Txt variant="eyebrow" color={color.labelSecondary} accessibilityRole="header" level={2} style={styles.section}>
+            RECORD HISTORY
+          </Txt>
+          <View style={styles.group}>
+            {moments.map((moment, index) => (
+              <Pressable
+                key={`${moment.sessionId}-${moment.kind}`}
+                onPress={() => router.push({ pathname: '/feed/[id]', params: { id: moment.sessionId } })}
+                accessibilityRole="link"
+                accessibilityLabel={`${dayLabel(moment.date)}, ${RECORD_WORD[moment.kind]}: ${moment.line}, in ${moment.name}. Open the workout`}
+                style={({ pressed }) => [styles.row, index > 0 && styles.rowLine, pressed && { backgroundColor: color.fill }]}
+              >
+                <Txt variant="footnote" color={color.labelSecondary} style={styles.date}>
+                  {dayLabel(moment.date)}
+                </Txt>
+                <View style={styles.flex}>
+                  <View style={styles.momentHead}>
+                    <Icon name="trophy" size={12} color={color.maybeInk} />
+                    <Txt variant="footnote" color={color.maybeInk} style={face('semibold')}>
+                      {RECORD_WORD[moment.kind]}
+                    </Txt>
+                  </View>
+                  <Txt variant="subhead">{moment.line}</Txt>
+                  <Txt variant="footnote" color={color.labelSecondary} numberOfLines={1}>
+                    {moment.name}
+                  </Txt>
+                </View>
+                <Icon name="chevron" size={13} color={color.labelTertiary} />
+              </Pressable>
+            ))}
+          </View>
+        </>
+      )}
+
       {billing.isPro ? (
         <View style={styles.card}>
           {/* What the chart follows: the estimated 1-rep max, the heaviest weight, the biggest set, the day's volume or reps. */}
@@ -452,6 +493,7 @@ const styles = themed(() => StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingHorizontal: space[4], paddingVertical: space[3] },
   rowLine: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: color.separator },
   date: { width: 80 },
+  momentHead: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   repCount: { width: 76 },
   note: { marginHorizontal: space[4] },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },

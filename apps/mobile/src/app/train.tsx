@@ -30,6 +30,8 @@ import { endSession, startSession, updateSession, useActiveSession, type ActiveI
 import { againPlan, emptyWorkoutName } from '@/lib/again';
 import { addedPlan, agoLabel, daysAgo } from '@/lib/exerciseLibrary';
 import { AddExercise, ExercisePicker } from '@/components/AddExercise';
+import { MuscleBars } from '@/components/MuscleSplit';
+import { muscleSplit } from '@/lib/feed';
 import { ApiError, api, apiBase, type SavedWorkout } from '@/lib/api';
 import { CoachNote } from '@/components/CoachNote';
 import { MaxBadge } from '@/components/MaxBadge';
@@ -96,7 +98,7 @@ import { libraryDetails, libraryTitle, startSavedWorkout } from '@/lib/savedWork
 import { changeLine, routineChange, routineFromSession } from '@/lib/routineUpdate';
 import { canMove, moveExercise, removeExercise, removeSet, replaceExercise } from '@/lib/liveEdits';
 import { useTrainingLog } from '@/lib/useTraining';
-import { TYPICAL_KIT, exerciseName, knownKit, setMeasure, swapFor, warmUpKit, type Exercise, type Kit, exerciseById } from '@/lib/workout';
+import { TYPICAL_KIT, exerciseName, knownKit, setMeasure, swapFor, tracksDistance, warmUpKit, type Exercise, type Kit, exerciseById } from '@/lib/workout';
 import { groupName, groupOf, linkWithNext, nextUp, restAfter, unlink, type GroupInfo } from '@/lib/supersets';
 import { GroupControls, groupTag, joinableNext } from '@/components/GroupControls';
 import { SwapButton } from '@/components/ExerciseCard';
@@ -909,6 +911,18 @@ const ExerciseLog = memo(function ExerciseLog({
     }
     return plannedLow === null ? '' : field === 'time' ? clockLabel(plannedLow) : String(plannedLow);
   };
+  // A rower, treadmill or air bike: how far beside how long, optional (lib/workout.ts tracksDistance).
+  const distanceToo = measure === 'time' && tracksDistance(item.exerciseId);
+  // Its distance until you type: last time's at the same place, else the set above's (never the plan's time).
+  const distanceFor = (at: number): string => {
+    const then = previousSet(last, item.sets, at, unit)?.distance;
+    if (then) return then;
+    for (let earlier = at - 1; earlier >= 0; earlier--) {
+      const typed = item.sets[earlier]?.distance?.trim();
+      if (typed) return typed;
+    }
+    return '';
+  };
   // A stopwatch on one set of a hold: when it started.
   const [watch, setWatch] = useState<{ at: number; since: number } | null>(null);
   // What a screen reader hears as it happens: a record, warm-ups added, the stopwatch (on the web too).
@@ -995,6 +1009,12 @@ const ExerciseLog = memo(function ExerciseLog({
         const time = clocked ?? (tidyTime(set.time ?? '').trim() || timedFor(at, 'time'));
         if (parseTime(time) === undefined) return setHint('Type how long it took (1:30, or 90 for 90 seconds), or use the stopwatch.');
         patch.time = time;
+        if (distanceToo) {
+          const typed = tidyDistance(set.distance ?? '').trim();
+          if (typed && parseDistance(typed) === undefined) return setHint('Type how far it was in metres, or leave it blank.');
+          const distance = typed || distanceFor(at);
+          if (distance) patch.distance = distance;
+        }
       } else {
         const distance = tidyDistance(set.distance ?? '').trim() || timedFor(at, 'distance');
         if (parseDistance(distance) === undefined) return setHint('Type how far it was, in metres.');
@@ -1071,7 +1091,8 @@ const ExerciseLog = memo(function ExerciseLog({
           <View style={styles.metaRow}>
             {/* The plan stays on one line; Swap and Plates go under it when they don't fit beside it. */}
             <Txt variant="footnote" color={color.labelSecondary} style={styles.meta}>
-              {timed && item.planned <= 1 ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · ${restLabel(item.restSeconds)} rest` : ''}`}
+              {/* A finisher's plan is its cue ("6 × 250 m hard"), never "3 × see cue". */}
+              {(timed && item.planned <= 1) || item.reps === 'see cue' ? exercise?.cue ?? item.reps : `${item.planned} × ${item.reps}${item.restSeconds ? ` · ${restLabel(item.restSeconds)} rest` : ''}`}
             </Txt>
             <View style={styles.metaButtons}>
               {swapTo && <SwapButton name={name} swapTo={swapTo} onSwap={() => onSwap(index)} />}
@@ -1195,7 +1216,13 @@ const ExerciseLog = memo(function ExerciseLog({
             {measure === 'time' ? 'TIME' : 'METRES'}
           </Txt>
           {measure === 'time' && <View style={styles.watchCol} />}
-          {last ? (
+          {distanceToo && (
+            <Txt variant="caption" color={color.labelSecondary} style={styles.inputCol}>
+              METRES
+            </Txt>
+          )}
+          {/* With a time and a distance, both boxes show last time's, so no Previous column to squeeze them. */}
+          {last && !distanceToo ? (
             <Txt variant="caption" color={color.labelSecondary} style={[styles.flex, styles.previous]}>
               PREVIOUS
             </Txt>
@@ -1319,6 +1346,24 @@ const ExerciseLog = memo(function ExerciseLog({
                     <Icon name={watch?.at === at ? 'pause' : 'play'} size={14} color={watch?.at === at ? color.onBrand : color.brandOnTint} />
                   </Pressable>
                 ))}
+              {distanceToo && (
+                <Input
+                  value={set.distance ?? ''}
+                  onChangeText={(distance) => setAt(at, { distance })}
+                  onBlur={() => {
+                    const typed = set.distance ?? '';
+                    const tidy = tidyDistance(typed);
+                    if (tidy !== typed) setAt(at, { distance: tidy });
+                  }}
+                  placeholder={distanceFor(at) || '—'}
+                  placeholderTextColor={color.labelTertiary}
+                  keyboardType="decimal-pad"
+                  inputMode="decimal"
+                  editable={!set.done}
+                  style={[styles.input, set.done && styles.inputDone]}
+                  accessibilityLabel={`${name}, ${tags[at]!.spoken} distance in metres, blank for none`}
+                />
+              )}
             </>
           )}
           {!timed && (
@@ -1363,7 +1408,7 @@ const ExerciseLog = memo(function ExerciseLog({
           {(() => {
             const previous = !rpeColumn ? previousSet(last, item.sets, at, unit) : null;
             // A hold's Previous is a time, a carry's a distance; last time's reps don't go in their boxes.
-            if (!previous || (timed && !(measure === 'time' ? previous.time : previous.distance))) return <View style={styles.flex} />;
+            if (!previous || distanceToo || (timed && !(measure === 'time' ? previous.time : previous.distance))) return <View style={styles.flex} />;
             // Tap to copy last time's set in, while the set's still to do.
             const copy = timed
               ? measure === 'time'
@@ -1735,6 +1780,7 @@ function Summary({
   };
   const best = bestRecord(records);
   const done = session.exercises.filter((logged) => logged.sets.length > 0);
+  const split = useMemo(() => muscleSplit(session.exercises), [session.exercises]);
   // In a browser the Finish button goes with the workout, and focus with it (to the page itself): it comes
   // here, to the heading, so a screen reader says the workout's saved and Tab goes on from it.
   const heading = useFocusOnArrival<ViewInstance>();
@@ -1838,6 +1884,15 @@ function Summary({
               </View>
             </Fragment>
           ))}
+        </View>
+      )}
+      {/* The muscles it worked, as the workout's own page shows them (components/MuscleSplit.tsx). */}
+      {split.length > 0 && (
+        <View style={[styles.didCard, styles.splitCard]}>
+          <Txt variant="label" color={color.labelSecondary} accessibilityRole="header" level={2}>
+            Muscles worked
+          </Txt>
+          <MuscleBars split={split} limit={5} />
         </View>
       )}
       <View style={styles.noteCard}>
@@ -2091,6 +2146,7 @@ const styles = themed(() => StyleSheet.create({
     ...shadow.plate,
   },
   did: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingVertical: space[2] },
+  splitCard: { gap: space[2], paddingBottom: space[4] },
   didLine: { height: StyleSheet.hairlineWidth, marginLeft: 36 + space[3], backgroundColor: color.separator },
   didRecord: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   input: {

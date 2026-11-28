@@ -9,6 +9,25 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 299 · Metres on cardio machines, record history, and the muscles you worked
+
+*28 Nov 2026 · the commit "Metres beside the time on cardio machines, record history on an exercise, muscles worked on the finish screen"*
+
+You asked for more polish and Hevy features. Three more, in GymGO's own look:
+
+- **Distance and time on cardio machines.** Rower intervals, treadmill sprints, the incline walk and air bike sprints now have a **METRES** box beside the time, so a set logs as "250 m in 0:52".
+  - The metres are optional: blank stands for last time's at the same place, else the set above's, like every other box, and with neither it's left out. Something that doesn't read as metres asks again.
+  - Both boxes show last time's numbers, so these rows drop the Previous column (it squeezed them on a 320-point phone).
+  - **Edit workout** shows the same two boxes, and keeps both numbers.
+  - The exercise's page charts **Longest** and **Furthest** once there's a distance, with both records.
+  - Jumping jacks and holds stay time only. A finisher planned for several sets now shows its cue ("6 × 250 m hard, 1 minute easy between") instead of "3 × see cue".
+- **Record history** (an exercise's page): each record it has broken, newest first, with the day, the kind ("Heaviest yet", "Furthest yet"), the set and the workout, which opens. Counted as the finish screen counts them: the first time is a starting point, not a record.
+- **Muscles worked on the finish screen.** The workout's share of sets for each muscle, as bars, the same as on the workout's own page (now one shared component).
+- Checked:
+  - domain 205, server 379 and app 737 tests (5 new: which exercises take metres, metres logged beside a time or left out, Edit workout keeping both, and record history), typecheck, lint and the empty-text scan;
+  - in a browser at 390 and 320 light and 1280 dark: three rower sets (250 m in 0:52, the second taking 250 from the set above, the third asking again for "lots"), saved as seconds and metres; the summary's line and Muscles worked bars; both boxes in Edit workout; the rower's page with Longest and Furthest and both in Record history; bench press's Record history opening its workout. The test workouts were deleted afterwards.
+- Not checked: a real phone.
+
 ## Update 298 · Warm-ups for dumbbells and machines, and an exercise's whole story
 
 *28 Nov 2026 · the commit "Warm-ups for dumbbells and machines, all-time totals on an exercise, how often a saved workout is done"*

@@ -384,6 +384,17 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Cardio metres, record history, muscles worked** (28 Nov, Update 299).
+  workout.ts `tracksDistance` (cardio on rower, treadmill or air bike).
+  train.tsx: `distanceToo` adds a METRES input after the stopwatch and
+  drops PREVIOUS on those rows; `distanceFor` (last time, else the set
+  above; never the plan's seconds) feeds the hint and the tick. Both
+  draftToLogged and sessionEdit's checkEdits keep metres beside a time
+  when typed (sessionEdit's loggedMeasure calls such sets 'time').
+  progress/[exercise].tsx offers both TIMED_METRICS when `both`, and
+  lists records.ts `recordHistory` (per exercise, projected to that
+  exercise so recordsBroken stays quick). components/MuscleSplit.tsx
+  `MuscleBars` on feed/[id].tsx and the finish Summary.
 - **Warm-ups for any weight, exercise totals, saved-workout use** (28 Nov, Update 298).
   training.ts `stepWarmUps` and `WARM_UP_STEP`; workout.ts `warmUpKit`
   (barbell, dumbbell, machine from `needs`; STACKS lists the machines).

@@ -835,7 +835,9 @@ export function draftToLogged(items: Array<{ exerciseId: string; sets: DraftSet[
         if (item.measure === 'time' || item.measure === 'distance') {
           // A time or distance, and any weight added or carried; reps 0. Without one it isn't logged.
           const seconds = parseTime(set.time ?? '');
-          const metres = item.measure === 'distance' ? parseDistance(set.distance ?? '') : undefined;
+          // A carry's distance, or one given beside a time (a rower's metres): optional there, and left out if it doesn't read.
+          const typedDistance = (set.distance ?? '').trim();
+          const metres = item.measure === 'distance' || typedDistance ? parseDistance(typedDistance) : undefined;
           if (weight === undefined || (item.measure === 'time' ? seconds === undefined : metres === undefined)) return [];
           return [{ weight, reps: 0, ...(seconds !== undefined ? { seconds } : {}), ...(metres !== undefined ? { metres } : {}), ...(set.kind ? { kind: set.kind } : {}) }];
         }

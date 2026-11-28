@@ -36,7 +36,7 @@ import { checkEdits, clockText, draftsOf, minutesOf, whenFor, type EditedExercis
 import { color, face, radius, shadow, space, themed } from '@/lib/theme';
 import { setTags, type DraftSet, type SetKind, type WeightUnit } from '@/lib/training';
 import { useTrainingLog } from '@/lib/useTraining';
-import { exerciseName, exerciseById, setMeasure } from '@/lib/workout';
+import { exerciseName, exerciseById, setMeasure, tracksDistance } from '@/lib/workout';
 
 interface Draft {
   name: string;
@@ -412,6 +412,12 @@ export default function SessionEditScreen() {
                 <Txt variant="caption" color={color.labelSecondary} style={[styles.inputCol, rpeColumn && styles.narrow]}>
                   {item.measure === 'time' ? 'TIME' : item.measure === 'distance' ? 'METRES' : 'REPS'}
                 </Txt>
+                {/* A rower's or treadmill's metres, beside its time. */}
+                {item.measure === 'time' && tracksDistance(item.exerciseId) && (
+                  <Txt variant="caption" color={color.labelSecondary} style={styles.inputCol}>
+                    METRES
+                  </Txt>
+                )}
                 <View style={styles.flex} />
                 {rpeColumn && <RpeHead />}
                 <View style={styles.removeCol} />
@@ -473,6 +479,17 @@ export default function SessionEditScreen() {
                         inputMode={item.measure === 'time' ? 'text' : 'decimal'}
                         style={styles.input}
                         accessibilityLabel={`${spoken} ${item.measure === 'time' ? 'time, in minutes and seconds' : 'distance in metres'}`}
+                      />
+                    )}
+                    {item.measure === 'time' && tracksDistance(item.exerciseId) && (
+                      <Input
+                        value={set.distance ?? ''}
+                        onChangeText={(distance) => changeSet(where, (each) => ({ ...each, distance }))}
+                        placeholder="—"
+                        keyboardType="decimal-pad"
+                        inputMode="decimal"
+                        style={styles.input}
+                        accessibilityLabel={`${spoken} distance in metres, blank for none`}
                       />
                     )}
                     <View style={styles.flex} />

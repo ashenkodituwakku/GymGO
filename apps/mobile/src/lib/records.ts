@@ -5,7 +5,8 @@
  * No React Native imports here, so it is unit-tested in Node.
  */
 
-import { isTimedSet, oneRepMax, setLine, toKg, workingSets, type LoggedSet, type NewRecord, type TrainingSession } from './training';
+import { byFinish } from '@gymgo/domain';
+import { isTimedSet, oneRepMax, recordsBroken, setLine, toKg, workingSets, type LoggedSet, type NewRecord, type TrainingSession } from './training';
 
 export const RECORD_WORD: Record<NewRecord['kind'], string> = {
   heaviest: 'Heaviest yet',
@@ -45,4 +46,35 @@ export function recordSet(session: TrainingSession, record: NewRecord): LoggedSe
 export function recordLine(session: TrainingSession, record: NewRecord): string {
   const set = recordSet(session, record);
   return set ? setLine(set, session.unit) : '';
+}
+
+export interface RecordMoment {
+  /** The workout it was broken in, to open. */
+  sessionId: string;
+  name: string;
+  date: string;
+  kind: NewRecord['kind'];
+  /** "100 kg × 5", "1:30", "250 m in 0:52". */
+  line: string;
+}
+
+/**
+ * Every record one exercise has broken, newest first: when, in which
+ * workout, what kind and the set, counted as the finish screen counts them
+ * (the first time is a starting point, not a record).
+ */
+export function recordHistory(sessions: readonly TrainingSession[], exerciseId: string, limit = 10): RecordMoment[] {
+  // Only this exercise, so working out each workout's records stays quick on a long log.
+  const ordered = sessions
+    .filter((session) => session.exercises.some((logged) => logged.exerciseId === exerciseId))
+    .map((session) => ({ ...session, exercises: session.exercises.filter((logged) => logged.exerciseId === exerciseId) }))
+    .sort(byFinish);
+  const moments: RecordMoment[] = [];
+  for (let at = 1; at < ordered.length; at += 1) {
+    const session = ordered[at]!;
+    for (const record of recordsBroken(session, ordered.slice(0, at))) {
+      moments.push({ sessionId: session.id, name: session.name, date: session.finishedAt, kind: record.kind, line: recordLine(session, record) });
+    }
+  }
+  return moments.reverse().slice(0, limit);
 }

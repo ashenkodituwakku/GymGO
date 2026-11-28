@@ -11,7 +11,7 @@ next number here as part of the update itself.
 
 ## Update 307 · Verity answers for real on OpenRouter
 
-*28 Nov 2026 · the commit "Verity: a current third free model, checked with real answers"*
+*28 Nov 2026 · `7caf3c1`*
 
 You added your OpenRouter key to the cloud environment (never in the chat or the repo), so Verity was checked with a real model for the first time.
 

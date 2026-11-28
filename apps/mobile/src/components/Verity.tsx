@@ -925,11 +925,14 @@ function Chat({
                 <Txt variant="footnote" style={face('semibold')}>
                   Use my training log{log.pro ? '' : ' · Pro'}
                 </Txt>
-                <Txt variant="caption" color={color.labelSecondary}>
-                  {log.pro
-                    ? 'Verity can see your recent exercises, sets and weights. It can’t see your gyms or notes.'
-                    : 'With Pro, Verity can use your workouts to answer questions like what to train today.'}
-                </Txt>
+                {/* What it shares, until the conversation starts: then the switch alone, so the messages have the room. */}
+                {lines.length === 0 && (
+                  <Txt variant="caption" color={color.labelSecondary}>
+                    {log.pro
+                      ? 'Verity can see your recent exercises, sets and weights. It can’t see your gyms or notes.'
+                      : 'With Pro, Verity can use your workouts to answer questions like what to train today.'}
+                  </Txt>
+                )}
               </View>
               {log.pro ? (
                 <Toggle value={log.on} onValueChange={(on) => log.set(on)} accessibilityLabel="Let Verity see my training log" />

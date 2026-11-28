@@ -46,7 +46,7 @@ export const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY?.trim() || null
  */
 export const GROQ_API_KEY = process.env.GROQ_API_KEY?.trim() || null;
 /** A comma-separated list from the environment, under its name since Verity or the name it had as GymPal. */
-const listOf = (name: string, older: string) => (process.env[name] ?? process.env[older] ?? '').split(',').map((item) => item.trim()).filter(Boolean);
+const listOf = (name: string, older: string) => (process.env[name] || process.env[older] || '').split(',').map((item) => item.trim()).filter(Boolean);
 /** Optional. Which Groq models Verity asks, comma-separated, tried in turn (verity.ts has the default). */
 export const VERITY_GROQ_MODELS = listOf('GYMGO_VERITY_GROQ_MODELS', 'GYMGO_GYMPAL_GROQ_MODELS');
 /**

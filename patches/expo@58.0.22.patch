@@ -1,0 +1,42 @@
+diff --git a/ios/Expo/ExpoAppDelegate.swift b/ios/Expo/ExpoAppDelegate.swift
+index 09766c7..afcedc0 100644
+--- a/ios/Expo/ExpoAppDelegate.swift
++++ b/ios/Expo/ExpoAppDelegate.swift
+@@ -1,5 +1,19 @@
+ import Foundation
+ import ExpoModulesCore
++// GymGO patch: UIKit only forward-declares the SiriKit and CloudKit classes that
++// `UIApplicationDelegate` and `UIWindowSceneDelegate` mention (INIntent,
++// INIntentResponse, CKShareMetadata). This module builds in Swift 6 mode, which
++// imports those forward declarations as placeholder types in UIKit and records
++// them in Expo.swiftmodule. The app target also loads the real classes (from
++// Intents and CloudKit, through Apple frameworks such as @expo/ui's WidgetKit),
++// so reading Expo.swiftmodule there failed with "reference to type 'INIntent'
++// broken by a context change". Importing the frameworks records the real types.
++#if canImport(Intents)
++import Intents
++#endif
++#if canImport(CloudKit)
++import CloudKit
++#endif
+ 
+ /**
+  Allows classes extending `ExpoAppDelegateSubscriber` to hook into project's app delegate
+diff --git a/ios/Expo/ExpoAppSceneDelegate.swift b/ios/Expo/ExpoAppSceneDelegate.swift
+index 4679699..96af61e 100644
+--- a/ios/Expo/ExpoAppSceneDelegate.swift
++++ b/ios/Expo/ExpoAppSceneDelegate.swift
+@@ -2,6 +2,13 @@
+ 
+ import Foundation
+ import React
++// GymGO patch: see ExpoAppDelegate.swift (CKShareMetadata in `UIWindowSceneDelegate`).
++#if canImport(Intents)
++import Intents
++#endif
++#if canImport(CloudKit)
++import CloudKit
++#endif
+ #if canImport(ExpoObjC)
+ import ExpoObjC
+ #endif

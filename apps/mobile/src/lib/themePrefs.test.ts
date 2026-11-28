@@ -1,0 +1,80 @@
+import { describe, expect, it, vi } from 'vitest';
+
+vi.mock('./fonts', () => ({ BUNDLED_FACES: {} }));
+vi.mock('./lookFonts', () => ({ loadLookFonts: async () => undefined, loadAllLookFonts: async () => undefined }));
+vi.mock('@react-native-async-storage/async-storage', () => ({ default: { getItem: async () => null, setItem: async () => undefined } }));
+
+const { DEFAULT_CHOICE, parseChoice, schemeFor } = await import('./themePrefs');
+
+describe('your appearance', () => {
+  it('reads what was kept, and falls back rather than trusting odd values', () => {
+    // Kept before looks existed: the standard look.
+    expect(parseChoice(JSON.stringify({ appearance: 'dark', accent: 'ocean' }))).toEqual({ ...DEFAULT_CHOICE, appearance: 'dark', accent: 'ocean', look: 'standard', glass: 50, dark: 'black' });
+    expect(parseChoice(JSON.stringify({ appearance: 'light', accent: 'camo', look: 'pixel', glass: 80 }))).toEqual({ ...DEFAULT_CHOICE, appearance: 'light', accent: 'camo', look: 'pixel', glass: 80, dark: 'black' });
+    expect(parseChoice(JSON.stringify({ appearance: 'dark', dark: 'dim' })).dark).toBe('dim');
+    expect(parseChoice(JSON.stringify({ dark: 'grey' })).dark).toBe('black');
+    expect(parseChoice(JSON.stringify({ appearance: 'sepia', accent: 'neon', look: 'vaporwave' }))).toEqual(DEFAULT_CHOICE);
+    expect(parseChoice('not json')).toEqual(DEFAULT_CHOICE);
+    expect(parseChoice(null)).toEqual(DEFAULT_CHOICE);
+  });
+
+  it('keeps Liquid Glass to whole steps from 0 to 100, and the balance for anything odd', () => {
+    const glass = (value: unknown) => parseChoice(JSON.stringify({ glass: value })).glass;
+    expect(glass(0)).toBe(0);
+    expect(glass(100)).toBe(100);
+    expect(glass(73)).toBe(75);
+    expect(glass(140)).toBe(100);
+    expect(glass(-20)).toBe(0);
+    expect(glass('clear')).toBe(50);
+    expect(glass(null)).toBe(50);
+  });
+
+  it('follows the phone only when set to Automatic', () => {
+    expect(schemeFor('system', 'dark')).toBe('dark');
+    expect(schemeFor('system', 'light')).toBe('light');
+    expect(schemeFor('system', null)).toBe('light');
+    expect(schemeFor('light', 'dark')).toBe('light');
+    expect(schemeFor('dark', 'light')).toBe('dark');
+  });
+
+  it('keeps Neon dark whatever the setting', () => {
+    expect(schemeFor('light', 'light', 'neon')).toBe('dark');
+    expect(schemeFor('system', 'light', 'neon')).toBe('dark');
+    expect(schemeFor('light', 'dark', 'classic')).toBe('light');
+  });
+});
+
+describe('your adjustments', () => {
+  it('keeps text size, bold text, corners, your own colour, the clock and Verity’s side, and falls back for anything odd', () => {
+    const kept = parseChoice(JSON.stringify({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 725, clock24: true, veritySide: 'left', verityButton: 'hidden' }));
+    expect(kept).toMatchObject({ accent: 'custom', textSize: 'larger', bold: true, corners: 'round', customHue: 5, clock24: true, veritySide: 'left', verityButton: 'hidden' });
+    const odd = parseChoice(JSON.stringify({ textSize: 'huge', bold: 'yes', corners: 'wavy', customHue: 'red', clock24: 1, veritySide: 'top', verityButton: 'floating' }));
+    expect(odd).toMatchObject({ textSize: 'default', bold: false, corners: 'standard', customHue: DEFAULT_CHOICE.customHue, clock24: false, veritySide: 'right', verityButton: 'corner' });
+    // GymPal's keys, from before the rename: a side and Hidden carry over; the old default tab becomes the button.
+    expect(parseChoice(JSON.stringify({ gymPalSide: 'left', gymPalButton: 'hidden' }))).toMatchObject({ veritySide: 'left', verityButton: 'hidden' });
+    expect(parseChoice(JSON.stringify({ gymPalButton: 'tab' }))).toMatchObject({ verityButton: 'corner' });
+    expect(parseChoice(JSON.stringify({ verityButton: 'tab' }))).toMatchObject({ verityButton: 'tab' });
+    expect(parseChoice(JSON.stringify({ customHue: -30 })).customHue).toBe(330);
+  });
+
+  it('keeps the map style, folding away on the map and Reduce motion, and falls back for anything odd', () => {
+    expect(parseChoice(null)).toMatchObject({ foldOnMap: true, mapStyle: 'standard', reduceMotion: false });
+    expect(parseChoice(JSON.stringify({ foldOnMap: false, mapStyle: 'deep', reduceMotion: true }))).toMatchObject({ foldOnMap: false, mapStyle: 'deep', reduceMotion: true });
+    // Only a plain false turns folding off; anything else keeps the default.
+    expect(parseChoice(JSON.stringify({ foldOnMap: 'no', mapStyle: 'satellite', reduceMotion: 'yes' }))).toMatchObject({ foldOnMap: true, mapStyle: 'standard', reduceMotion: false });
+    // Move widgets with buttons: off unless chosen, and only a real true turns it on.
+    expect(parseChoice(null).moveButtons).toBe(false);
+    expect(parseChoice(JSON.stringify({ moveButtons: true })).moveButtons).toBe(true);
+    expect(parseChoice(JSON.stringify({ moveButtons: 'yes' })).moveButtons).toBe(false);
+  });
+});
+
+describe('the layout choice', () => {
+  it('starts automatic; a chosen sidebar carries over, the old stored tab bar becomes automatic', () => {
+    expect(parseChoice(null).nav).toBe('auto');
+    expect(parseChoice(JSON.stringify({ layout: 'sidebar' })).nav).toBe('sidebar');
+    expect(parseChoice(JSON.stringify({ layout: 'tabs' })).nav).toBe('auto');
+    expect(parseChoice(JSON.stringify({ nav: 'tabs', layout: 'sidebar' })).nav).toBe('tabs');
+    expect(parseChoice(JSON.stringify({ nav: 'sideways' })).nav).toBe('auto');
+  });
+});

@@ -1,0 +1,109 @@
+/**
+ * Which plan you're on, and what Pro costs.
+ *
+ * The server decides "Free or Pro" (it's the one Stripe tells); the app just
+ * asks. The last answer is kept on the device so a Pro subscriber isn't
+ * treated as Free when the server can't be reached for a moment.
+ */
+
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GIFT_PRICES, LIMITS, MAX_PRICES, PRO_PRICES, type BillingCurrency, type PayWith, type PlanId, type ProPrice, type WalletButtons } from '@gymgo/domain';
+import { useCallback, useEffect, useState } from 'react';
+import { api, type BillingState } from './api';
+import type { AccountApi } from './useAccount';
+
+const PLAN_KEY = 'gymgo.plan.v1';
+
+/**
+ * Whether Pro can be bought through this server: still asking, couldn't ask
+ * (out of reach), or its answer. Couldn't-ask isn't "not on sale", so it's
+ * kept apart, and asked again when the Pro screen opens.
+ */
+export type Sale = 'asking' | 'unreachable' | 'on' | 'off';
+
+export function useBilling(account: AccountApi) {
+  const [offer, setOffer] = useState<{ sale: Sale; prices: ProPrice[]; max: ProPrice[]; gifts: Array<{ currency: BillingCurrency; amountMinor: number }>; payWith: PayWith | null; wallets: WalletButtons | null }>({
+    sale: 'asking',
+    prices: PRO_PRICES,
+    max: MAX_PRICES,
+    gifts: GIFT_PRICES,
+    payWith: null,
+    wallets: null,
+  });
+  const [state, setState] = useState<BillingState | null>(null);
+  const [remembered, setRemembered] = useState<PlanId>('free');
+  const token = account.token;
+  const signedIn = account.state === 'signed_in' || account.state === 'unreachable';
+
+  const askSale = useCallback(() => {
+    setOffer((current) => (current.sale === 'unreachable' ? { ...current, sale: 'asking' } : current));
+    api
+      .billingPlans()
+      .then((result) => setOffer({ sale: result.available ? 'on' : 'off', prices: result.prices, max: result.max ?? [], gifts: result.gifts ?? [], payWith: result.payWith ?? null, wallets: result.wallets ?? null }))
+      .catch(() => setOffer((current) => (current.sale === 'asking' ? { ...current, sale: 'unreachable' } : current)));
+  }, []);
+
+  useEffect(() => {
+    askSale();
+    AsyncStorage.getItem(PLAN_KEY)
+      .then((value) => setRemembered(value === 'pro' ? 'pro' : 'free'))
+      .catch(() => undefined);
+  }, [askSale]);
+
+  /** Ask the server again; `fromStripe` makes it re-read Stripe first. */
+  const refresh = useCallback(
+    async (fromStripe = false): Promise<BillingState | null> => {
+      if (!token) return null;
+      try {
+        const next = fromStripe ? await api.syncBilling(token) : await api.billing(token);
+        setState(next);
+        setOffer((current) => ({ ...current, sale: next.available ? 'on' : 'off' }));
+        setRemembered(next.plan);
+        AsyncStorage.setItem(PLAN_KEY, next.plan).catch(() => undefined);
+        return next;
+      } catch {
+        return null;
+      }
+    },
+    [token],
+  );
+
+  useEffect(() => {
+    if (account.state === 'signed_in') void refresh();
+    if (account.state === 'signed_out') {
+      setState(null);
+      setRemembered('free');
+      AsyncStorage.removeItem(PLAN_KEY).catch(() => undefined);
+    }
+  }, [account.state, refresh]);
+
+  const plan: PlanId = state?.plan ?? (signedIn ? remembered : 'free');
+  return {
+    plan,
+    isPro: plan === 'pro',
+    /** The plan is the server's answer, not a guess from last time (or you're signed out, so it's Free). */
+    planKnown: state !== null || account.state === 'signed_out',
+    limits: LIMITS[plan],
+    subscription: state?.subscription ?? null,
+    /** Whether Pro can be bought through this server right now. */
+    sale: offer.sale,
+    askSale,
+    prices: offer.prices,
+    /** The ways to pay checkout will really take (card, Apple Pay, Google Pay, PayPal); null when not known. */
+    payWith: offer.payWith,
+    /** Apple Pay's and Google Pay's own buttons for the Pro page, when the server has them set up. */
+    wallets: offer.wallets,
+    /** Max's prices, and a gift year's (empty when the server doesn't sell them). */
+    maxPrices: offer.max,
+    giftPrices: offer.gifts,
+    /** On GymGO Max: Pro, with Max's extras (your own subscription). */
+    isMax: plan === 'pro' && state?.max === true,
+    /** Pro through a gifted year. */
+    grant: state?.grant ?? null,
+    /** The free trial of monthly Pro this account can start: new accounts, once. */
+    trial: state?.trial ?? null,
+    refresh,
+  };
+}
+
+export type BillingApi = ReturnType<typeof useBilling>;

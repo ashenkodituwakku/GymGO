@@ -1,0 +1,745 @@
+/**
+ * Sign in, or make an account: with Apple or Google where they're set up,
+ * or with an email and password. GymGO needs an account, so signed out this
+ * is the first screen (and, apart from the legal pages and Report a bug,
+ * the only one); afterwards it goes to the link you opened, or Home.
+ */
+
+import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
+import { Platform, StyleSheet, TextInput, View, useWindowDimensions, type TextInputProps, type TextInputInstance } from 'react-native';
+import { useGlassRedraw } from '@/components/Redrawn';
+import { serverOfflineLine } from '@/lib/copy';
+import Animated, { FadeInDown, ReduceMotion, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+import { AuthPerks, AuthShowcase } from '@/components/AuthShowcase';
+import { Aurora } from '@/components/Aurora';
+import { EASE_OUT, FADE_IN, FADE_OUT, GLIDE, Pressable } from '@/components/motion';
+import { passwordStrength } from '@/lib/passwordStrength';
+import { emailSuggestion } from '@/lib/emailTypos';
+import { AppBadge } from '@/components/BrandMark';
+import { Icon, type IconName } from '@/components/Icon';
+import { OrDivider, SocialButtons, useAnySocial, type TokenHandler } from '@/components/SocialSignIn';
+import { PrimaryButton, Segmented, Txt } from '@/components/ui';
+import { ApiError, OfflineError, api, serverHosted } from '@/lib/api';
+import { accountCreationLocked, formatBirthMonthInput, lockAccountCreation, parseBirthMonth, takePendingSignIn, type PendingSignIn } from '@/lib/ageGate';
+import { useApp } from '@/lib/app-state';
+import { haptic } from '@/lib/haptics';
+import { FIELD_FRAME, NO_WEB_OUTLINE, color, currentTheme, dropShadow, face, radius, space, themed } from '@/lib/theme';
+import { usePageTitle } from '@/lib/pageTitle';
+import { PageScroll } from '@/components/PageScroll';
+import { LegalText } from '@/components/LegalText';
+import { ScreenOptions } from '@/components/ScreenOptions';
+import { noteNewAccount, takeNewAccount, takeWanted } from '@/lib/afterSignIn';
+import { ACCOUNT_OPTIONAL } from '@/lib/accountRule';
+
+type Mode = 'sign_in' | 'create';
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** What someone too young for an account is told, once, and on this device for a day after. */
+const TOO_YOUNG = 'Sorry, GymGO accounts are for people 13 and over.';
+
+const tooYoung = (error: unknown) => error instanceof ApiError && error.code === 'too_young';
+
+function messageFor(error: unknown): string {
+  if (error instanceof OfflineError) return serverOfflineLine(Platform.OS, serverHosted());
+  if (error instanceof ApiError) return error.message;
+  return 'Something went wrong. Try again.';
+}
+
+export default function SignInScreen() {
+  useGlassRedraw();
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const { account } = useApp();
+  const router = useRouter();
+  // A wide screen has the form beside a panel that says what GymGO is (components/AuthShowcase.tsx).
+  const { width } = useWindowDimensions();
+  const wide = width >= 960;
+  const [mode, setMode] = useState<Mode>(params.mode === 'create' || (params.mode !== 'sign_in' && account.newcomer) ? 'create' : 'sign_in');
+  usePageTitle(mode === 'create' ? 'Create an account' : 'Sign in');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  // The age question (see ageGate.ts): typed as MM / YYYY.
+  const [born, setBorn] = useState('');
+  const birthMonth = parseBirthMonth(born);
+  const [locked, setLocked] = useState(false);
+  // The terms and privacy policy, agreed to before an account is made.
+  const [agreed, setAgreed] = useState(false);
+  // A Google or Apple sign-in that would make a new account, waiting on the age question.
+  const [pendingSocial, setPendingSocial] = useState<PendingSignIn | null>(() => takePendingSignIn());
+  useEffect(() => {
+    void accountCreationLocked().then(setLocked);
+  }, []);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // The server said the email and password don't match: both fields turn red until either changes.
+  const [mismatch, setMismatch] = useState(false);
+  // "Forgot your password?": the address a reset link went to, once asked.
+  const [resetSentTo, setResetSentTo] = useState<string | null>(null);
+  const [resetBusy, setResetBusy] = useState(false);
+  // Signed in or made just now: the button shows a tick for a moment before the next screen.
+  const [succeeded, setSucceeded] = useState<'in' | 'made' | null>(null);
+  const calm = useReducedMotion();
+  // Caps Lock, on a keyboard, while the password has focus.
+  const [capsOn, setCapsOn] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined' || !passwordFocused) return;
+    const read = (event: KeyboardEvent) => setCapsOn(Boolean(event.getModifierState?.('CapsLock')));
+    document.addEventListener('keydown', read);
+    document.addEventListener('keyup', read);
+    return () => {
+      document.removeEventListener('keydown', read);
+      document.removeEventListener('keyup', read);
+    };
+  }, [passwordFocused]);
+
+  const forgot = async () => {
+    if (resetBusy) return;
+    if (!EMAIL.test(email.trim())) {
+      fail('Type your account’s email address above, then tap “Forgot your password?” again.');
+      return;
+    }
+    setResetBusy(true);
+    setError(null);
+    try {
+      await api.forgotPassword(email.trim());
+      haptic.success();
+      setResetSentTo(email.trim());
+    } catch (caught) {
+      fail(messageFor(caught));
+    } finally {
+      setResetBusy(false);
+    }
+  };
+  const emailRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
+  const shake = useSharedValue(0);
+  const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shake.value }] }));
+
+  // Once only: signing in here and the account noticing it both land here.
+  const closed = useRef(false);
+  // `fresh`: you've just signed in here (not arrived already signed in), so Welcome back says hello first.
+  const done = useCallback((fresh = false) => {
+    if (closed.current) return;
+    closed.current = true;
+    haptic.success();
+    // A link opened before signing in (a gym a friend sent) goes there now.
+    const next = takeWanted();
+    // A new account sees the welcome tour first, then goes on; signing in again, Welcome back.
+    if (takeNewAccount()) router.replace({ pathname: '/welcome', params: next ? { next } : {} });
+    else if (fresh) router.replace({ pathname: '/welcome-back', params: next ? { next } : {} });
+    else if (next) router.replace(next as Href);
+    else if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }, [router]);
+
+  // Signed in (here, or by a Google popup finishing): nothing more to do on this screen.
+  useEffect(() => {
+    if (account.state === 'signed_in' && !busy && !succeeded) done();
+  }, [account.state, busy, done, succeeded]);
+
+  const fail = useCallback(
+    (message: string) => {
+      haptic.warn();
+      setError(message);
+      // A head shake, as a Mac's login window gives: side to side, smaller each time, 360 ms in all.
+      shake.value = withSequence(
+        withTiming(-8, { duration: 45, reduceMotion: ReduceMotion.System }),
+        withTiming(8, { duration: 60, reduceMotion: ReduceMotion.System }),
+        withTiming(-6, { duration: 60, reduceMotion: ReduceMotion.System }),
+        withTiming(5, { duration: 55, reduceMotion: ReduceMotion.System }),
+        withTiming(-3, { duration: 50, reduceMotion: ReduceMotion.System }),
+        withTiming(2, { duration: 45, reduceMotion: ReduceMotion.System }),
+        withTiming(0, { duration: 45, reduceMotion: ReduceMotion.System }),
+      );
+    },
+    [shake],
+  );
+
+  const emailOk = EMAIL.test(email.trim());
+  const suggestion = emailSuggestion(email);
+  const passwordOk = password.length >= (mode === 'create' ? 8 : 1);
+  const nameOk = mode === 'sign_in' || name.trim().length > 0;
+  const bornOk = mode === 'sign_in' || birthMonth !== null;
+  const agreedOk = mode === 'sign_in' || agreed;
+  const ready = emailOk && passwordOk && nameOk && bornOk && agreedOk && !(mode === 'create' && locked);
+
+  const refuseYoung = () => {
+    void lockAccountCreation();
+    setLocked(true);
+    setPendingSocial(null);
+    fail(TOO_YOUNG);
+  };
+
+  const submit = async () => {
+    if (!ready || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (mode === 'create') {
+        noteNewAccount();
+        await account.signUp(name.trim(), email.trim(), password, birthMonth ?? '');
+      } else await account.signIn(email.trim(), password);
+      setSucceeded(mode === 'create' ? 'made' : 'in');
+      setTimeout(() => done(true), calm ? 0 : 450);
+    } catch (caught) {
+      noteNewAccount(false);
+      if (tooYoung(caught)) refuseYoung();
+      else {
+        setMismatch(mode === 'sign_in' && caught instanceof ApiError && caught.status === 401);
+        fail(messageFor(caught));
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Finish a Google or Apple sign-in that was waiting on the age question. */
+  const finishSocial = async () => {
+    if (!pendingSocial || !birthMonth || !agreed || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      noteNewAccount();
+      await account.signInWith(pendingSocial.provider, pendingSocial.idToken, pendingSocial.nonce, pendingSocial.name, birthMonth);
+      done();
+    } catch (caught) {
+      noteNewAccount(false);
+      if (tooYoung(caught)) refuseYoung();
+      else fail(messageFor(caught));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const withProvider: TokenHandler = async (provider, idToken, nonce, providedName) => {
+    setBusy(true);
+    setError(null);
+    try {
+      if (await account.signInWith(provider, idToken, nonce, providedName)) noteNewAccount();
+      done(true);
+    } catch (caught) {
+      if (caught instanceof ApiError && (caught.code === 'age_needed' || caught.code === 'terms_needed')) {
+        // A new account: ask the age question and for the terms first, then finish with the same sign-in.
+        if (locked) fail(TOO_YOUNG);
+        else setPendingSocial({ provider, idToken, nonce, name: providedName ?? null });
+      } else if (tooYoung(caught)) refuseYoung();
+      else fail(messageFor(caught));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError(null);
+    setResetSentTo(null);
+  };
+
+  // The form's frosted panel: the page's colour, part clear, over the pools of colour behind.
+  const dark = currentTheme().scheme === 'dark';
+  const frosted = { backgroundColor: dark ? 'rgba(28, 28, 30, 0.62)' : 'rgba(255, 255, 255, 0.58)', ...(Platform.OS === 'web' ? ({ backdropFilter: 'blur(24px) saturate(160%)' } as object) : null) };
+
+  return (
+    <View style={styles.page}>
+    <Aurora />
+    <PageScroll
+      style={styles.scroll}
+      contentContainerStyle={[styles.content, wide && styles.contentWide]}
+    >
+      <ScreenOptions options={{ title: '' }} />
+      {wide && <AuthShowcase mode={mode} />}
+      <View style={[styles.column, wide && styles.columnWide]}>
+      <Animated.View entering={FadeInDown.duration(520).easing(EASE_OUT).reduceMotion(ReduceMotion.System)} style={[styles.hero, wide && styles.heroWide]}>
+        {/* The panel beside a wide form shows the logo already. */}
+        {!wide && (
+          <View style={styles.badge}>
+            <AppBadge size={64} />
+          </View>
+        )}
+        <Txt variant="largeTitle" style={!wide && styles.center} accessibilityRole="header">
+          {mode === 'create' ? 'Join GymGO' : 'Welcome back'}
+        </Txt>
+        <Txt variant="subhead" color={color.labelSecondary} style={!wide && styles.center}>
+          {mode === 'create'
+            ? ACCOUNT_OPTIONAL
+              ? 'Make a free account to save gyms on every device, write reviews and keep your training log.'
+              : 'It’s free. Find gyms that let you in, save them on every device and log your training.'
+            : 'Pick up your saved gyms, workouts and training log.'}
+        </Txt>
+        {mode === 'create' && !wide && <AuthPerks />}
+      </Animated.View>
+
+      <View style={[styles.panel, frosted]}>
+      <Segmented
+        options={[
+          { value: 'sign_in', label: 'Sign in' },
+          { value: 'create', label: 'Create account' },
+        ]}
+        value={mode}
+        onChange={switchMode}
+      />
+
+      <SocialButtons onToken={withProvider} onError={fail} />
+      <Animated.View layout={GLIDE}>
+        <SocialDivider />
+      </Animated.View>
+
+      {pendingSocial ? (
+        <Animated.View entering={FADE_IN} style={[styles.form, styles.pending, shakeStyle]}>
+          <Txt variant="headline">One more step</Txt>
+          <BornField value={born} onChange={setBorn} onSubmit={() => void finishSocial()} autoFocus />
+          <TermsBox agreed={agreed} onChange={setAgreed} />
+          <PrimaryButton label="Continue" busy={busy} disabled={!birthMonth || !agreed} onPress={() => void finishSocial()} />
+          <PrimaryButton label="Cancel" tone="quiet" onPress={() => setPendingSocial(null)} />
+        </Animated.View>
+      ) : mode === 'create' && locked ? (
+        // Said aloud as it replaces the form: otherwise a screen reader hears nothing after Create account.
+        <View style={[styles.form, styles.pending]} accessibilityLiveRegion="assertive">
+          <Txt variant="subhead" color={color.labelSecondary}>
+            {TOO_YOUNG}
+          </Txt>
+        </View>
+      ) : (
+      <>
+      <Animated.View layout={GLIDE} style={[styles.form, shakeStyle]}>
+        {mode === 'create' && (
+          <Animated.View entering={FADE_IN} exiting={FADE_OUT}>
+            <AuthField
+              icon="person"
+              label="Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="Shown on your reviews"
+              autoComplete="name"
+              textContentType="name"
+              maxLength={40}
+              returnKeyType="next"
+              onSubmitEditing={() => emailRef.current?.focus()}
+            />
+          </Animated.View>
+        )}
+        <AuthField
+          ref={emailRef}
+          icon="mail"
+          label="Email"
+          value={email}
+          onChangeText={(text) => {
+            setEmail(text);
+            // A "don't match" from the last try is stale once either field changes.
+            setError(null);
+            setMismatch(false);
+          }}
+          wrong={mismatch}
+          placeholder="you@example.com"
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="email-address"
+          inputMode="email"
+          autoComplete="email"
+          textContentType={mode === 'create' ? 'username' : 'emailAddress'}
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          problem={suggestion ? null : email.trim().length > 4 && !emailOk ? 'That email doesn’t look right yet.' : null}
+        />
+        {/* A slip in a provider's name ("gmial.com"): offered, never changed without a tap. */}
+        {suggestion && (
+          <Animated.View entering={FADE_IN} accessibilityLiveRegion="polite">
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                setEmail(suggestion);
+                setError(null);
+                setMismatch(false);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Did you mean ${suggestion}? Use it`}
+              hitSlop={6}
+              style={({ pressed }) => [styles.suggest, pressed && { opacity: 0.7 }]}
+            >
+              <Icon name="info" size={14} color={color.brand} />
+              <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+                Did you mean <Txt variant="footnote" color={color.brand} style={face('semibold')}>{suggestion}</Txt>?
+              </Txt>
+            </Pressable>
+          </Animated.View>
+        )}
+        <AuthField
+          ref={passwordRef}
+          icon="lock"
+          label="Password"
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            setError(null);
+            setMismatch(false);
+          }}
+          wrong={mismatch}
+          // The rule is the live check under it ("8 characters or more"), not said twice.
+          secureTextEntry={!showPassword}
+          onFocus={() => setPasswordFocused(true)}
+          onBlur={() => {
+            setPasswordFocused(false);
+            setCapsOn(false);
+          }}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete={mode === 'create' ? 'new-password' : 'current-password'}
+          textContentType={mode === 'create' ? 'newPassword' : 'password'}
+          returnKeyType="go"
+          onSubmitEditing={() => void submit()}
+          accessory={
+            <Pressable
+              onPress={() => {
+                haptic.select();
+                setShowPassword((shown) => !shown);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              hitSlop={10}
+            >
+              <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color={color.labelSecondary} />
+            </Pressable>
+          }
+        />
+        {capsOn && passwordFocused && (
+          <Animated.View entering={FADE_IN} style={styles.rule} accessibilityLiveRegion="polite">
+            <Icon name="info" size={15} color={color.maybeInk} />
+            <Txt variant="footnote" color={color.maybeInk}>
+              Caps Lock is on
+            </Txt>
+          </Animated.View>
+        )}
+        {mode === 'create' && (
+          <Animated.View entering={FADE_IN} style={styles.rule}>
+            <Icon name={password.length >= 8 ? 'done' : 'todo'} size={15} color={password.length >= 8 ? color.goodInk : color.labelSecondary} />
+            <Txt variant="footnote" color={password.length >= 8 ? color.goodInk : color.labelSecondary}>
+              8 characters or more
+            </Txt>
+          </Animated.View>
+        )}
+        {mode === 'create' && password.length >= 8 && <StrengthMeter password={password} hints={[name, email.split('@')[0] ?? '']} />}
+        {mode === 'create' && <BornField value={born} onChange={setBorn} onSubmit={() => void submit()} />}
+        {mode === 'create' && <TermsBox agreed={agreed} onChange={setAgreed} />}
+      </Animated.View>
+
+      {error && (
+        <Animated.View entering={FADE_IN} style={styles.error} accessibilityLiveRegion="assertive">
+          <Icon name="info" size={16} color={color.dangerInk} />
+          <Txt variant="footnote" color={color.dangerInk} style={styles.flex}>
+            {error}
+          </Txt>
+        </Animated.View>
+      )}
+
+      <Animated.View layout={GLIDE}>
+        <PrimaryButton
+          label={succeeded === 'made' ? 'Account created' : succeeded === 'in' ? 'Signed in' : mode === 'create' ? 'Create account' : 'Sign in'}
+          icon={succeeded ? 'check' : undefined}
+          busy={busy && !succeeded}
+          disabled={!ready && !succeeded}
+          onPress={() => void submit()}
+        />
+      </Animated.View>
+
+      {mode === 'sign_in' &&
+        (resetSentTo ? (
+          <Animated.View entering={FADE_IN} style={styles.resetSent} accessibilityLiveRegion="polite">
+            <Icon name="mail" size={16} color={color.brand} />
+            <Txt variant="footnote" color={color.labelSecondary} style={styles.flex}>
+              If there’s a GymGO account for {resetSentTo}, we’ve emailed it a link to choose a new password. It works for 30
+              minutes. Check your junk folder if it doesn’t arrive.
+            </Txt>
+          </Animated.View>
+        ) : (
+          <Pressable onPress={() => void forgot()} accessibilityRole="button" hitSlop={8} style={styles.forgot} disabled={resetBusy}>
+            <Txt variant="subhead" color={color.brand} style={face('medium')}>
+              {resetBusy ? 'Sending…' : 'Forgot your password?'}
+            </Txt>
+          </Pressable>
+        ))}
+      </>
+      )}
+      </View>
+
+      <PrivacyNote />
+      {account.gate !== 'in' && (
+        <Pressable onPress={() => router.push('/report-bug')} accessibilityRole="link" hitSlop={8} style={styles.forgot}>
+          <Txt variant="footnote" color={color.brand} style={face('medium')}>
+            Can’t get in? Report a problem
+          </Txt>
+        </Pressable>
+      )}
+      </View>
+    </PageScroll>
+    </View>
+  );
+}
+
+/**
+ * How strong a new password looks (lib/passwordStrength.ts): four bars that
+ * fill and colour as it grows, and a word. Advice: 8 characters is still the
+ * only rule.
+ */
+function StrengthMeter({ password, hints }: { password: string; hints: string[] }) {
+  const strength = passwordStrength(password, hints);
+  const tone = strength.score <= 1 ? color.danger : strength.score === 2 ? color.maybe : color.good;
+  const ink = strength.score <= 1 ? color.dangerInk : strength.score === 2 ? color.maybeInk : color.goodInk;
+  return (
+    <View style={styles.meter} accessible accessibilityLabel={`Password strength: ${strength.label}`}>
+      <View style={styles.meterBars}>
+        {[1, 2, 3, 4].map((bar) => (
+          <View key={bar} style={[styles.meterBar, bar <= strength.score && { backgroundColor: tone }]} />
+        ))}
+      </View>
+      <Txt variant="footnote" color={ink} style={[face('semibold'), styles.meterLabel]}>
+        {strength.label}
+      </Txt>
+    </View>
+  );
+}
+
+/** The box ticked to agree to the terms and privacy policy, which a new account needs. */
+function TermsBox({ agreed, onChange }: { agreed: boolean; onChange: (agreed: boolean) => void }) {
+  return (
+    <View style={styles.terms}>
+      <Pressable
+        onPress={() => {
+          haptic.select();
+          onChange(!agreed);
+        }}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: agreed }}
+        // Said outright for a browser, which was told nothing while it was unticked.
+        aria-checked={agreed}
+        accessibilityLabel="I agree to GymGO’s Terms of Service and Privacy Policy"
+        hitSlop={10}
+        style={[styles.box, agreed && styles.boxOn]}
+      >
+        {agreed ? <Icon name="check" size={15} color={color.onBrand} /> : null}
+      </Pressable>
+      <LegalText
+        variant="footnote"
+        tint={color.labelSecondary}
+        style={styles.flex}
+        text="I agree to GymGO’s [Terms of Service](terms) and [Privacy Policy](privacy)."
+      />
+    </View>
+  );
+}
+
+/** "or use email", only when there's something above it to be an alternative to. */
+function SocialDivider() {
+  return useAnySocial() ? <OrDivider /> : null;
+}
+
+/** How sign-in details are kept; Apple and Google only where their buttons show. */
+function PrivacyNote() {
+  const social = useAnySocial() ? ' With Apple or Google, GymGO gets your name and email from them, never your password.' : '';
+  return (
+    <LegalText
+      variant="caption"
+      tint={color.labelSecondary}
+      style={styles.small}
+      text={`Passwords are kept only as a salted hash, never readable.${social} The [Privacy Policy](privacy) says what GymGO keeps and why.`}
+    />
+  );
+}
+
+/** The age question: the month and year you were born, typed on a number pad. */
+function BornField({ value, onChange, onSubmit, autoFocus }: { value: string; onChange: (value: string) => void; onSubmit: () => void; autoFocus?: boolean }) {
+  const complete = value.replace(/\D/g, '').length === 6;
+  return (
+    <View style={styles.bornWrap}>
+      <AuthField
+        icon="calendar"
+        label="Month and year you were born"
+        value={value}
+        onChangeText={(typed) => onChange(formatBirthMonthInput(typed))}
+        placeholder="MM / YYYY"
+        keyboardType="number-pad"
+        inputMode="numeric"
+        autoComplete="off"
+        maxLength={9}
+        autoFocus={autoFocus}
+        returnKeyType="go"
+        onSubmitEditing={onSubmit}
+        problem={complete && !parseBirthMonth(value) ? 'That isn’t a month and year yet.' : null}
+      />
+      <Txt variant="caption" color={color.labelSecondary}>
+        Asked to check GymGO suits your age. It isn’t kept.
+      </Txt>
+    </View>
+  );
+}
+
+/**
+ * A field whose name stays in view: it rests in the box like a hint, and
+ * rises small above what you type once you tap in or there's text. The
+ * hint (`placeholder`) shows only then, under the name. Screen readers
+ * hear the same name.
+ */
+function AuthField({
+  ref,
+  icon,
+  label,
+  accessory,
+  problem = null,
+  wrong = false,
+  placeholder,
+  ...props
+}: TextInputProps & { ref?: Ref<TextInputInstance>; icon: IconName; label: string; accessory?: ReactNode; problem?: string | null; wrong?: boolean }) {
+  const [focused, setFocused] = useState(false);
+  // A browser's saved details show before the page can read them: the name rises for those too.
+  const [autofilled, setAutofilled] = useState(false);
+  const own = useRef<TextInputInstance | null>(null);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const look = () => {
+      const node = own.current as unknown as { matches?: (selector: string) => boolean } | null;
+      try {
+        setAutofilled(Boolean(node?.matches?.(':-webkit-autofill') || node?.matches?.(':autofill')));
+      } catch {
+        // A browser without either selector: nothing to look for.
+      }
+    };
+    const timers = [200, 700, 1500, 3000].map((ms) => setTimeout(look, ms));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  const floated = focused || autofilled || (typeof props.value === 'string' && props.value.length > 0);
+  const lift = useSharedValue(floated ? 1 : 0);
+  useEffect(() => {
+    lift.value = withTiming(floated ? 1 : 0, { duration: 180, easing: EASE_OUT, reduceMotion: ReduceMotion.System });
+  }, [floated, lift]);
+  const labelMotion = useAnimatedStyle(() => ({
+    transform: [{ translateY: interpolate(lift.value, [0, 1], [0, -11]) }, { scale: interpolate(lift.value, [0, 1], [1, 0.74]) }],
+  }));
+  return (
+    <View style={styles.field}>
+      {/* `wrong`: the server turned this down (the email and password don't match): red, and its icon too. */}
+      <View {...FIELD_FRAME} style={[styles.fieldBox, focused && styles.fieldFocused, problem && styles.fieldProblem, wrong && styles.fieldWrong]}>
+        <Icon name={icon} size={17} color={wrong ? color.dangerInk : focused ? color.brand : color.labelTertiary} />
+        <View style={styles.fieldStack}>
+          <Animated.Text
+            numberOfLines={1}
+            aria-hidden
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            pointerEvents="none"
+            style={[styles.fieldLabel, { color: wrong ? color.dangerInk : focused ? color.brand : color.labelSecondaryOnFill }, labelMotion]}
+          >
+            {label}
+          </Animated.Text>
+          <TextInput
+          ref={(node: TextInputInstance | null) => {
+            own.current = node;
+            if (typeof ref === 'function') ref(node);
+            else if (ref) (ref as { current: TextInputInstance | null }).current = node;
+          }}
+          placeholderTextColor={color.labelTertiary}
+          accessibilityLabel={label}
+          aria-invalid={problem || wrong ? true : undefined}
+          placeholder={floated ? placeholder : undefined}
+          {...props}
+          onFocus={(event) => {
+            setFocused(true);
+            props.onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setFocused(false);
+            props.onBlur?.(event);
+          }}
+          style={styles.fieldInput}
+          />
+        </View>
+        {accessory}
+      </View>
+      {/* Read out when it appears, as the line under the form's own errors is: it's why the button below won't press. */}
+      {problem && (
+        <View accessibilityLiveRegion="polite">
+          <Txt variant="footnote" color={color.maybeInk} style={styles.fieldHint}>
+            {problem}
+          </Txt>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = themed(() =>
+  StyleSheet.create({
+    page: { flex: 1, backgroundColor: color.groupedBackground },
+    scroll: { flex: 1, backgroundColor: 'transparent' },
+    // The form, on frosted glass over the pools of colour.
+    panel: {
+      gap: space[4],
+      padding: space[4],
+      borderRadius: radius.xl,
+      borderCurve: 'continuous',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: color.separator,
+      ...dropShadow(0.08, 24, 8, 4),
+    },
+    content: { padding: space[4], paddingBottom: space[8], width: '100%', maxWidth: 460, alignSelf: 'center' },
+    // Wide: the panel and the form side by side, the form its usual width.
+    contentWide: { maxWidth: 1120, flexDirection: 'row', alignItems: 'stretch', gap: space[8], padding: space[6] },
+    column: { gap: space[4] },
+    columnWide: { width: 420, justifyContent: 'center', paddingVertical: space[6] },
+    hero: { alignItems: 'center', gap: space[2], marginTop: space[2], marginBottom: space[1] },
+    heroWide: { alignItems: 'flex-start' },
+    badge: { borderRadius: 14.4, marginBottom: space[2], ...dropShadow(0.18, 12, 6, 6) },
+    center: { textAlign: 'center' },
+    flex: { flex: 1 },
+    form: { gap: space[3] },
+    field: { gap: 4 },
+    fieldBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      height: 58,
+      paddingHorizontal: space[4],
+      borderRadius: radius.md,
+      borderCurve: 'continuous',
+      backgroundColor: color.card,
+      borderWidth: 1.5,
+      borderColor: 'transparent',
+    },
+    fieldFocused: { borderColor: color.brand },
+    fieldProblem: { borderColor: color.maybe },
+    fieldWrong: { borderColor: color.danger },
+    // The box's border shows focus, in the accent, instead of the browser's own ring.
+    // minWidth 0: a browser text field won't otherwise shrink below its own width, and ran past a narrow phone's edge.
+    fieldStack: { flex: 1, minWidth: 0, height: '100%', justifyContent: 'center' },
+    // Resting, the name sits where the text goes; risen, it's small above it (transformOrigin keeps its left edge put).
+    fieldLabel: { position: 'absolute', left: 0, right: 0, top: 19, fontSize: 17, lineHeight: 20, transformOrigin: 'left center', ...face('regular') },
+    fieldInput: { flex: 1, minWidth: 0, height: '100%', paddingTop: 18, fontSize: 17, color: color.label, ...NO_WEB_OUTLINE, ...face('regular') },
+    suggest: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[1], minHeight: 28 },
+    fieldHint: { marginLeft: space[4] },
+    pending: { gap: space[3] },
+    bornWrap: { gap: space[1] },
+    rule: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginLeft: space[1] },
+    meter: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginLeft: space[1] },
+    meterBars: { flex: 1, flexDirection: 'row', gap: 4 },
+    meterBar: { flex: 1, height: 5, borderRadius: 3, backgroundColor: color.fill },
+    meterLabel: { minWidth: 56, textAlign: 'right' },
+    error: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.dangerTint },
+    small: { textAlign: 'center', marginTop: space[2] },
+    terms: { flexDirection: 'row', alignItems: 'center', gap: space[3], marginLeft: space[1], marginTop: space[1] },
+    forgot: { alignSelf: 'center', paddingVertical: space[1] },
+    resetSent: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2], padding: space[3], borderRadius: radius.md, backgroundColor: color.brandWash },
+    box: {
+      width: 24,
+      height: 24,
+      borderRadius: 7,
+      borderCurve: 'continuous',
+      borderWidth: 1.5,
+      borderColor: color.labelTertiary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    boxOn: { backgroundColor: color.brand, borderColor: color.brand },
+  }),
+);

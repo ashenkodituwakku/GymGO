@@ -97,7 +97,7 @@ export default function Profile() {
       const outcome = await manageSubscription(account.token, billing.subscription);
       if (outcome !== 'left') await refresh(true);
     } catch (problem) {
-      setError(problem instanceof ApiError ? problem.message : 'Couldn’t reach the GymGO server.');
+      setError(problem instanceof ApiError ? problem.message : 'Couldn’t connect to GymGO.');
     }
   };
 
@@ -491,7 +491,7 @@ function SignInCard() {
         return;
       }
       haptic.warn();
-      setProblem(caught instanceof ApiError ? caught.message : 'Couldn’t reach the GymGO server. Try again.');
+      setProblem(caught instanceof ApiError ? caught.message : 'Couldn’t connect to GymGO. Try again.');
     }
   };
   return (
@@ -581,7 +581,7 @@ function NewTermsCard() {
       await account.agreeToTerms(LEGAL_VERSION);
       haptic.success();
     } catch (caught) {
-      setProblem(caught instanceof ApiError ? caught.message : 'Couldn’t reach the GymGO server. Try again.');
+      setProblem(caught instanceof ApiError ? caught.message : 'Couldn’t connect to GymGO. Try again.');
     } finally {
       setBusy(false);
     }

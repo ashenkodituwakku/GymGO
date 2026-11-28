@@ -389,7 +389,7 @@ function ReviewForm({ gymId, token, inSheet, onDone, onCancel }: { gymId: string
       haptic.warn();
       setError(
         caught instanceof OfflineError
-          ? 'Can’t reach the GymGO server right now.'
+          ? 'Couldn’t connect to GymGO. Try again in a moment.'
           : caught instanceof ApiError
             ? caught.message
             : 'Something went wrong.',

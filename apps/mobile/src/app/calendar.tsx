@@ -89,6 +89,8 @@ export default function CalendarScreen() {
 
   const thisMonth = months[0]!;
   const none = log.sessions.length === 0;
+  /** The log couldn't be loaded, so an empty calendar says nothing about your training. */
+  const unknown = none && !!log.error;
 
   return (
     <PageScroll style={styles.page} contentContainerStyle={styles.content}>
@@ -192,14 +194,19 @@ export default function CalendarScreen() {
       )}
 
       {log.error && (
-        <Txt variant="footnote" color={color.dangerInk}>
-          {log.error}
-        </Txt>
+        <View style={styles.empty}>
+          <Txt variant="footnote" color={color.dangerInk}>
+            {log.error}
+          </Txt>
+          {/* Nothing loaded: a way to ask again, rather than an empty calendar that looks like no training. */}
+          {none && <PrimaryButton label="Try again" icon="refresh" tone="quiet" onPress={log.reload} />}
+        </View>
       )}
 
       {(none || view === 'month') && months.map((month, index) => {
         const open = picked && month.weeks.some((week) => week.some((day) => day.inMonth && day.key === picked.key)) ? picked : null;
-        const summary = month.workouts === 0 ? 'No workouts' : `${month.workouts} ${month.workouts === 1 ? 'workout' : 'workouts'} · ${month.days} ${month.days === 1 ? 'day' : 'days'}`;
+        // When the log couldn't load, an empty month isn't "No workouts": nothing is said about it.
+        const summary = unknown ? '' : month.workouts === 0 ? 'No workouts' : `${month.workouts} ${month.workouts === 1 ? 'workout' : 'workouts'} · ${month.days} ${month.days === 1 ? 'day' : 'days'}`;
         return (
           <Animated.View key={month.key} entering={arrive(index)} layout={GLIDE} style={styles.card}>
             <Pressable
@@ -209,7 +216,7 @@ export default function CalendarScreen() {
                 router.push({ pathname: '/month', params: { m: month.key } });
               }}
               accessibilityRole={month.workouts > 0 ? 'link' : 'header'}
-              accessibilityLabel={month.workouts > 0 ? `${month.label}, ${summary}. Monthly report` : `${month.label}, ${summary}`}
+              accessibilityLabel={month.workouts > 0 ? `${month.label}, ${summary}. Monthly report` : summary ? `${month.label}, ${summary}` : month.label}
               style={({ pressed }) => [styles.monthHead, pressed && { opacity: 0.7 }]}
             >
               <Txt variant="headline" style={styles.flex}>
@@ -228,7 +235,7 @@ export default function CalendarScreen() {
               onPick={(day) => setPicked((now) => (now?.key === day.key ? null : day))}
             />
             {open && <DayList day={open} onOpen={(session) => router.push({ pathname: '/feed/[id]', params: { id: session.id } })} onStart={() => router.push('/train')} />}
-            {index === 0 && none && (
+            {index === 0 && none && !unknown && (
               <View style={styles.empty}>
                 <Txt variant="subhead" color={color.labelSecondary} style={styles.center}>
                   Each day you train fills in here.

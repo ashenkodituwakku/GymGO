@@ -179,7 +179,7 @@ export default function SessionEditScreen() {
       stopAsking();
       close();
     } catch (error) {
-      setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your changes are still here; try again.');
+      setProblem(error instanceof ApiError ? error.message : 'Couldn’t connect to GymGO. Your changes are still here. Try again.');
     } finally {
       setSaving(false);
     }

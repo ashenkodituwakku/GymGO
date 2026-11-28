@@ -48,7 +48,7 @@ export default function SavedWorkoutScreen() {
       api
         .workouts(token)
         .then((result) => setSaved(result.workouts.find((item) => item.id === id) ?? 'missing'))
-        .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t reach the GymGO server to load this workout.')));
+        .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t connect to GymGO to load this workout.')));
     }, [token, id]),
   );
 

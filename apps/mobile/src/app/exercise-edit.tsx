@@ -124,7 +124,7 @@ export default function ExerciseEditScreen() {
       if (existing) router.canGoBack() ? router.back() : router.replace('/exercises');
       else router.replace({ pathname: '/progress/[exercise]', params: { exercise: kept.id } });
     } catch (error) {
-      setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your exercise is still here; try again.');
+      setProblem(error instanceof ApiError ? error.message : 'Couldn’t connect to GymGO. Your exercise is still here. Try again.');
     } finally {
       setSaving(false);
     }

@@ -606,7 +606,7 @@ export default function TrainScreen() {
       if (records.length > 0) playSound('record', 250);
       setDone({ session: saved, records, compared });
     } catch (error) {
-      setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your workout is still here; try again.');
+      setProblem(error instanceof ApiError ? error.message : 'Couldn’t connect to GymGO. Your workout is still here. Try again.');
     } finally {
       setSaving(false);
     }

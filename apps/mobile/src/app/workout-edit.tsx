@@ -70,7 +70,7 @@ export default function WorkoutEditScreen() {
           setDraft(filled);
           setOriginal(JSON.stringify(filled));
         })
-        .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t reach the GymGO server to load this workout.')));
+        .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t connect to GymGO to load this workout.')));
       return;
     }
     const handed = takePlan();
@@ -157,7 +157,7 @@ export default function WorkoutEditScreen() {
       stopAsking();
       router.replace({ pathname: '/workouts/[id]', params: { id: kept.workout.id } });
     } catch (error) {
-      setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your workout is still here; try again.');
+      setProblem(error instanceof ApiError ? error.message : 'Couldn’t connect to GymGO. Your workout is still here. Try again.');
     } finally {
       setSaving(false);
     }

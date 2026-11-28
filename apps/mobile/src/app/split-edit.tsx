@@ -118,7 +118,7 @@ export default function SplitEditScreen() {
       stopAsking();
       router.canGoBack() ? router.back() : router.replace('/templates');
     } catch (error) {
-      setProblem(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server. Your split is still here; try again.');
+      setProblem(error instanceof ApiError ? error.message : 'Couldn’t connect to GymGO. Your split is still here. Try again.');
     } finally {
       setSaving(false);
     }

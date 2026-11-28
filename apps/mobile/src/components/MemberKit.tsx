@@ -136,7 +136,7 @@ export function MemberKit({
               haptic.warn();
               setNotice(
                 error instanceof OfflineError
-                  ? 'Can’t reach the GymGO server right now.'
+                  ? 'Couldn’t connect to GymGO. Try again in a moment.'
                   : error instanceof ApiError
                     ? error.message
                     : 'That didn’t save. Try again?',

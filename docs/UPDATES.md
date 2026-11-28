@@ -9,9 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 304 · The Calendar doesn't say "No workouts" when it couldn't load them
+
+*28 Nov 2026 · the commit "The Calendar says it couldn't load, not 'No workouts'"*
+
+With GymGO's server out of reach, the Calendar showed the error line and then an empty month saying "No workouts" and "Each day you train fills in here.", as if you had never trained.
+
+- app/calendar.tsx: when the log couldn't load, the months say nothing about workouts, the "Each day you train" prompt stays away, and **Try again** sits under the error (as on Progress). Once the log loads, everything is as before.
+- The last 15 messages still saying "Couldn’t reach the GymGO server…" now read the house way, "Couldn’t connect to GymGO…": saving a workout, split, exercise or edits ("Your workout is still here. Try again."), loading saved workouts, reviews, photos, member equipment and Profile.
+- Also walked through with the server stopped: Saved, Progress, Collection, a gym's page, the Feed, the monthly report, the workout screen, My workouts and Lifetime each said what was wrong, kept working where they could, and none showed the crash screen.
+- Checked: app 750 tests and a typecheck; in the browser, the Calendar opened with the server down (the error and Try again, no "No workouts"), then Try again with the server back (loaded).
+
 ## Update 303 · Notes on a saved workout
 
-*28 Nov 2026 · the commit "Notes on a saved workout, shown while you train it"*
+*28 Nov 2026 · `9b70517`*
 
 You asked for more Hevy features. This one is its routine notes, in GymGO's own look:
 
@@ -26,7 +37,7 @@ You asked for more Hevy features. This one is its routine notes, in GymGO's own 
 
 ## Update 302 · Import your workouts from another app
 
-*28 Nov 2026 · the commit "Import workouts from another app's CSV export, or GymGO's own"*
+*28 Nov 2026 · `4c3a224`*
 
 You asked for more Hevy features. This one is for people moving to GymGO: **Import workouts** (Progress → Import workouts).
 
@@ -44,7 +55,7 @@ You asked for more Hevy features. This one is for people moving to GymGO: **Impo
 
 ## Update 301 · Pace on cardio machines, supersets you can see, and History in the menu
 
-*28 Nov 2026 · the commit "Best pace on cardio machines, a rail on superset cards, See history in the exercise menu"*
+*28 Nov 2026 · `c5b1d87`*
 
 You asked for more polish and Hevy features. Three more, in GymGO's own look:
 
@@ -287,7 +298,7 @@ You asked for more Hevy features. Two more, in GymGO's own look:
 
 ## Update 289 · The tests pass in every time zone, Melbourne included
 
-*25 Nov 2026 · the commit "The exercise chart test passes in every time zone"*
+*25 Nov 2026 · `f0f6d29`*
 
 The tests had only ever run here, where the clock is UTC. Run as if the computer were in Melbourne, one app test failed: the exercise chart's test logged a morning and an evening workout at 07:00 and 19:00 UTC and expected one point for the day, but in Melbourne (UTC+11 in October) those are 6 pm on the 1st and 6 am on the 2nd. The app was right to chart two days (a workout belongs to the day it was where you are); the test wasn't. It now logs 7 am and 7 pm local time.
 

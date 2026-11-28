@@ -205,7 +205,7 @@ export default function WorkoutScreen() {
         setSaveState('idle');
         openPro('workouts');
       } else {
-        setSaveState(error instanceof ApiError ? error.message : 'Couldn’t reach the GymGO server to save it.');
+        setSaveState(error instanceof ApiError ? error.message : 'Couldn’t connect to GymGO to save it.');
       }
     }
   };

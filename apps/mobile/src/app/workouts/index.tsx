@@ -58,7 +58,7 @@ export default function MyWorkouts() {
         setWorkouts(result.workouts);
         setProblem(null);
       })
-      .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t reach the GymGO server to load your workouts.')));
+      .catch((error: unknown) => setProblem(failureText(error, 'Couldn’t connect to GymGO to load your saved workouts.')));
   }, [token]);
   useFocusEffect(load);
 

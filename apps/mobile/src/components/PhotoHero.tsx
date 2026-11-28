@@ -270,7 +270,7 @@ export function PhotoHero({
         kind: 'done',
         text:
           error instanceof OfflineError
-            ? 'Can’t reach the GymGO server right now.'
+            ? 'Couldn’t connect to GymGO. Try again in a moment.'
             : error instanceof ApiError
               ? error.message
               : 'Couldn’t upload that photo. Try another one.',

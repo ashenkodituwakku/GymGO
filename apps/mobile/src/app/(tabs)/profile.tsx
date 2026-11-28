@@ -285,6 +285,13 @@ export default function Profile() {
           toggle={{ value: prefs.rpe, onChange: (value) => setPref('rpe', value) }}
         />
         <Row
+          icon="history"
+          tile={TILE.indigo}
+          title="Last time from the same workout"
+          subtitle={prefs.sameWorkoutPrevious ? 'A saved workout shows its own last numbers first' : 'Last time you did each exercise, in any workout'}
+          toggle={{ value: prefs.sameWorkoutPrevious, onChange: (value) => setPref('sameWorkoutPrevious', value) }}
+        />
+        <Row
           icon="locate"
           tile={TILE.blue}
           title="Location"

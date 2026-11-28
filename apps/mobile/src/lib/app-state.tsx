@@ -100,6 +100,8 @@ export interface Prefs {
   soundPack: SoundPack;
   /** An RPE (how hard, 6 to 10) on each set as you log it; off until you switch it on. */
   rpe: boolean;
+  /** Last time's numbers from the same saved workout when there are some; on unless switched off. */
+  sameWorkoutPrevious: boolean;
 }
 
 const RECENTS_KEY = 'gymgo.recents.v1';
@@ -215,7 +217,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [compare, setCompare] = useState<string[]>([]);
   const compareLoaded = useRef(false);
   const [exploreRequest, setExploreRequest] = useState<ExploreRequest | null>(null);
-  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, location: true, verity: true, demo: false, country: null, weeklyGoal: null, goal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK, rpe: false });
+  const [prefs, setPrefs] = useState<Prefs>({ haptics: true, sounds: true, location: true, verity: true, demo: false, country: null, weeklyGoal: null, goal: null, plates: {}, timers: [], celebration: FREE_CELEBRATION, soundPack: FREE_SOUND_PACK, rpe: false, sameWorkoutPrevious: true });
   const [prefsReady, setPrefsReady] = useState(false);
   // Arcade with Pro, Marimba without: a lapsed Pro hears Marimba again, the pick kept for when it's back.
   useEffect(() => setSoundPack(soundPackFor(prefs.soundPack, billing.isPro)), [prefs.soundPack, billing.isPro]);
@@ -243,7 +245,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const lbPlates = cleanPlates(value.plates?.lb, 'lb');
       const plates = { ...(kgPlates ? { kg: kgPlates } : {}), ...(lbPlates ? { lb: lbPlates } : {}) };
       // The limited website shows real gyms only, whatever was kept (lib/limited.ts).
-      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, location: value.location !== false, verity: (value.verity ?? value.gymPal) !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, goal: trainingGoal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack), rpe: value.rpe === true };
+      const next = { haptics: value.haptics !== false, sounds: value.sounds !== false, location: value.location !== false, verity: (value.verity ?? value.gymPal) !== false, demo: !LIMITED && value.demo === true, country, weeklyGoal: goal, goal: trainingGoal, plates, timers: cleanTimers(value.timers), celebration: cleanCelebration(value.celebration), soundPack: cleanSoundPack(value.soundPack), rpe: value.rpe === true, sameWorkoutPrevious: value.sameWorkoutPrevious !== false };
       setHapticsEnabled(next.haptics);
       setSoundsEnabled(next.sounds);
       setLocationAllowed(next.location);

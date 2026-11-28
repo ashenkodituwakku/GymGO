@@ -927,7 +927,10 @@ records and exercises, to **like** and **comment** on. Open one for every set,
 until you turn it on; friends never see your notes, and see the gym only when you tag one; hide any
 one workout from its page. Who liked or commented on yours shows at the top.
 While you train, each set shows **Previous** (last time's set at the same
-place; tap to copy it in), and a finished workout is **compared with the last
+place; tap to copy it in). In a saved workout, last time means the last
+time in that workout ("Last time in this workout"), so Push day's bench
+press isn't Upper body's; Profile → **Last time from the same workout**
+switches that off. And a finished workout is **compared with the last
 time** you did it. A workout can be **tagged with its gym** (the chip under its title while you
 train, or Edit workout later), a friend's page lists **their workouts**, and a
 workout's page shows its **muscle split**. **Profile → Your workouts** is

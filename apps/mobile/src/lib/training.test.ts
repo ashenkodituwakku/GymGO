@@ -121,6 +121,16 @@ describe('last time and next time', () => {
     expect(setsSummary([{ weight: 20, reps: 8 }, { weight: null, reps: 12 }], 'kg')).toBe('20\u00a0kg × 8 · 12 reps');
   });
 
+  it('finds last time in the same saved workout first, else anywhere', () => {
+    const push = { ...session('2026-09-02T10:00:00Z', { 'bench-press': [[80, 5]] }), workoutId: 'push' };
+    const upper = { ...session('2026-09-09T10:00:00Z', { 'bench-press': [[60, 10]] }), workoutId: 'upper' };
+    const log = [push, upper];
+    expect(lastTime(log, 'bench-press', 'push')).toMatchObject({ sets: [{ weight: 80, reps: 5 }], sameWorkout: true });
+    expect(lastTime(log, 'bench-press')).toMatchObject({ sets: [{ weight: 60, reps: 10 }], sameWorkout: false });
+    // Not yet in this workout: the last time anywhere.
+    expect(lastTime(log, 'bench-press', 'legs')).toMatchObject({ sets: [{ weight: 60, reps: 10 }], sameWorkout: false });
+  });
+
   it('reads rep ranges, and leaves timed work alone', () => {
     expect(repRange('8–10')).toEqual({ low: 8, high: 10 });
     expect(repRange('5')).toEqual({ low: 5, high: 5 });

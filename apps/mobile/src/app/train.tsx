@@ -709,6 +709,7 @@ export default function TrainScreen() {
               item={item}
               unit={session.unit}
               history={log.sessions}
+              workoutId={prefs.sameWorkoutPrevious ? session.workoutId : null}
               isPro={billing.isPro}
               onPro={showPro}
               onWarmUpPro={showWarmUpPro}
@@ -822,6 +823,7 @@ const ExerciseLog = memo(function ExerciseLog({
   item,
   unit,
   history,
+  workoutId,
   isPro,
   onPro,
   onWarmUpPro,
@@ -846,6 +848,8 @@ const ExerciseLog = memo(function ExerciseLog({
   item: ActiveItem;
   unit: WeightUnit;
   history: TrainingSession[];
+  /** The saved workout this one started from, for last time's numbers in it (null: any workout). */
+  workoutId: string | null;
   isPro: boolean;
   onPro: () => void;
   /** Warm-up sets are Pro's, as on the plate calculator. */
@@ -887,7 +891,8 @@ const ExerciseLog = memo(function ExerciseLog({
   const barbell = exercise ? exercise.needs.some((option) => option.includes('barbells')) : false;
   // Warm-ups: a barbell's ramp from the empty bar, or a shorter one for dumbbells or a machine.
   const warmKit = warmUpKit(exercise);
-  const last = useMemo(() => lastTime(history, item.exerciseId), [history, item.exerciseId]);
+  // Last time in this saved workout first, when that's what you've asked for (Profile).
+  const last = useMemo(() => lastTime(history, item.exerciseId, workoutId), [history, item.exerciseId, workoutId]);
   // Your records from before this workout, to mark a set that beats them as you tick it.
   const before = useMemo(() => personalRecords(history).get(item.exerciseId), [history, item.exerciseId]);
   const bests = useMemo(() => bestSoFar(item.sets, unit, before, measure), [item.sets, unit, before, measure]);
@@ -1183,7 +1188,7 @@ const ExerciseLog = memo(function ExerciseLog({
         <View style={styles.guides}>
           <Txt variant="footnote" color={color.labelSecondary}>
             {last
-              ? `Last time (${shortDate(last.date)}): ${setsSummary(last.sets, last.unit)}`
+              ? `${last.sameWorkout ? 'Last time in this workout' : 'Last time'} (${shortDate(last.date)}): ${setsSummary(last.sets, last.unit)}`
               : `First time logging this one.${exercise?.cue ? ` ${exercise.cue}` : ''}`}
           </Txt>
           {target ? (

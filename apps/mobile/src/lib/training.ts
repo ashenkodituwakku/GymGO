@@ -143,14 +143,23 @@ export function repMax(oneRm: number, reps: number): number | null {
 export const PERCENT_STEPS = [100, 95, 90, 85, 80, 75, 70, 65, 60, 55, 50] as const;
 export const FREE_PERCENTS: readonly number[] = [90, 80, 70];
 
-/** The last time you did this exercise: its sets, in that session's unit. */
-export function lastTime(sessions: TrainingSession[], exerciseId: string): { sets: LoggedSet[]; unit: WeightUnit; date: string } | null {
-  for (const session of [...sessions].sort(byDate).reverse()) {
-    const logged = session.exercises.find((item) => item.exerciseId === exerciseId);
-    const sets = logged ? workingSets(logged.sets) : [];
-    if (sets.length) return { sets, unit: session.unit, date: session.finishedAt };
-  }
-  return null;
+/**
+ * The last time you did this exercise: its sets, in that session's unit.
+ * Given a saved workout, the last time in that workout first (Push day's
+ * bench press, not Upper body's), else the last time anywhere;
+ * `sameWorkout` says which it was.
+ */
+export function lastTime(sessions: TrainingSession[], exerciseId: string, workoutId: string | null = null): { sets: LoggedSet[]; unit: WeightUnit; date: string; sameWorkout: boolean } | null {
+  const newest = [...sessions].sort(byDate).reverse();
+  const find = (pool: TrainingSession[], sameWorkout: boolean) => {
+    for (const session of pool) {
+      const logged = session.exercises.find((item) => item.exerciseId === exerciseId);
+      const sets = logged ? workingSets(logged.sets) : [];
+      if (sets.length) return { sets, unit: session.unit, date: session.finishedAt, sameWorkout };
+    }
+    return null;
+  };
+  return (workoutId ? find(newest.filter((session) => session.workoutId === workoutId), true) : null) ?? find(newest, false);
 }
 
 /** Reps without a weight: "12 reps", "12, 10 reps", "1 rep". */

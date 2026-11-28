@@ -423,6 +423,13 @@ mobile 550, domain 191 and web 39 tests, all passing.
   their places for Next, and feeds `chapterRanges` to the strip and the
   light. With calm, Opening returns static styles (its progress 1 would be
   "gone").
+- **Last time from the same workout** (28 Nov, Update 308). training.ts
+  `lastTime(sessions, exerciseId, workoutId?)` returns `sameWorkout`;
+  train.tsx passes `workoutId={prefs.sameWorkoutPrevious ? session.workoutId
+  : null}` to ExerciseLog, whose `last` feeds Previous, placeholders and
+  programmeTarget. Prefs `sameWorkoutPrevious` (default true, loaded as
+  `!== false`); Profile row beside RPE. Merged after the other session's
+  Verity rename (prefs.verity): keep both when touching app-state.
 - **Workout notes** (28 Nov, Update 303). Server: cleanWorkoutPlan keeps
   `note` (string, tidied, 1 to MAX_WORKOUT_NOTE = 500 characters; blank is
   none; other types 400), on POST and PATCH /api/workouts; tested in

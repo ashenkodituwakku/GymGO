@@ -9,6 +9,20 @@ Updates 1 to 64 were written up on 3 Nov 2026 from the project's history
 (557 commits from 22 Sep 2026). From now on, each update adds the
 next number here as part of the update itself.
 
+## Update 308 · Last time from the same workout
+
+*28 Nov 2026 · the commit "Last time from the same saved workout, with a switch on Profile"*
+
+You asked for more Hevy features. This one is its setting for where "previous" numbers come from, in GymGO's own look:
+
+- **In a saved workout, last time now means the last time in that workout.** If Push day has bench press at 87.5 kg × 5 and Upper body has it at 55 kg × 12, Push day shows 87.5 × 5: in **Previous**, the placeholders, **Aim**, and the line above the sets, which says "Last time in this workout (26 Nov)".
+- An exercise not yet done in that workout falls back to the last time anywhere, as before ("Last time (28 Nov)"). Workouts not from My workouts are unchanged.
+- **Profile → Last time from the same workout** turns it off, for the last time you did each exercise in any workout. It's on to start with.
+- Checked:
+  - domain 205, server 447 and app 755 tests (1 new: same workout first, else anywhere), typecheck, lint and the empty-text scan, after merging the other session's Updates 304 to 307;
+  - in a browser at 390 light: a saved workout with bench press logged at 87.5 kg × 5 in it and 55 kg × 12 elsewhere since, showing 87.5 kg × 5, Previous 87.5 × 5 and Aim 90 kg; with the switch off, 55 kg × 12. The test workouts were deleted afterwards.
+- Not checked: a real phone.
+
 ## Update 307 · Verity answers for real on OpenRouter
 
 *28 Nov 2026 · `7caf3c1`*

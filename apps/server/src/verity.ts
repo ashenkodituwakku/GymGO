@@ -79,11 +79,12 @@ const LIST_EVERY_MS = 6 * 60 * 60_000;
 /**
  * Asked in this order, each one free, from three different makers so one
  * being busy (a popular free model is often "rate-limited upstream")
- * doesn't stop Verity. Checked on OpenRouter's list of models on 18
- * November 2026, when inkling-small's free version had gone (inkling-2-small
- * took its place). Free models come and go: GYMGO_VERITY_MODELS overrides.
+ * doesn't stop Verity. Checked on OpenRouter's list of models on 28
+ * November 2026, when inkling-2-small's free version had gone (Baidu's
+ * ERNIE 5.5 Flash, a preview, took its place; each answered a real question
+ * that day). Free models come and go: GYMGO_VERITY_MODELS overrides.
  */
-export const DEFAULT_MODELS = ['google/gemma-4-31b-it:free', 'thinkingmachines/inkling-2-small:free', 'nvidia/nemotron-3.5-super-vl:free'];
+export const DEFAULT_MODELS = ['google/gemma-4-31b-it:free', 'baidu/ernie-5.5-flash-preview:free', 'nvidia/nemotron-3.5-super-vl:free'];
 
 /**
  * What each plan gets: questions a minute and a day, how much of the

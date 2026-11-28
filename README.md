@@ -1390,10 +1390,10 @@ never answers Free accounts.
 whose OpenRouter id ends in `:free`, and OpenRouter bills a fallback at the
 price of the model that answered, so a list of free ones stays free. By
 default it asks `google/gemma-4-31b-it:free`, then
-`thinkingmachines/inkling-2-small:free`, then
+`baidu/ernie-5.5-flash-preview:free`, then
 `nvidia/nemotron-3.5-super-vl:free`, three makers so one being busy doesn't
-stop Verity (free on OpenRouter's list on 18 November 2026; free models
-come and go). When OpenRouter says no, the server's log (and
+stop Verity (each free on OpenRouter's list, and answering, on 28 November
+2026; free models come and go). When OpenRouter says no, the server's log (and
 `verity:check`) shows its reason, such as "rate-limited upstream". Before
 asking, the server checks OpenRouter's public list of models every 6 hours
 and leaves out any that have gone; with none of its own left, it asks up to

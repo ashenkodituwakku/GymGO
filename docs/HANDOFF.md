@@ -138,7 +138,11 @@ mobile 550, domain 191 and web 39 tests, all passing.
   when tightening a pattern, add the question that broke to that list.
   To look at it locally without a key, run a stand-in OpenAI-style server
   and point `GYMGO_VERITY_PAID_URL` at it (never a real key in the
-  sandbox). The legal wording (version 2026-11-28.1) needs the owner's
+  sandbox). The owner's OpenRouter key is a network secret on the cloud
+  environment (28 Nov): the proxy adds it to requests to openrouter.ai, so
+  run the server or `verity:check` with `OPENROUTER_API_KEY=dummy` and
+  `NODE_USE_ENV_PROXY=1` (Node's fetch ignores the proxy otherwise). Each
+  question uses one of OpenRouter's 50 free a day. The legal wording (version 2026-11-28.1) needs the owner's
   approval. Verity's `GREETING`/`WAITING` keep the owner's wording with the
   new name.
 - **The owner's logo** (28 Nov). `apps/mobile/assets/brand/gymgo-logo.svg`
